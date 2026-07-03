@@ -12,15 +12,15 @@ export declare class ProductsController {
         } & {
             id: string;
             name: string;
+            createdAt: Date;
+            updatedAt: Date;
             slug: string;
             description: string | null;
             price: import("@prisma/client/runtime/library").Decimal;
             stock: number;
+            categoryId: string;
             images: string[];
             isActive: boolean;
-            createdAt: Date;
-            updatedAt: Date;
-            categoryId: string;
         })[];
         total: number;
         page: number;
@@ -31,76 +31,76 @@ export declare class ProductsController {
         category: {
             id: string;
             name: string;
-            slug: string;
             createdAt: Date;
             updatedAt: Date;
+            slug: string;
         };
     } & {
         id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
         slug: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
         stock: number;
+        categoryId: string;
         images: string[];
         isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-        categoryId: string;
     }>;
     create(dto: CreateProductDto): Promise<{
         category: {
             id: string;
             name: string;
-            slug: string;
             createdAt: Date;
             updatedAt: Date;
+            slug: string;
         };
     } & {
         id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
         slug: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
         stock: number;
+        categoryId: string;
         images: string[];
         isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-        categoryId: string;
     }>;
     update(id: string, dto: UpdateProductDto): Promise<{
         category: {
             id: string;
             name: string;
-            slug: string;
             createdAt: Date;
             updatedAt: Date;
+            slug: string;
         };
     } & {
         id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
         slug: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
         stock: number;
+        categoryId: string;
         images: string[];
         isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-        categoryId: string;
     }>;
     remove(id: string): Promise<{
         id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
         slug: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
         stock: number;
+        categoryId: string;
         images: string[];
         isActive: boolean;
-        createdAt: Date;
-        updatedAt: Date;
-        categoryId: string;
     }>;
 }

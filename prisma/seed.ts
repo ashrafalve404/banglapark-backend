@@ -199,6 +199,34 @@ async function main() {
     });
 
     console.log('✅ Platform config seeded');
+
+    // ── Sample Banners ──────────────────────────────────────────────────────────
+    const sampleBanners = [
+        {
+            imageUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?w=1600&h=600&fit=crop',
+            linkUrl: '/shop',
+            isActive: true,
+            sortOrder: 0,
+        },
+        {
+            imageUrl: 'https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1600&h=600&fit=crop',
+            linkUrl: '/register',
+            isActive: true,
+            sortOrder: 1,
+        },
+        {
+            imageUrl: 'https://images.unsplash.com/photo-1472851294608-062f824d29cc?w=1600&h=600&fit=crop',
+            linkUrl: '/shop',
+            isActive: true,
+            sortOrder: 2,
+        },
+    ];
+
+    for (const banner of sampleBanners) {
+        await prisma.banner.create({ data: banner });
+    }
+    console.log(`✅ ${sampleBanners.length} sample banners created`);
+
     console.log('\n🚀 Seed complete!');
     console.log('   Super Admin → superadmin@banglapark.com / SuperAdmin@123');
     console.log('   Admin       → admin@banglapark.com / Admin@123');

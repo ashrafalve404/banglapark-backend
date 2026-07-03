@@ -22,6 +22,7 @@ import { WithdrawalModule } from './modules/withdrawal/withdrawal.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { AdminModule } from './modules/admin/admin.module';
 import { ReportsModule } from './modules/reports/reports.module';
+import { BannersModule } from './modules/banners/banners.module';
 
 @Module({
   imports: [
@@ -91,6 +92,7 @@ import { ReportsModule } from './modules/reports/reports.module';
     NotificationsModule,
     AdminModule,
     ReportsModule,
+    BannersModule,
   ],
 })
 export class AppModule { }

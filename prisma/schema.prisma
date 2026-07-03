@@ -244,6 +244,16 @@ model Notification {
   @@index([isRead])
 }
 
+model Banner {
+  id        String   @id @default(uuid())
+  imageUrl  String
+  linkUrl   String?
+  isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ─── Platform configuration (admin-adjustable rules) ─────────────────────────
 
 model PlatformConfig {
