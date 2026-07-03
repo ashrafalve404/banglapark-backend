@@ -3,3 +3,6 @@ node_modules
 .env
 
 /generated/prisma
+
+# Master prompt (developer reference only)
+01-backend-master-prompt.md
