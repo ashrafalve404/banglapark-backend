@@ -122,6 +122,7 @@ class ProductQueryDto {
     categoryId;
     page;
     limit;
+    sort;
 }
 exports.ProductQueryDto = ProductQueryDto;
 __decorate([
@@ -150,4 +151,10 @@ __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], ProductQueryDto.prototype, "limit", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ProductQueryDto.prototype, "sort", void 0);
 //# sourceMappingURL=product.dto.js.map

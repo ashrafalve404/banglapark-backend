@@ -27,7 +27,7 @@ export class ProductsService {
     }
 
     async findAll(query: ProductQueryDto) {
-        const { search, categoryId, page = 1, limit = 20 } = query;
+        const { search, categoryId, page = 1, limit = 20, sort = 'newest' } = query;
         const skip = (page - 1) * limit;
 
         const where: Prisma.ProductWhereInput = {
@@ -41,13 +41,18 @@ export class ProductsService {
             ...(categoryId && { categoryId }),
         };
 
+        let orderBy: Prisma.ProductOrderByWithRelationInput[] = [{ createdAt: 'desc' }];
+        if (sort === 'price_asc') orderBy = [{ price: 'asc' }];
+        else if (sort === 'price_desc') orderBy = [{ price: 'desc' }];
+        else orderBy = [{ createdAt: 'desc' }];
+
         const [products, total] = await Promise.all([
             this.prisma.product.findMany({
                 where,
                 skip,
                 take: limit,
                 include: { category: { select: { id: true, name: true } } },
-                orderBy: { createdAt: 'desc' },
+                orderBy,
             }),
             this.prisma.product.count({ where }),
         ]);
