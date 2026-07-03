@@ -50,7 +50,7 @@ export declare class ProductsService {
         limit: number;
         totalPages: number;
     }>;
-    findOne(id: string): Promise<{
+    findOne(idOrSlug: string): Promise<{
         category: {
             id: string;
             name: string;

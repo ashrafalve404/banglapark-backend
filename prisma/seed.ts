@@ -54,6 +54,29 @@ async function main() {
     });
     console.log('✅ Admin created:', admin.email);
 
+    // ── Regular User ──────────────────────────────────────────────────────────
+    const user = await prisma.user.upsert({
+        where: { email: 'user@banglapark.com' },
+        update: {},
+        create: {
+            name: 'Test User',
+            email: 'user@banglapark.com',
+            phone: '01700000002',
+            passwordHash: await bcrypt.hash('User@123', 12),
+            role: 'USER',
+            status: 'ACTIVE',
+            referralCode: 'REF-USER001',
+            referralLink: 'http://localhost:3001/register?ref=REF-USER001',
+            isFirstActivated: true,
+        },
+    });
+    await prisma.wallet.upsert({
+        where: { userId: user.id },
+        update: {},
+        create: { userId: user.id },
+    });
+    console.log('✅ Regular User created:', user.email);
+
     // ── Categories ────────────────────────────────────────────────────────────
     const categories = await Promise.all([
         prisma.category.upsert({
