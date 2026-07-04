@@ -112,46 +112,38 @@ let OrdersService = OrdersService_1 = class OrdersService {
             return order;
         const qualifyingAmount = this.configService.get('app.qualifyingOrderAmount') ?? 2000;
         const activationDays = this.configService.get('app.activationPeriodDays') ?? 30;
-        if (dto.status === client_1.OrderStatus.DELIVERED && !order.commissionTriggered) {
+        if (dto.status === client_1.OrderStatus.DELIVERED) {
             const deliveredAt = new Date();
+            const userBeforeUpdate = await this.prisma.user.findUnique({
+                where: { id: order.userId },
+                select: { isFirstActivated: true },
+            });
+            const isFirstTime = !userBeforeUpdate?.isFirstActivated;
             await this.prisma.$transaction(async (tx) => {
                 await tx.order.update({
                     where: { id: orderId },
                     data: {
                         status: client_1.OrderStatus.DELIVERED,
                         deliveredAt,
-                        commissionTriggered: order.isQualifying,
+                        commissionTriggered: order.isQualifying ? true : order.commissionTriggered,
                     },
                 });
                 if (order.isQualifying && Number(order.total) >= qualifyingAmount) {
-                    const user = await tx.user.findUnique({
-                        where: { id: order.userId },
-                        select: { isFirstActivated: true, status: true },
-                    });
                     const activeUntil = new Date(deliveredAt.getTime() + activationDays * 86_400_000);
                     await tx.user.update({
                         where: { id: order.userId },
                         data: {
                             status: 'ACTIVE',
                             activeUntil,
-                            isFirstActivated: user?.isFirstActivated || false ? true : true,
+                            isFirstActivated: true,
                         },
                     });
                     this.logger.log(`User ${order.userId} activated until ${activeUntil.toISOString()}`);
                 }
             });
-            if (order.isQualifying) {
-                const user = await this.prisma.user.findUnique({
-                    where: { id: order.userId },
-                    select: { isFirstActivated: true },
-                });
-                if (!user?.isFirstActivated) {
-                    await this.commissionService.triggerGenerationCommission(order.userId, orderId);
-                    await this.prisma.user.update({
-                        where: { id: order.userId },
-                        data: { isFirstActivated: true },
-                    });
-                }
+            if (order.isQualifying && isFirstTime && !order.commissionTriggered) {
+                await this.commissionService.triggerGenerationCommission(order.userId, orderId);
+                this.logger.log(`Generation commission triggered for user ${order.userId}`);
             }
             return this.findOne(orderId);
         }

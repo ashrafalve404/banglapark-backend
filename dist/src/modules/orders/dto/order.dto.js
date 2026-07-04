@@ -61,6 +61,7 @@ class UpdateOrderStatusDto {
 exports.UpdateOrderStatusDto = UpdateOrderStatusDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ enum: client_1.OrderStatus }),
+    (0, class_validator_1.IsEnum)(client_1.OrderStatus),
     __metadata("design:type", String)
 ], UpdateOrderStatusDto.prototype, "status", void 0);
 //# sourceMappingURL=order.dto.js.map

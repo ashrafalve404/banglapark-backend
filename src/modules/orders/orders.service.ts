@@ -126,27 +126,30 @@ export class OrdersService {
         const activationDays = this.configService.get<number>('app.activationPeriodDays') ?? 30;
 
         // ── Transitioning to DELIVERED ────────────────────────────────────────
-        if (dto.status === OrderStatus.DELIVERED && !order.commissionTriggered) {
+        if (dto.status === OrderStatus.DELIVERED) {
             const deliveredAt = new Date();
 
+            // Read isFirstActivated BEFORE the transaction mutates it (for commission eligibility)
+            const userBeforeUpdate = await this.prisma.user.findUnique({
+                where: { id: order.userId },
+                select: { isFirstActivated: true },
+            });
+            const isFirstTime = !userBeforeUpdate?.isFirstActivated;
+
             await this.prisma.$transaction(async (tx) => {
-                // 1. Update order
+                // 1. Update order status
                 await tx.order.update({
                     where: { id: orderId },
                     data: {
                         status: OrderStatus.DELIVERED,
                         deliveredAt,
-                        commissionTriggered: order.isQualifying,
+                        // Mark commission triggered if qualifying (idempotent)
+                        commissionTriggered: order.isQualifying ? true : order.commissionTriggered,
                     },
                 });
 
-                // 2. Activate user if qualifying
+                // 2. Always activate user on qualifying delivery — regardless of commissionTriggered
                 if (order.isQualifying && Number(order.total) >= qualifyingAmount) {
-                    const user = await tx.user.findUnique({
-                        where: { id: order.userId },
-                        select: { isFirstActivated: true, status: true },
-                    });
-
                     const activeUntil = new Date(deliveredAt.getTime() + activationDays * 86_400_000);
 
                     await tx.user.update({
@@ -154,7 +157,7 @@ export class OrdersService {
                         data: {
                             status: 'ACTIVE',
                             activeUntil,
-                            isFirstActivated: user?.isFirstActivated || false ? true : true,
+                            isFirstActivated: true,
                         },
                     });
 
@@ -162,25 +165,15 @@ export class OrdersService {
                 }
             });
 
-            // 3. Trigger generation commission outside order transaction (has its own tx)
-            if (order.isQualifying) {
-                const user = await this.prisma.user.findUnique({
-                    where: { id: order.userId },
-                    select: { isFirstActivated: true },
-                });
-                // Commission only on FIRST activation
-                if (!user?.isFirstActivated) {
-                    await this.commissionService.triggerGenerationCommission(order.userId, orderId);
-                    // Mark user as having been activated at least once
-                    await this.prisma.user.update({
-                        where: { id: order.userId },
-                        data: { isFirstActivated: true },
-                    });
-                }
+            // 3. Trigger generation commission only once (first activation only)
+            if (order.isQualifying && isFirstTime && !order.commissionTriggered) {
+                await this.commissionService.triggerGenerationCommission(order.userId, orderId);
+                this.logger.log(`Generation commission triggered for user ${order.userId}`);
             }
 
             return this.findOne(orderId);
         }
+
 
         // ── Other status transitions ────────────────────────────────────────────
         if (dto.status === OrderStatus.CANCELLED) {
