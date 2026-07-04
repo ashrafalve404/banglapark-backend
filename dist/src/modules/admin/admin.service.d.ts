@@ -28,6 +28,7 @@ export declare class AdminService {
             referralLink: string | null;
             parentId: string | null;
             status: import("@prisma/client").$Enums.UserStatus;
+            activeFrom: Date | null;
             activeUntil: Date | null;
             isFirstActivated: boolean;
             createdAt: Date;
@@ -52,7 +53,14 @@ export declare class AdminService {
         id: string;
         name: string;
         status: import("@prisma/client").$Enums.UserStatus;
+        activeFrom: Date | null;
         activeUntil: Date | null;
+    }>;
+    deleteUser(userId: string): Promise<{
+        message: string;
+    }>;
+    deleteOrder(orderId: string): Promise<{
+        message: string;
     }>;
     getConfig(key: string): Promise<{
         id: string;

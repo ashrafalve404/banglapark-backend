@@ -58,6 +58,7 @@ let UsersService = class UsersService {
         phone: true,
         role: true,
         status: true,
+        activeFrom: true,
         activeUntil: true,
         isFirstActivated: true,
         referralCode: true,

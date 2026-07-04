@@ -50,7 +50,15 @@ let CategoriesService = class CategoriesService {
         });
     }
     async remove(id) {
-        await this.findOne(id);
+        const cat = await this.prisma.category.findUnique({
+            where: { id },
+            include: { _count: { select: { products: true } } },
+        });
+        if (!cat)
+            throw new common_1.NotFoundException('Category not found');
+        if (cat._count.products > 0) {
+            throw new common_1.ConflictException('Cannot delete category because it has active products linked to it. Remove or reassign the products first.');
+        }
         return this.prisma.category.delete({ where: { id } });
     }
 };

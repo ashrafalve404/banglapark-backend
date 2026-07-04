@@ -110,16 +110,27 @@ let OrdersService = OrdersService_1 = class OrdersService {
         }
         if (dto.status === order.status)
             return order;
-        const qualifyingAmount = this.configService.get('app.qualifyingOrderAmount') ?? 2000;
+        const validTransitions = {
+            [client_1.OrderStatus.PENDING]: [client_1.OrderStatus.CONFIRMED, client_1.OrderStatus.CANCELLED],
+            [client_1.OrderStatus.CONFIRMED]: [client_1.OrderStatus.PROCESSING, client_1.OrderStatus.CANCELLED],
+            [client_1.OrderStatus.PROCESSING]: [client_1.OrderStatus.SHIPPED, client_1.OrderStatus.CANCELLED],
+            [client_1.OrderStatus.SHIPPED]: [client_1.OrderStatus.DELIVERED],
+            [client_1.OrderStatus.DELIVERED]: [],
+            [client_1.OrderStatus.CANCELLED]: [],
+        };
+        const allowed = validTransitions[order.status];
+        if (!allowed || !allowed.includes(dto.status)) {
+            throw new common_1.BadRequestException(`Invalid order status transition: ${order.status} → ${dto.status}`);
+        }
         const activationDays = this.configService.get('app.activationPeriodDays') ?? 30;
         if (dto.status === client_1.OrderStatus.DELIVERED) {
             const deliveredAt = new Date();
-            const userBeforeUpdate = await this.prisma.user.findUnique({
-                where: { id: order.userId },
-                select: { isFirstActivated: true },
-            });
-            const isFirstTime = !userBeforeUpdate?.isFirstActivated;
             await this.prisma.$transaction(async (tx) => {
+                const user = await tx.user.findUnique({
+                    where: { id: order.userId },
+                    select: { isFirstActivated: true },
+                });
+                const isFirstActivation = !user?.isFirstActivated;
                 await tx.order.update({
                     where: { id: orderId },
                     data: {
@@ -128,23 +139,27 @@ let OrdersService = OrdersService_1 = class OrdersService {
                         commissionTriggered: order.isQualifying ? true : order.commissionTriggered,
                     },
                 });
-                if (order.isQualifying && Number(order.total) >= qualifyingAmount) {
+                if (order.isQualifying) {
                     const activeUntil = new Date(deliveredAt.getTime() + activationDays * 86_400_000);
                     await tx.user.update({
                         where: { id: order.userId },
                         data: {
                             status: 'ACTIVE',
+                            activeFrom: deliveredAt,
                             activeUntil,
                             isFirstActivated: true,
                         },
                     });
                     this.logger.log(`User ${order.userId} activated until ${activeUntil.toISOString()}`);
                 }
+                else {
+                    this.logger.warn(`Order ${orderId} (total: ${order.total}) marked DELIVERED but NOT qualifying — user ${order.userId} not activated`);
+                }
+                if (order.isQualifying && isFirstActivation) {
+                    await this.commissionService.triggerGenerationCommission(order.userId, orderId, tx);
+                    this.logger.log(`Generation commission triggered for user ${order.userId}`);
+                }
             });
-            if (order.isQualifying && isFirstTime && !order.commissionTriggered) {
-                await this.commissionService.triggerGenerationCommission(order.userId, orderId);
-                this.logger.log(`Generation commission triggered for user ${order.userId}`);
-            }
             return this.findOne(orderId);
         }
         if (dto.status === client_1.OrderStatus.CANCELLED) {

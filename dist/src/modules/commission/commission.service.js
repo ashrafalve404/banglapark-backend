@@ -26,8 +26,9 @@ let CommissionService = CommissionService_1 = class CommissionService {
         this.walletService = walletService;
         this.configService = configService;
     }
-    async triggerGenerationCommission(newUserId, orderId) {
-        const alreadyPaid = await this.prisma.generationCommission.findFirst({
+    async triggerGenerationCommission(newUserId, orderId, tx) {
+        const prisma = tx ?? this.prisma;
+        const alreadyPaid = await prisma.generationCommission.findFirst({
             where: { fromUserId: newUserId },
         });
         if (alreadyPaid) {
@@ -39,14 +40,14 @@ let CommissionService = CommissionService_1 = class CommissionService {
         let currentId = newUserId;
         const sponsors = [];
         for (let level = 1; level <= levels; level++) {
-            const user = await this.prisma.user.findUnique({
+            const user = await prisma.user.findUnique({
                 where: { id: currentId },
                 select: { parentId: true },
             });
             if (!user?.parentId)
                 break;
             currentId = user.parentId;
-            const sponsor = await this.prisma.user.findUnique({
+            const sponsor = await prisma.user.findUnique({
                 where: { id: currentId },
                 select: {
                     id: true,
@@ -62,7 +63,7 @@ let CommissionService = CommissionService_1 = class CommissionService {
         }
         if (sponsors.length === 0)
             return;
-        await this.prisma.$transaction(async (tx) => {
+        if (tx) {
             for (const sponsor of sponsors) {
                 await this.walletService.credit(tx, sponsor.walletId, amount, client_1.TxType.GENERATION_COMMISSION, `Generation commission (Level ${sponsor.level}) from new member activation`, orderId);
                 await tx.generationCommission.create({
@@ -75,7 +76,23 @@ let CommissionService = CommissionService_1 = class CommissionService {
                     },
                 });
             }
-        });
+        }
+        else {
+            await this.prisma.$transaction(async (innerTx) => {
+                for (const sponsor of sponsors) {
+                    await this.walletService.credit(innerTx, sponsor.walletId, amount, client_1.TxType.GENERATION_COMMISSION, `Generation commission (Level ${sponsor.level}) from new member activation`, orderId);
+                    await innerTx.generationCommission.create({
+                        data: {
+                            toUserId: sponsor.id,
+                            fromUserId: newUserId,
+                            orderId,
+                            level: sponsor.level,
+                            amount,
+                        },
+                    });
+                }
+            });
+        }
         this.logger.log(`Generation commission paid to ${sponsors.length} sponsors for user ${newUserId}`);
     }
     async getCommissionReport(page = 1, limit = 20, userId) {

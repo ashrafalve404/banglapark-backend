@@ -30,6 +30,7 @@ export declare class AdminController {
             referralLink: string | null;
             parentId: string | null;
             status: import("@prisma/client").$Enums.UserStatus;
+            activeFrom: Date | null;
             activeUntil: Date | null;
             isFirstActivated: boolean;
             createdAt: Date;
@@ -54,13 +55,21 @@ export declare class AdminController {
         id: string;
         name: string;
         status: import("@prisma/client").$Enums.UserStatus;
+        activeFrom: Date | null;
         activeUntil: Date | null;
     }>;
     deactivate(id: string): Promise<{
         id: string;
         name: string;
         status: import("@prisma/client").$Enums.UserStatus;
+        activeFrom: Date | null;
         activeUntil: Date | null;
+    }>;
+    deleteUser(id: string): Promise<{
+        message: string;
+    }>;
+    deleteOrder(id: string): Promise<{
+        message: string;
     }>;
     getConfigs(): Promise<{
         id: string;

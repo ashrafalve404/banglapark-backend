@@ -14,6 +14,7 @@ export declare class UsersService {
         referralLink: string | null;
         parentId: string | null;
         status: import("@prisma/client").$Enums.UserStatus;
+        activeFrom: Date | null;
         activeUntil: Date | null;
         isFirstActivated: boolean;
         createdAt: Date;
@@ -34,6 +35,7 @@ export declare class UsersService {
         referralLink: string | null;
         parentId: string | null;
         status: import("@prisma/client").$Enums.UserStatus;
+        activeFrom: Date | null;
         activeUntil: Date | null;
         isFirstActivated: boolean;
         createdAt: Date;
@@ -49,6 +51,7 @@ export declare class UsersService {
         referralLink: string | null;
         parentId: string | null;
         status: import("@prisma/client").$Enums.UserStatus;
+        activeFrom: Date | null;
         activeUntil: Date | null;
         isFirstActivated: boolean;
         createdAt: Date;
@@ -72,6 +75,7 @@ export declare class UsersService {
             referralLink: string | null;
             parentId: string | null;
             status: import("@prisma/client").$Enums.UserStatus;
+            activeFrom: Date | null;
             activeUntil: Date | null;
             isFirstActivated: boolean;
             createdAt: Date;

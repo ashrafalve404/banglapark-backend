@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
-import { TxType } from '@prisma/client';
+import { TxType, Prisma } from '@prisma/client';
 
 @Injectable()
 export class CommissionService {
@@ -16,15 +16,18 @@ export class CommissionService {
 
     /**
      * Called when a qualifying order is DELIVERED for the first time.
-     * Runs inside the caller's DB transaction.
+     * Can run inside a caller's DB transaction (pass `tx`) or standalone.
      * Returns early (idempotent) if generation commission was already paid.
      */
     async triggerGenerationCommission(
         newUserId: string,
         orderId: string,
+        tx?: Prisma.TransactionClient,
     ): Promise<void> {
+        const prisma = tx ?? this.prisma;
+
         // Idempotency: check if commission was ever paid FROM this user
-        const alreadyPaid = await this.prisma.generationCommission.findFirst({
+        const alreadyPaid = await prisma.generationCommission.findFirst({
             where: { fromUserId: newUserId },
         });
         if (alreadyPaid) {
@@ -42,14 +45,14 @@ export class CommissionService {
         const sponsors: Array<{ id: string; walletId: string; level: number }> = [];
 
         for (let level = 1; level <= levels; level++) {
-            const user = await this.prisma.user.findUnique({
+            const user = await prisma.user.findUnique({
                 where: { id: currentId! },
                 select: { parentId: true },
             });
             if (!user?.parentId) break;
             currentId = user.parentId;
 
-            const sponsor = await this.prisma.user.findUnique({
+            const sponsor = await prisma.user.findUnique({
                 where: { id: currentId as string },
                 select: {
                     id: true,
@@ -70,11 +73,12 @@ export class CommissionService {
 
         if (sponsors.length === 0) return;
 
-        // All-or-nothing: process inside a DB transaction
-        await this.prisma.$transaction(async (tx) => {
+        // All-or-nothing: process payouts
+        if (tx) {
+            // Inside caller's outer transaction — use tx directly
             for (const sponsor of sponsors) {
                 await this.walletService.credit(
-                    tx,
+                    tx as any,
                     sponsor.walletId,
                     amount,
                     TxType.GENERATION_COMMISSION,
@@ -92,7 +96,31 @@ export class CommissionService {
                     },
                 });
             }
-        });
+        } else {
+            // Standalone — wrap in its own transaction
+            await this.prisma.$transaction(async (innerTx) => {
+                for (const sponsor of sponsors) {
+                    await this.walletService.credit(
+                        innerTx as any,
+                        sponsor.walletId,
+                        amount,
+                        TxType.GENERATION_COMMISSION,
+                        `Generation commission (Level ${sponsor.level}) from new member activation`,
+                        orderId,
+                    );
+
+                    await innerTx.generationCommission.create({
+                        data: {
+                            toUserId: sponsor.id,
+                            fromUserId: newUserId,
+                            orderId,
+                            level: sponsor.level,
+                            amount,
+                        },
+                    });
+                }
+            });
+        }
 
         this.logger.log(
             `Generation commission paid to ${sponsors.length} sponsors for user ${newUserId}`,

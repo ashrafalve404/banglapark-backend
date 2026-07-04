@@ -52,10 +52,60 @@ let AdminService = class AdminService {
             where: { id: userId },
             data: {
                 status: activate ? 'ACTIVE' : 'INACTIVE',
+                activeFrom: activate ? now : null,
                 activeUntil: activate ? new Date(now.getTime() + 30 * 86_400_000) : null,
             },
-            select: { id: true, name: true, status: true, activeUntil: true },
+            select: { id: true, name: true, status: true, activeFrom: true, activeUntil: true },
         });
+    }
+    async deleteUser(userId) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        await this.prisma.$transaction(async (tx) => {
+            await tx.user.updateMany({
+                where: { parentId: userId },
+                data: { parentId: null },
+            });
+            await tx.generationCommission.deleteMany({
+                where: { OR: [{ toUserId: userId }, { fromUserId: userId }] },
+            });
+            await tx.dailyBenefitLog.deleteMany({ where: { userId } });
+            await tx.notification.deleteMany({ where: { userId } });
+            await tx.withdrawalRequest.deleteMany({ where: { userId } });
+            const orderIds = (await tx.order.findMany({ where: { userId }, select: { id: true } })).map((o) => o.id);
+            if (orderIds.length > 0) {
+                await tx.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
+                await tx.order.deleteMany({ where: { id: { in: orderIds } } });
+            }
+            const wallet = await tx.wallet.findUnique({ where: { userId } });
+            if (wallet) {
+                await tx.walletTransaction.deleteMany({ where: { walletId: wallet.id } });
+                await tx.wallet.delete({ where: { userId } });
+            }
+            await tx.user.delete({ where: { id: userId } });
+        });
+        return { message: 'User deleted successfully' };
+    }
+    async deleteOrder(orderId) {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { items: true },
+        });
+        if (!order)
+            throw new common_1.NotFoundException('Order not found');
+        await this.prisma.$transaction(async (tx) => {
+            for (const item of order.items) {
+                await tx.product.update({
+                    where: { id: item.productId },
+                    data: { stock: { increment: item.quantity } },
+                });
+            }
+            await tx.generationCommission.deleteMany({ where: { orderId } });
+            await tx.orderItem.deleteMany({ where: { orderId } });
+            await tx.order.delete({ where: { id: orderId } });
+        });
+        return { message: 'Order deleted successfully' };
     }
     async getConfig(key) {
         return this.prisma.platformConfig.findUnique({ where: { key } });

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 
@@ -54,10 +54,77 @@ export class AdminService {
             where: { id: userId },
             data: {
                 status: activate ? 'ACTIVE' : 'INACTIVE',
+                activeFrom: activate ? now : null,
                 activeUntil: activate ? new Date(now.getTime() + 30 * 86_400_000) : null,
             },
-            select: { id: true, name: true, status: true, activeUntil: true },
+            select: { id: true, name: true, status: true, activeFrom: true, activeUntil: true },
         });
+    }
+
+    async deleteUser(userId: string) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user) throw new NotFoundException('User not found');
+
+        await this.prisma.$transaction(async (tx) => {
+            // Orphan referral children
+            await tx.user.updateMany({
+                where: { parentId: userId },
+                data: { parentId: null },
+            });
+            // Delete generation commissions
+            await tx.generationCommission.deleteMany({
+                where: { OR: [{ toUserId: userId }, { fromUserId: userId }] },
+            });
+            // Delete daily benefit logs
+            await tx.dailyBenefitLog.deleteMany({ where: { userId } });
+            // Delete notifications
+            await tx.notification.deleteMany({ where: { userId } });
+            // Delete withdrawal requests
+            await tx.withdrawalRequest.deleteMany({ where: { userId } });
+            // Delete order items then orders
+            const orderIds = (
+                await tx.order.findMany({ where: { userId }, select: { id: true } })
+            ).map((o) => o.id);
+            if (orderIds.length > 0) {
+                await tx.orderItem.deleteMany({ where: { orderId: { in: orderIds } } });
+                await tx.order.deleteMany({ where: { id: { in: orderIds } } });
+            }
+            // Delete wallet transactions then wallet
+            const wallet = await tx.wallet.findUnique({ where: { userId } });
+            if (wallet) {
+                await tx.walletTransaction.deleteMany({ where: { walletId: wallet.id } });
+                await tx.wallet.delete({ where: { userId } });
+            }
+            // Delete user
+            await tx.user.delete({ where: { id: userId } });
+        });
+
+        return { message: 'User deleted successfully' };
+    }
+
+    async deleteOrder(orderId: string) {
+        const order = await this.prisma.order.findUnique({
+            where: { id: orderId },
+            include: { items: true },
+        });
+        if (!order) throw new NotFoundException('Order not found');
+
+        await this.prisma.$transaction(async (tx) => {
+            // Restore stock
+            for (const item of order.items) {
+                await tx.product.update({
+                    where: { id: item.productId },
+                    data: { stock: { increment: item.quantity } },
+                });
+            }
+            // Delete commission records linked to this order
+            await tx.generationCommission.deleteMany({ where: { orderId } });
+            // Delete order items then order
+            await tx.orderItem.deleteMany({ where: { orderId } });
+            await tx.order.delete({ where: { id: orderId } });
+        });
+
+        return { message: 'Order deleted successfully' };
     }
 
     // Platform config (income rules)

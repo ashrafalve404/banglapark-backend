@@ -14,13 +14,13 @@ export declare class OrdersService {
     create(userId: string, dto: CreateOrderDto): Promise<{
         items: ({
             product: {
-                name: string;
                 id: string;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                price: import("@prisma/client/runtime/library").Decimal;
                 slug: string;
                 description: string | null;
+                price: import("@prisma/client/runtime/library").Decimal;
                 stock: number;
                 categoryId: string;
                 images: string[];
@@ -28,53 +28,53 @@ export declare class OrdersService {
             };
         } & {
             id: string;
-            quantity: number;
             price: import("@prisma/client/runtime/library").Decimal;
-            productId: string;
             orderId: string;
+            productId: string;
+            quantity: number;
         })[];
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.OrderStatus;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string;
         total: import("@prisma/client/runtime/library").Decimal;
-        status: import("@prisma/client").$Enums.OrderStatus;
-        isQualifying: boolean;
         shippingAddress: import("@prisma/client/runtime/library").JsonValue | null;
         notes: string | null;
+        isQualifying: boolean;
         deliveredAt: Date | null;
         commissionTriggered: boolean;
         commissionReversed: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     findMyOrders(userId: string, page?: number, limit?: number): Promise<{
         orders: ({
             items: ({
                 product: {
-                    name: string;
                     id: string;
+                    name: string;
                     images: string[];
                 };
             } & {
                 id: string;
-                quantity: number;
                 price: import("@prisma/client/runtime/library").Decimal;
-                productId: string;
                 orderId: string;
+                productId: string;
+                quantity: number;
             })[];
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.OrderStatus;
+            createdAt: Date;
+            updatedAt: Date;
             userId: string;
             total: import("@prisma/client/runtime/library").Decimal;
-            status: import("@prisma/client").$Enums.OrderStatus;
-            isQualifying: boolean;
             shippingAddress: import("@prisma/client/runtime/library").JsonValue | null;
             notes: string | null;
+            isQualifying: boolean;
             deliveredAt: Date | null;
             commissionTriggered: boolean;
             commissionReversed: boolean;
-            createdAt: Date;
-            updatedAt: Date;
         })[];
         total: number;
         page: number;
@@ -82,19 +82,19 @@ export declare class OrdersService {
     }>;
     findOne(id: string, userId?: string): Promise<{
         user: {
-            name: string;
             id: string;
             email: string;
+            name: string;
         };
         items: ({
             product: {
-                name: string;
                 id: string;
+                name: string;
                 createdAt: Date;
                 updatedAt: Date;
-                price: import("@prisma/client/runtime/library").Decimal;
                 slug: string;
                 description: string | null;
+                price: import("@prisma/client/runtime/library").Decimal;
                 stock: number;
                 categoryId: string;
                 images: string[];
@@ -102,74 +102,74 @@ export declare class OrdersService {
             };
         } & {
             id: string;
-            quantity: number;
             price: import("@prisma/client/runtime/library").Decimal;
-            productId: string;
             orderId: string;
+            productId: string;
+            quantity: number;
         })[];
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.OrderStatus;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string;
         total: import("@prisma/client/runtime/library").Decimal;
-        status: import("@prisma/client").$Enums.OrderStatus;
-        isQualifying: boolean;
         shippingAddress: import("@prisma/client/runtime/library").JsonValue | null;
         notes: string | null;
+        isQualifying: boolean;
         deliveredAt: Date | null;
         commissionTriggered: boolean;
         commissionReversed: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     updateStatus(orderId: string, dto: UpdateOrderStatusDto): Promise<{
         items: {
             id: string;
-            quantity: number;
             price: import("@prisma/client/runtime/library").Decimal;
-            productId: string;
             orderId: string;
+            productId: string;
+            quantity: number;
         }[];
     } & {
         id: string;
+        status: import("@prisma/client").$Enums.OrderStatus;
+        createdAt: Date;
+        updatedAt: Date;
         userId: string;
         total: import("@prisma/client/runtime/library").Decimal;
-        status: import("@prisma/client").$Enums.OrderStatus;
-        isQualifying: boolean;
         shippingAddress: import("@prisma/client/runtime/library").JsonValue | null;
         notes: string | null;
+        isQualifying: boolean;
         deliveredAt: Date | null;
         commissionTriggered: boolean;
         commissionReversed: boolean;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     findAll(page?: number, limit?: number, status?: OrderStatus): Promise<{
         orders: ({
             user: {
-                name: string;
                 id: string;
                 email: string;
+                name: string;
             };
             items: {
                 id: string;
-                quantity: number;
                 price: import("@prisma/client/runtime/library").Decimal;
-                productId: string;
                 orderId: string;
+                productId: string;
+                quantity: number;
             }[];
         } & {
             id: string;
+            status: import("@prisma/client").$Enums.OrderStatus;
+            createdAt: Date;
+            updatedAt: Date;
             userId: string;
             total: import("@prisma/client/runtime/library").Decimal;
-            status: import("@prisma/client").$Enums.OrderStatus;
-            isQualifying: boolean;
             shippingAddress: import("@prisma/client/runtime/library").JsonValue | null;
             notes: string | null;
+            isQualifying: boolean;
             deliveredAt: Date | null;
             commissionTriggered: boolean;
             commissionReversed: boolean;
-            createdAt: Date;
-            updatedAt: Date;
         })[];
         total: number;
         page: number;

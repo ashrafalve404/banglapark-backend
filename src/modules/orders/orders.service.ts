@@ -110,9 +110,10 @@ export class OrdersService {
 
     /**
      * Admin-only: update order status.
-     * On transition to DELIVERED:
-     *  1. Activate user if qualifying order & first time
-     *  2. Trigger generation commission (idempotent)
+     * Validates the status flow: PENDING → CONFIRMED → PROCESSING → SHIPPED → DELIVERED
+     * On DELIVERED:
+     *  1. Activates user if qualifying order (≥ BDT 2,000)
+     *  2. Triggers generation commission inside same transaction (first activation only)
      */
     async updateStatus(orderId: string, dto: UpdateOrderStatusDto) {
         const order = await this.findOne(orderId);
@@ -122,62 +123,84 @@ export class OrdersService {
         }
         if (dto.status === order.status) return order;
 
-        const qualifyingAmount = this.configService.get<number>('app.qualifyingOrderAmount') ?? 2000;
+        // ── Status transition validation ──────────────────────────────────────
+        const validTransitions: Record<OrderStatus, OrderStatus[]> = {
+            [OrderStatus.PENDING]: [OrderStatus.CONFIRMED, OrderStatus.CANCELLED],
+            [OrderStatus.CONFIRMED]: [OrderStatus.PROCESSING, OrderStatus.CANCELLED],
+            [OrderStatus.PROCESSING]: [OrderStatus.SHIPPED, OrderStatus.CANCELLED],
+            [OrderStatus.SHIPPED]: [OrderStatus.DELIVERED],
+            [OrderStatus.DELIVERED]: [],
+            [OrderStatus.CANCELLED]: [],
+        };
+
+        const allowed = validTransitions[order.status];
+        if (!allowed || !allowed.includes(dto.status)) {
+            throw new BadRequestException(
+                `Invalid order status transition: ${order.status} → ${dto.status}`,
+            );
+        }
+
         const activationDays = this.configService.get<number>('app.activationPeriodDays') ?? 30;
 
         // ── Transitioning to DELIVERED ────────────────────────────────────────
         if (dto.status === OrderStatus.DELIVERED) {
             const deliveredAt = new Date();
 
-            // Read isFirstActivated BEFORE the transaction mutates it (for commission eligibility)
-            const userBeforeUpdate = await this.prisma.user.findUnique({
-                where: { id: order.userId },
-                select: { isFirstActivated: true },
-            });
-            const isFirstTime = !userBeforeUpdate?.isFirstActivated;
-
             await this.prisma.$transaction(async (tx) => {
-                // 1. Update order status
+                // 1. Read user state BEFORE mutations
+                const user = await tx.user.findUnique({
+                    where: { id: order.userId },
+                    select: { isFirstActivated: true },
+                });
+                const isFirstActivation = !user?.isFirstActivated;
+
+                // 2. Update order status
                 await tx.order.update({
                     where: { id: orderId },
                     data: {
                         status: OrderStatus.DELIVERED,
                         deliveredAt,
-                        // Mark commission triggered if qualifying (idempotent)
                         commissionTriggered: order.isQualifying ? true : order.commissionTriggered,
                     },
                 });
 
-                // 2. Always activate user on qualifying delivery — regardless of commissionTriggered
-                if (order.isQualifying && Number(order.total) >= qualifyingAmount) {
+                // 3. Activate user if qualifying order
+                if (order.isQualifying) {
                     const activeUntil = new Date(deliveredAt.getTime() + activationDays * 86_400_000);
 
                     await tx.user.update({
                         where: { id: order.userId },
                         data: {
                             status: 'ACTIVE',
+                            activeFrom: deliveredAt,
                             activeUntil,
                             isFirstActivated: true,
                         },
                     });
 
                     this.logger.log(`User ${order.userId} activated until ${activeUntil.toISOString()}`);
+                } else {
+                    this.logger.warn(
+                        `Order ${orderId} (total: ${order.total}) marked DELIVERED but NOT qualifying — user ${order.userId} not activated`,
+                    );
+                }
+
+                // 4. Trigger generation commission inside same transaction (first activation only)
+                if (order.isQualifying && isFirstActivation) {
+                    await this.commissionService.triggerGenerationCommission(
+                        order.userId,
+                        orderId,
+                        tx,
+                    );
+                    this.logger.log(`Generation commission triggered for user ${order.userId}`);
                 }
             });
-
-            // 3. Trigger generation commission only once (first activation only)
-            if (order.isQualifying && isFirstTime && !order.commissionTriggered) {
-                await this.commissionService.triggerGenerationCommission(order.userId, orderId);
-                this.logger.log(`Generation commission triggered for user ${order.userId}`);
-            }
 
             return this.findOne(orderId);
         }
 
-
-        // ── Other status transitions ────────────────────────────────────────────
+        // ── CANCELLED ─────────────────────────────────────────────────────────
         if (dto.status === OrderStatus.CANCELLED) {
-            // Restore stock
             await this.prisma.$transaction(async (tx) => {
                 for (const item of order.items) {
                     await tx.product.update({
@@ -193,6 +216,7 @@ export class OrdersService {
             return this.findOne(orderId);
         }
 
+        // ── Non-terminal transitions (CONFIRMED, PROCESSING, SHIPPED) ───────
         return this.prisma.order.update({
             where: { id: orderId },
             data: { status: dto.status },

@@ -78,6 +78,7 @@ model User {
   parent           User?      @relation("Referral", fields: [parentId], references: [id])
   children         User[]     @relation("Referral")
   status           UserStatus @default(INACTIVE)
+  activeFrom       DateTime?
   activeUntil      DateTime?
   isFirstActivated Boolean    @default(false)
   isBanned         Boolean    @default(false)

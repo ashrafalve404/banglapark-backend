@@ -49,6 +49,8 @@ let AdminController = class AdminController {
     unban(id) { return this.adminService.unbanUser(id); }
     activate(id) { return this.adminService.overrideActivation(id, true); }
     deactivate(id) { return this.adminService.overrideActivation(id, false); }
+    deleteUser(id) { return this.adminService.deleteUser(id); }
+    deleteOrder(id) { return this.adminService.deleteOrder(id); }
     getConfigs() { return this.adminService.getAllConfigs(); }
     setConfig(dto) { return this.adminService.setConfig(dto.key, dto.value); }
 };
@@ -105,6 +107,22 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "deactivate", null);
+__decorate([
+    (0, common_1.Delete)('users/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete a user permanently' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "deleteUser", null);
+__decorate([
+    (0, common_1.Delete)('orders/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Delete an order permanently' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "deleteOrder", null);
 __decorate([
     (0, common_1.Get)('config'),
     (0, swagger_1.ApiOperation)({ summary: 'List all platform configs (income rules, thresholds)' }),

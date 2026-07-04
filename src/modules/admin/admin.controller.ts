@@ -1,5 +1,5 @@
 import {
-    Controller, Get, Post, Patch, Param, Body, Query, UseGuards,
+    Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { IsObject, IsString } from 'class-validator';
@@ -55,6 +55,14 @@ export class AdminController {
     @Patch('users/:id/deactivate')
     @ApiOperation({ summary: 'Force-deactivate a user' })
     deactivate(@Param('id') id: string) { return this.adminService.overrideActivation(id, false); }
+
+    @Delete('users/:id')
+    @ApiOperation({ summary: 'Delete a user permanently' })
+    deleteUser(@Param('id') id: string) { return this.adminService.deleteUser(id); }
+
+    @Delete('orders/:id')
+    @ApiOperation({ summary: 'Delete an order permanently' })
+    deleteOrder(@Param('id') id: string) { return this.adminService.deleteOrder(id); }
 
     @Get('config')
     @ApiOperation({ summary: 'List all platform configs (income rules, thresholds)' })
