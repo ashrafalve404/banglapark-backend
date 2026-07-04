@@ -1,11 +1,21 @@
 import { NestFactory } from '@nestjs/core';
+import { NestExpressApplication } from '@nestjs/platform-express';
 import { ValidationPipe, VersioningType } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { Logger } from 'nestjs-pino';
+import { join } from 'path';
+import { existsSync, mkdirSync } from 'fs';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+
+  // ── Ensure upload directory exists ─────────────────────────────────────
+  const uploadDir = join(__dirname, 'public', 'uploads');
+  if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true });
+
+  // ── Static file serving ────────────────────────────────────────────────
+  app.useStaticAssets(uploadDir, { prefix: '/uploads/' });
 
   // ── Structured logging ────────────────────────────────────────────────────
   app.useLogger(app.get(Logger));

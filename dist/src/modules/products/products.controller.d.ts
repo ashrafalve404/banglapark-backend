@@ -20,6 +20,7 @@ export declare class ProductsController {
             stock: number;
             categoryId: string;
             images: string[];
+            sizes: string[];
             isActive: boolean;
         })[];
         total: number;
@@ -46,6 +47,7 @@ export declare class ProductsController {
         stock: number;
         categoryId: string;
         images: string[];
+        sizes: string[];
         isActive: boolean;
     }>;
     create(dto: CreateProductDto): Promise<{
@@ -67,6 +69,7 @@ export declare class ProductsController {
         stock: number;
         categoryId: string;
         images: string[];
+        sizes: string[];
         isActive: boolean;
     }>;
     update(id: string, dto: UpdateProductDto): Promise<{
@@ -88,6 +91,7 @@ export declare class ProductsController {
         stock: number;
         categoryId: string;
         images: string[];
+        sizes: string[];
         isActive: boolean;
     }>;
     remove(id: string): Promise<{
@@ -101,6 +105,7 @@ export declare class ProductsController {
         stock: number;
         categoryId: string;
         images: string[];
+        sizes: string[];
         isActive: boolean;
     }>;
 }

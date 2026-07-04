@@ -34,6 +34,7 @@ export declare class CategoriesService {
             stock: number;
             categoryId: string;
             images: string[];
+            sizes: string[];
             isActive: boolean;
         }[];
     } & {

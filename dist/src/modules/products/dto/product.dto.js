@@ -20,6 +20,7 @@ class CreateProductDto {
     stock;
     categoryId;
     images;
+    sizes;
 }
 exports.CreateProductDto = CreateProductDto;
 __decorate([
@@ -60,6 +61,13 @@ __decorate([
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], CreateProductDto.prototype, "images", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ type: [String] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], CreateProductDto.prototype, "sizes", void 0);
 class UpdateProductDto {
     name;
     description;
@@ -67,6 +75,7 @@ class UpdateProductDto {
     stock;
     categoryId;
     images;
+    sizes;
     isActive;
 }
 exports.UpdateProductDto = UpdateProductDto;
@@ -111,6 +120,13 @@ __decorate([
     (0, class_validator_1.IsString)({ each: true }),
     __metadata("design:type", Array)
 ], UpdateProductDto.prototype, "images", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ type: [String] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], UpdateProductDto.prototype, "sizes", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),

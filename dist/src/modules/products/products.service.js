@@ -30,6 +30,7 @@ let ProductsService = class ProductsService {
                 stock: dto.stock,
                 categoryId: dto.categoryId,
                 images: dto.images ?? [],
+                sizes: dto.sizes ?? [],
             },
             include: { category: true },
         });

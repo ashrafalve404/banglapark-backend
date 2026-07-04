@@ -24,6 +24,7 @@ export declare class ProductsService {
         stock: number;
         categoryId: string;
         images: string[];
+        sizes: string[];
         isActive: boolean;
     }>;
     findAll(query: ProductQueryDto): Promise<{
@@ -43,6 +44,7 @@ export declare class ProductsService {
             stock: number;
             categoryId: string;
             images: string[];
+            sizes: string[];
             isActive: boolean;
         })[];
         total: number;
@@ -69,6 +71,7 @@ export declare class ProductsService {
         stock: number;
         categoryId: string;
         images: string[];
+        sizes: string[];
         isActive: boolean;
     }>;
     update(id: string, dto: UpdateProductDto): Promise<{
@@ -90,6 +93,7 @@ export declare class ProductsService {
         stock: number;
         categoryId: string;
         images: string[];
+        sizes: string[];
         isActive: boolean;
     }>;
     remove(id: string): Promise<{
@@ -103,6 +107,7 @@ export declare class ProductsService {
         stock: number;
         categoryId: string;
         images: string[];
+        sizes: string[];
         isActive: boolean;
     }>;
 }

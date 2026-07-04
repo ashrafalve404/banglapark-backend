@@ -4,9 +4,15 @@ const core_1 = require("@nestjs/core");
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const nestjs_pino_1 = require("nestjs-pino");
+const path_1 = require("path");
+const fs_1 = require("fs");
 const app_module_1 = require("./app.module");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { bufferLogs: true });
+    const uploadDir = (0, path_1.join)(__dirname, 'public', 'uploads');
+    if (!(0, fs_1.existsSync)(uploadDir))
+        (0, fs_1.mkdirSync)(uploadDir, { recursive: true });
+    app.useStaticAssets(uploadDir, { prefix: '/uploads/' });
     app.useLogger(app.get(nestjs_pino_1.Logger));
     app.useGlobalPipes(new common_1.ValidationPipe({
         whitelist: true,

@@ -23,6 +23,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { AdminModule } from './modules/admin/admin.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { BannersModule } from './modules/banners/banners.module';
+import { UploadsModule } from './modules/uploads/uploads.module';
 
 @Module({
   imports: [
@@ -93,6 +94,7 @@ import { BannersModule } from './modules/banners/banners.module';
     AdminModule,
     ReportsModule,
     BannersModule,
+    UploadsModule,
   ],
 })
 export class AppModule { }

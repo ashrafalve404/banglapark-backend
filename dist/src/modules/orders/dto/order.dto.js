@@ -17,6 +17,7 @@ const client_1 = require("@prisma/client");
 class OrderItemDto {
     productId;
     quantity;
+    size;
 }
 exports.OrderItemDto = OrderItemDto;
 __decorate([
@@ -31,6 +32,12 @@ __decorate([
     (0, class_transformer_1.Type)(() => Number),
     __metadata("design:type", Number)
 ], OrderItemDto.prototype, "quantity", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], OrderItemDto.prototype, "size", void 0);
 class CreateOrderDto {
     items;
     shippingAddress;

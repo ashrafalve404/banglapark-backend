@@ -6,6 +6,7 @@ import { OrderStatus } from '@prisma/client';
 export class OrderItemDto {
     @ApiProperty() @IsString() productId: string;
     @ApiProperty() @IsInt() @Min(1) @Type(() => Number) quantity: number;
+    @ApiPropertyOptional() @IsOptional() @IsString() size?: string;
 }
 
 export class CreateOrderDto {

@@ -69,6 +69,7 @@ export class OrdersService {
                             productId: item.productId,
                             quantity: item.quantity,
                             price: productMap.get(item.productId)!.price,
+                            size: item.size,
                         })),
                     },
                 },

@@ -12,6 +12,7 @@ export class CreateProductDto {
     @ApiProperty() @IsNumber() @Min(0) @Type(() => Number) stock: number;
     @ApiProperty() @IsString() categoryId: string;
     @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) images?: string[];
+    @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) sizes?: string[];
 }
 
 export class UpdateProductDto {
@@ -21,6 +22,7 @@ export class UpdateProductDto {
     @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Type(() => Number) stock?: number;
     @ApiPropertyOptional() @IsOptional() @IsString() categoryId?: string;
     @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) images?: string[];
+    @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) sizes?: string[];
     @ApiPropertyOptional() @IsOptional() @IsBoolean() isActive?: boolean;
 }
 

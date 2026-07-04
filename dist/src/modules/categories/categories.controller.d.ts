@@ -26,6 +26,7 @@ export declare class CategoriesController {
             stock: number;
             categoryId: string;
             images: string[];
+            sizes: string[];
             isActive: boolean;
         }[];
     } & {

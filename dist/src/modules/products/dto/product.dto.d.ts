@@ -5,6 +5,7 @@ export declare class CreateProductDto {
     stock: number;
     categoryId: string;
     images?: string[];
+    sizes?: string[];
 }
 export declare class UpdateProductDto {
     name?: string;
@@ -13,6 +14,7 @@ export declare class UpdateProductDto {
     stock?: number;
     categoryId?: string;
     images?: string[];
+    sizes?: string[];
     isActive?: boolean;
 }
 export declare class ProductQueryDto {

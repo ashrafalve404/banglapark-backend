@@ -2,6 +2,7 @@ import { OrderStatus } from '@prisma/client';
 export declare class OrderItemDto {
     productId: string;
     quantity: number;
+    size?: string;
 }
 export declare class CreateOrderDto {
     items: OrderItemDto[];

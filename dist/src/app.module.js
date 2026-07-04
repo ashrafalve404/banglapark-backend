@@ -29,6 +29,7 @@ const notifications_module_1 = require("./modules/notifications/notifications.mo
 const admin_module_1 = require("./modules/admin/admin.module");
 const reports_module_1 = require("./modules/reports/reports.module");
 const banners_module_1 = require("./modules/banners/banners.module");
+const uploads_module_1 = require("./modules/uploads/uploads.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -87,6 +88,7 @@ exports.AppModule = AppModule = __decorate([
             admin_module_1.AdminModule,
             reports_module_1.ReportsModule,
             banners_module_1.BannersModule,
+            uploads_module_1.UploadsModule,
         ],
     })
 ], AppModule);

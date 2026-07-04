@@ -19,6 +19,7 @@ export declare class ReportsController {
                 orderId: string;
                 productId: string;
                 quantity: number;
+                size: string | null;
             })[];
         } & {
             id: string;

@@ -143,7 +143,8 @@ model Product {
   categoryId  String
   category    Category    @relation(fields: [categoryId], references: [id])
   images      String[]
-  isActive    Boolean     @default(true)
+  sizes       String[]
+    isActive    Boolean     @default(true)
   orderItems  OrderItem[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -179,7 +180,8 @@ model OrderItem {
   productId String
   product   Product @relation(fields: [productId], references: [id])
   quantity  Int
-  price     Decimal @db.Decimal(12, 2)
+  price     Decimal
+  size      String?
 
   @@index([orderId])
 }

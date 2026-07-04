@@ -17,6 +17,7 @@ export declare class OrdersController {
                 stock: number;
                 categoryId: string;
                 images: string[];
+                sizes: string[];
                 isActive: boolean;
             };
         } & {
@@ -25,6 +26,7 @@ export declare class OrdersController {
             orderId: string;
             productId: string;
             quantity: number;
+            size: string | null;
         })[];
     } & {
         id: string;
@@ -54,6 +56,7 @@ export declare class OrdersController {
                 orderId: string;
                 productId: string;
                 quantity: number;
+                size: string | null;
             })[];
         } & {
             id: string;
@@ -91,6 +94,7 @@ export declare class OrdersController {
                 stock: number;
                 categoryId: string;
                 images: string[];
+                sizes: string[];
                 isActive: boolean;
             };
         } & {
@@ -99,6 +103,7 @@ export declare class OrdersController {
             orderId: string;
             productId: string;
             quantity: number;
+            size: string | null;
         })[];
     } & {
         id: string;
@@ -127,6 +132,7 @@ export declare class OrdersController {
                 orderId: string;
                 productId: string;
                 quantity: number;
+                size: string | null;
             }[];
         } & {
             id: string;
@@ -164,6 +170,7 @@ export declare class OrdersController {
                 stock: number;
                 categoryId: string;
                 images: string[];
+                sizes: string[];
                 isActive: boolean;
             };
         } & {
@@ -172,6 +179,7 @@ export declare class OrdersController {
             orderId: string;
             productId: string;
             quantity: number;
+            size: string | null;
         })[];
     } & {
         id: string;
@@ -194,6 +202,7 @@ export declare class OrdersController {
             orderId: string;
             productId: string;
             quantity: number;
+            size: string | null;
         }[];
     } & {
         id: string;
