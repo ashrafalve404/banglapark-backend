@@ -9,7 +9,7 @@ const fs_1 = require("fs");
 const app_module_1 = require("./app.module");
 async function bootstrap() {
     const app = await core_1.NestFactory.create(app_module_1.AppModule, { bufferLogs: true });
-    const uploadDir = (0, path_1.join)(__dirname, 'public', 'uploads');
+    const uploadDir = process.env.UPLOAD_DIR || (0, path_1.join)(process.cwd(), 'uploads');
     if (!(0, fs_1.existsSync)(uploadDir))
         (0, fs_1.mkdirSync)(uploadDir, { recursive: true });
     app.useStaticAssets(uploadDir, { prefix: '/uploads/' });

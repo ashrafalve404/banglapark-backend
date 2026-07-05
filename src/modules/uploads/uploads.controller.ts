@@ -10,13 +10,17 @@ import type { Request } from 'express';
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024;
 
+function uploadDir(): string {
+    return process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
+}
+
 @Controller('uploads')
 export class UploadsController {
     @Post()
     @UseInterceptors(
         FileInterceptor('file', {
             storage: diskStorage({
-                destination: join(__dirname, '..', '..', 'public', 'uploads'),
+                destination: (_req: any, _file: any, cb: any) => cb(null, uploadDir()),
                 filename: (_req: any, file: any, cb: any) => {
                     const ext = extname(file.originalname);
                     cb(null, `${randomUUID()}${ext}`);

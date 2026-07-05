@@ -8,16 +8,12 @@ var __decorate = (this && this.__decorate) || function (decorators, target, key,
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.UploadsModule = void 0;
 const common_1 = require("@nestjs/common");
-const platform_express_1 = require("@nestjs/platform-express");
 const uploads_controller_1 = require("./uploads.controller");
 let UploadsModule = class UploadsModule {
 };
 exports.UploadsModule = UploadsModule;
 exports.UploadsModule = UploadsModule = __decorate([
     (0, common_1.Module)({
-        imports: [
-            platform_express_1.MulterModule.register({ dest: './public/uploads' }),
-        ],
         controllers: [uploads_controller_1.UploadsController],
     })
 ], UploadsModule);

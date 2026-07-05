@@ -11,7 +11,7 @@ async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
 
   // ── Ensure upload directory exists ─────────────────────────────────────
-  const uploadDir = join(__dirname, 'public', 'uploads');
+  const uploadDir = process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');
   if (!existsSync(uploadDir)) mkdirSync(uploadDir, { recursive: true });
 
   // ── Static file serving ────────────────────────────────────────────────

@@ -6,3 +6,7 @@ node_modules
 
 # Master prompt (developer reference only)
 01-backend-master-prompt.md
+
+# Uploaded files (keep directory but not contents)
+uploads/*
+!uploads/.gitkeep

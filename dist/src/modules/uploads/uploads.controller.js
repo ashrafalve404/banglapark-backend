@@ -20,6 +20,9 @@ const path_1 = require("path");
 const crypto_1 = require("crypto");
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
 const MAX_SIZE = 5 * 1024 * 1024;
+function uploadDir() {
+    return process.env.UPLOAD_DIR || (0, path_1.join)(process.cwd(), 'uploads');
+}
 let UploadsController = class UploadsController {
     upload(file, req) {
         if (!file)
@@ -34,7 +37,7 @@ __decorate([
     (0, common_1.Post)(),
     (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', {
         storage: (0, multer_1.diskStorage)({
-            destination: (0, path_1.join)(__dirname, '..', '..', 'public', 'uploads'),
+            destination: (_req, _file, cb) => cb(null, uploadDir()),
             filename: (_req, file, cb) => {
                 const ext = (0, path_1.extname)(file.originalname);
                 cb(null, `${(0, crypto_1.randomUUID)()}${ext}`);
