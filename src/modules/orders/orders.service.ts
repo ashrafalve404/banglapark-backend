@@ -46,6 +46,19 @@ export class OrdersService {
         }
 
         const qualifyingAmount = this.configService.get<number>('app.qualifyingOrderAmount') ?? 2000;
+
+        // ── Determine delivery charge ────────────────────────────────────────
+        let deliveryCharge = 0;
+        if (dto.deliveryArea) {
+            const configs = await this.prisma.platformConfig.findMany({
+                where: { key: { in: ['deliveryChargeInsideDhaka', 'deliveryChargeOutsideDhaka'] } },
+            });
+            const configMap = new Map(configs.map((c) => [c.key, Number(c.value)]));
+            const insideCharge = configMap.get('deliveryChargeInsideDhaka') ?? 60;
+            const outsideCharge = configMap.get('deliveryChargeOutsideDhaka') ?? 150;
+            deliveryCharge = dto.deliveryArea === 'INSIDE_DHAKA' ? insideCharge : outsideCharge;
+        }
+
         const isQualifying = total >= qualifyingAmount;
 
         const order = await this.prisma.$transaction(async (tx) => {
@@ -60,7 +73,12 @@ export class OrdersService {
             return tx.order.create({
                 data: {
                     userId,
-                    total,
+                    total: total + deliveryCharge,
+                    deliveryArea: dto.deliveryArea,
+                    deliveryCharge,
+                    paymentMethod: dto.paymentMethod ?? 'CASH_ON_DELIVERY',
+                    transactionId: dto.transactionId,
+                    userBkashNumber: dto.userBkashNumber,
                     isQualifying,
                     shippingAddress: dto.shippingAddress ?? {},
                     notes: dto.notes,

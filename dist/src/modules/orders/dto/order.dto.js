@@ -42,6 +42,10 @@ class CreateOrderDto {
     items;
     shippingAddress;
     notes;
+    paymentMethod;
+    transactionId;
+    userBkashNumber;
+    deliveryArea;
 }
 exports.CreateOrderDto = CreateOrderDto;
 __decorate([
@@ -62,6 +66,30 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], CreateOrderDto.prototype, "notes", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.PaymentMethod, default: 'CASH_ON_DELIVERY' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.PaymentMethod),
+    __metadata("design:type", String)
+], CreateOrderDto.prototype, "paymentMethod", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateOrderDto.prototype, "transactionId", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateOrderDto.prototype, "userBkashNumber", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.DeliveryArea }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.DeliveryArea),
+    __metadata("design:type", String)
+], CreateOrderDto.prototype, "deliveryArea", void 0);
 class UpdateOrderStatusDto {
     status;
 }

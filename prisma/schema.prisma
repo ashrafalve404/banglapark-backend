@@ -41,6 +41,16 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum PaymentMethod {
+  CASH_ON_DELIVERY
+  BKASH
+}
+
+enum DeliveryArea {
+  INSIDE_DHAKA
+  OUTSIDE_DHAKA
+}
+
 enum WithdrawMethod {
   BKASH
   NAGAD
@@ -154,20 +164,25 @@ model Product {
 }
 
 model Order {
-  id                  String      @id @default(uuid())
+  id                  String        @id @default(uuid())
   userId              String
-  user                User        @relation(fields: [userId], references: [id])
+  user                User          @relation(fields: [userId], references: [id])
   items               OrderItem[]
-  total               Decimal     @db.Decimal(12, 2)
-  status              OrderStatus @default(PENDING)
-  isQualifying        Boolean     @default(false)
+  total               Decimal       @db.Decimal(12, 2)
+  status              OrderStatus   @default(PENDING)
+  paymentMethod       PaymentMethod @default(CASH_ON_DELIVERY)
+  transactionId       String?
+  userBkashNumber     String?
+  deliveryArea        DeliveryArea?
+  deliveryCharge      Decimal       @default(0) @db.Decimal(12, 2)
+  isQualifying        Boolean       @default(false)
   shippingAddress     Json?
   notes               String?
   deliveredAt         DateTime?
-  commissionTriggered Boolean     @default(false)
-  commissionReversed  Boolean     @default(false)
-  createdAt           DateTime    @default(now())
-  updatedAt           DateTime    @updatedAt
+  commissionTriggered Boolean       @default(false)
+  commissionReversed  Boolean       @default(false)
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
 
   @@index([userId])
   @@index([status])

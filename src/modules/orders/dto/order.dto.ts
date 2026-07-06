@@ -1,7 +1,7 @@
 import { IsArray, IsString, IsInt, IsOptional, Min, ValidateNested, IsEnum } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { Type } from 'class-transformer';
-import { OrderStatus } from '@prisma/client';
+import { OrderStatus, PaymentMethod, DeliveryArea } from '@prisma/client';
 
 export class OrderItemDto {
     @ApiProperty() @IsString() productId: string;
@@ -18,6 +18,26 @@ export class CreateOrderDto {
 
     @ApiPropertyOptional() @IsOptional() shippingAddress?: Record<string, string>;
     @ApiPropertyOptional() @IsOptional() @IsString() notes?: string;
+
+    @ApiPropertyOptional({ enum: PaymentMethod, default: 'CASH_ON_DELIVERY' })
+    @IsOptional()
+    @IsEnum(PaymentMethod)
+    paymentMethod?: PaymentMethod;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    transactionId?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    userBkashNumber?: string;
+
+    @ApiPropertyOptional({ enum: DeliveryArea })
+    @IsOptional()
+    @IsEnum(DeliveryArea)
+    deliveryArea?: DeliveryArea;
 }
 
 export class UpdateOrderStatusDto {
