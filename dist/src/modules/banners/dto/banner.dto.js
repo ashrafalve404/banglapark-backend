@@ -21,13 +21,13 @@ class CreateBannerDto {
 exports.CreateBannerDto = CreateBannerDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'https://example.com/banner.jpg' }),
-    (0, class_validator_1.IsUrl)(),
+    (0, class_validator_1.IsUrl)({ require_tld: false }),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "imageUrl", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ example: '/shop' }),
     (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
+    (0, class_validator_1.IsUrl)({ require_tld: false }),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "linkUrl", void 0);
 __decorate([

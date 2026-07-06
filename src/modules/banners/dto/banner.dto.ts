@@ -4,12 +4,12 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateBannerDto {
     @ApiProperty({ example: 'https://example.com/banner.jpg' })
-    @IsUrl()
+    @IsUrl({ require_tld: false })
     imageUrl: string;
 
     @ApiPropertyOptional({ example: '/shop' })
     @IsOptional()
-    @IsUrl()
+    @IsUrl({ require_tld: false })
     linkUrl?: string;
 
     @ApiPropertyOptional({ default: true })
