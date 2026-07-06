@@ -10,7 +10,7 @@ export class CreateProductDto {
     @ApiPropertyOptional() @IsOptional() @IsString() description?: string;
     @ApiProperty() @IsNumber() @Min(0) @Type(() => Number) price: number;
     @ApiProperty() @IsNumber() @Min(0) @Type(() => Number) stock: number;
-    @ApiProperty() @IsString() categoryId: string;
+    @ApiPropertyOptional() @IsOptional() @IsString() categoryId?: string;
     @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) images?: string[];
     @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) sizes?: string[];
 }

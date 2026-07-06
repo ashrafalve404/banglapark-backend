@@ -12,7 +12,7 @@ export declare class ProductsService {
             createdAt: Date;
             updatedAt: Date;
             slug: string;
-        };
+        } | null;
     } & {
         id: string;
         name: string;
@@ -22,7 +22,7 @@ export declare class ProductsService {
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
-        categoryId: string;
+        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
@@ -32,7 +32,7 @@ export declare class ProductsService {
             category: {
                 id: string;
                 name: string;
-            };
+            } | null;
         } & {
             id: string;
             name: string;
@@ -42,7 +42,7 @@ export declare class ProductsService {
             description: string | null;
             price: Prisma.Decimal;
             stock: number;
-            categoryId: string;
+            categoryId: string | null;
             images: string[];
             sizes: string[];
             isActive: boolean;
@@ -59,7 +59,7 @@ export declare class ProductsService {
             createdAt: Date;
             updatedAt: Date;
             slug: string;
-        };
+        } | null;
     } & {
         id: string;
         name: string;
@@ -69,7 +69,7 @@ export declare class ProductsService {
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
-        categoryId: string;
+        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
@@ -81,7 +81,7 @@ export declare class ProductsService {
             createdAt: Date;
             updatedAt: Date;
             slug: string;
-        };
+        } | null;
     } & {
         id: string;
         name: string;
@@ -91,7 +91,7 @@ export declare class ProductsService {
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
-        categoryId: string;
+        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
@@ -105,7 +105,7 @@ export declare class ProductsService {
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
-        categoryId: string;
+        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;

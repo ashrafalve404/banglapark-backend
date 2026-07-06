@@ -4,48 +4,48 @@ export declare class BannersService {
     private readonly prisma;
     constructor(prisma: PrismaService);
     findAll(): Promise<{
-        imageUrl: string;
-        linkUrl: string | null;
-        isActive: boolean;
-        sortOrder: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
+        imageUrl: string;
+        linkUrl: string | null;
+        sortOrder: number;
     }[]>;
     findActive(): Promise<{
-        imageUrl: string;
-        linkUrl: string | null;
-        isActive: boolean;
-        sortOrder: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
+        imageUrl: string;
+        linkUrl: string | null;
+        sortOrder: number;
     }[]>;
     create(dto: CreateBannerDto): Promise<{
-        imageUrl: string;
-        linkUrl: string | null;
-        isActive: boolean;
-        sortOrder: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
+        imageUrl: string;
+        linkUrl: string | null;
+        sortOrder: number;
     }>;
     update(id: string, dto: UpdateBannerDto): Promise<{
-        imageUrl: string;
-        linkUrl: string | null;
-        isActive: boolean;
-        sortOrder: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
+        imageUrl: string;
+        linkUrl: string | null;
+        sortOrder: number;
     }>;
     remove(id: string): Promise<{
-        imageUrl: string;
-        linkUrl: string | null;
-        isActive: boolean;
-        sortOrder: number;
         id: string;
         createdAt: Date;
         updatedAt: Date;
+        isActive: boolean;
+        imageUrl: string;
+        linkUrl: string | null;
+        sortOrder: number;
     }>;
 }

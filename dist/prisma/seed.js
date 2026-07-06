@@ -101,66 +101,27 @@ async function main() {
         create: { userId: user.id },
     });
     console.log('✅ Regular User created:', user.email);
-    const categories = await Promise.all([
-        prisma.category.upsert({
-            where: { slug: 'health-beauty' },
-            update: {},
-            create: { name: 'Health & Beauty', slug: 'health-beauty' },
-        }),
-        prisma.category.upsert({
-            where: { slug: 'clothing' },
-            update: {},
-            create: { name: 'Clothing & Accessories', slug: 'clothing' },
-        }),
-        prisma.category.upsert({
-            where: { slug: 'electronics' },
-            update: {},
-            create: { name: 'Electronics', slug: 'electronics' },
-        }),
-        prisma.category.upsert({
-            where: { slug: 'food-supplements' },
-            update: {},
-            create: { name: 'Food & Supplements', slug: 'food-supplements' },
-        }),
-    ]);
-    console.log(`✅ ${categories.length} categories created`);
     const products = [
-        {
-            name: 'Premium Skin Care Kit',
-            slug: 'premium-skin-care-kit',
-            description: 'A complete skin care kit with natural ingredients.',
-            price: 2500,
-            stock: 100,
-            categoryId: categories[0].id,
-            images: [],
-        },
-        {
-            name: 'Herbal Supplement Pack',
-            slug: 'herbal-supplement-pack',
-            description: 'Daily wellness supplement pack.',
-            price: 1800,
-            stock: 200,
-            categoryId: categories[3].id,
-            images: [],
-        },
-        {
-            name: 'Smart Watch',
-            slug: 'smart-watch-basic',
-            description: 'Feature-packed smart watch at an affordable price.',
-            price: 3500,
-            stock: 50,
-            categoryId: categories[2].id,
-            images: [],
-        },
-        {
-            name: 'Traditional Panjabi Set',
-            slug: 'traditional-panjabi-set',
-            description: 'Premium quality panjabi for formal occasions.',
-            price: 2200,
-            stock: 75,
-            categoryId: categories[1].id,
-            images: [],
-        },
+        { name: 'Multipurpose Tote Bag', slug: 'multipurpose-tote-bag', description: 'Eco-friendly reusable shopping tote bag.', price: 450, stock: 300, categoryId: null, images: [] },
+        { name: 'Handmade Scented Candle Set', slug: 'handmade-scented-candle-set', description: 'Set of 3 handmade soy wax candles.', price: 650, stock: 120, categoryId: null, images: [] },
+        { name: 'Bamboo Toothbrush Pack', slug: 'bamboo-toothbrush-pack', description: 'Pack of 4 eco-friendly bamboo toothbrushes.', price: 350, stock: 500, categoryId: null, images: [] },
+        { name: 'Organic Green Tea', slug: 'organic-green-tea', description: 'Premium organic green tea leaves 200g.', price: 550, stock: 250, categoryId: null, images: [] },
+        { name: 'Cotton Bed Sheet Set', slug: 'cotton-bed-sheet-set', description: 'Soft cotton bed sheet set, twin size.', price: 1200, stock: 80, categoryId: null, images: [] },
+        { name: 'Stainless Steel Water Bottle', slug: 'stainless-water-bottle', description: 'Double-wall insulated 750ml bottle.', price: 850, stock: 200, categoryId: null, images: [] },
+        { name: 'Yoga Mat Premium', slug: 'yoga-mat-premium', description: 'Non-slip thick yoga mat with carry strap.', price: 1100, stock: 150, categoryId: null, images: [] },
+        { name: 'LED Desk Lamp', slug: 'led-desk-lamp', description: 'Adjustable LED desk lamp with USB port.', price: 950, stock: 100, categoryId: null, images: [] },
+        { name: 'Natural Honey Jar', slug: 'natural-honey-jar', description: 'Pure raw honey 500g, no additives.', price: 750, stock: 300, categoryId: null, images: [] },
+        { name: 'Canvas Backpack', slug: 'canvas-backpack', description: 'Vintage-style canvas backpack, 25L capacity.', price: 1400, stock: 90, categoryId: null, images: [] },
+        { name: 'Scented Soy Wax Candle', slug: 'scented-soy-wax-candle', description: 'Long-burning soy wax candle, vanilla scent.', price: 480, stock: 180, categoryId: null, images: [] },
+        { name: 'Wireless Bluetooth Earbuds', slug: 'wireless-bluetooth-earbuds', description: 'True wireless earbuds with charging case.', price: 1600, stock: 60, categoryId: null, images: [] },
+        { name: 'Jute Grocery Bag Set', slug: 'jute-grocery-bag-set', description: 'Set of 3 jute bags for eco-friendly shopping.', price: 320, stock: 400, categoryId: null, images: [] },
+        { name: 'Aromatic Essential Oil Kit', slug: 'aromatic-essential-oil-kit', description: 'Set of 6 essential oils with diffuser.', price: 2100, stock: 70, categoryId: null, images: [] },
+        { name: 'Copper Water Bottle', slug: 'copper-water-bottle', description: 'Pure copper water bottle, 1 liter.', price: 980, stock: 130, categoryId: null, images: [] },
+        { name: 'Planner & Journal Combo', slug: 'planner-journal-combo', description: 'Daily planner + dotted journal, hardcover.', price: 580, stock: 220, categoryId: null, images: [] },
+        { name: 'Resistance Band Set', slug: 'resistance-band-set', description: 'Set of 5 resistance bands with door anchor.', price: 720, stock: 160, categoryId: null, images: [] },
+        { name: 'Ceramic Coffee Mug Set', slug: 'ceramic-coffee-mug-set', description: 'Set of 4 ceramic mugs, 350ml each.', price: 890, stock: 110, categoryId: null, images: [] },
+        { name: 'Portable Power Bank', slug: 'portable-power-bank', description: '10000mAh power bank with dual USB output.', price: 1300, stock: 85, categoryId: null, images: [] },
+        { name: 'Wooden Phone Stand', slug: 'wooden-phone-stand', description: 'Handcrafted bamboo phone stand, universal fit.', price: 250, stock: 350, categoryId: null, images: [] },
     ];
     for (const product of products) {
         await prisma.product.upsert({

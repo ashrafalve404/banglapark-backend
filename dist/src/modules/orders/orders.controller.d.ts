@@ -15,7 +15,7 @@ export declare class OrdersController {
                 description: string | null;
                 price: import("@prisma/client/runtime/library").Decimal;
                 stock: number;
-                categoryId: string;
+                categoryId: string | null;
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
@@ -102,7 +102,7 @@ export declare class OrdersController {
                 description: string | null;
                 price: import("@prisma/client/runtime/library").Decimal;
                 stock: number;
-                categoryId: string;
+                categoryId: string | null;
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
@@ -188,7 +188,7 @@ export declare class OrdersController {
                 description: string | null;
                 price: import("@prisma/client/runtime/library").Decimal;
                 stock: number;
-                categoryId: string;
+                categoryId: string | null;
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
