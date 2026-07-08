@@ -19,8 +19,12 @@ export class ProductsController {
     findAll(@Query() query: ProductQueryDto) { return this.productsService.findAll(query); }
 
     @Get(':id')
-    @ApiOperation({ summary: 'Get product by ID (public)' })
+    @ApiOperation({ summary: 'Get product by ID or slug (public)' })
     findOne(@Param('id') id: string) { return this.productsService.findOne(id); }
+
+    @Post(':id/click')
+    @ApiOperation({ summary: 'Record a product click (public)' })
+    recordClick(@Param('id') id: string) { return this.productsService.recordClick(id); }
 
     @Post()
     @ApiBearerAuth()

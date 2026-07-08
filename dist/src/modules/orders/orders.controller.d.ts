@@ -19,6 +19,7 @@ export declare class OrdersController {
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
+                clicks: number;
             };
         } & {
             id: string;
@@ -106,6 +107,7 @@ export declare class OrdersController {
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
+                clicks: number;
             };
         } & {
             id: string;
@@ -192,6 +194,7 @@ export declare class OrdersController {
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
+                clicks: number;
             };
         } & {
             id: string;

@@ -155,6 +155,7 @@ model Product {
   images      String[]
   sizes       String[]
     isActive    Boolean     @default(true)
+  clicks      Int         @default(0)
   orderItems  OrderItem[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt

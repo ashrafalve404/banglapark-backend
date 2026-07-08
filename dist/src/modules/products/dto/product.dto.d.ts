@@ -22,5 +22,5 @@ export declare class ProductQueryDto {
     categoryId?: string;
     page?: number;
     limit?: number;
-    sort?: 'price_asc' | 'price_desc' | 'newest';
+    sort?: 'price_asc' | 'price_desc' | 'newest' | 'popular';
 }

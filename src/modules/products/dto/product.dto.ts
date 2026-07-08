@@ -31,5 +31,5 @@ export class ProductQueryDto {
     @ApiPropertyOptional() @IsOptional() @IsString() categoryId?: string;
     @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsNumber() page?: number;
     @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsNumber() limit?: number;
-    @ApiPropertyOptional() @IsOptional() @IsString() sort?: 'price_asc' | 'price_desc' | 'newest';
+    @ApiPropertyOptional() @IsOptional() @IsString() sort?: 'price_asc' | 'price_desc' | 'newest' | 'popular';
 }

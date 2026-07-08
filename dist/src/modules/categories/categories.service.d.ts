@@ -36,6 +36,7 @@ export declare class CategoriesService {
             images: string[];
             sizes: string[];
             isActive: boolean;
+            clicks: number;
         }[];
     } & {
         id: string;

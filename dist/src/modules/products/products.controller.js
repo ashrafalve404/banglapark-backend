@@ -28,6 +28,7 @@ let ProductsController = class ProductsController {
     }
     findAll(query) { return this.productsService.findAll(query); }
     findOne(id) { return this.productsService.findOne(id); }
+    recordClick(id) { return this.productsService.recordClick(id); }
     create(dto) { return this.productsService.create(dto); }
     update(id, dto) {
         return this.productsService.update(id, dto);
@@ -45,12 +46,20 @@ __decorate([
 ], ProductsController.prototype, "findAll", null);
 __decorate([
     (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get product by ID (public)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Get product by ID or slug (public)' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], ProductsController.prototype, "findOne", null);
+__decorate([
+    (0, common_1.Post)(':id/click'),
+    (0, swagger_1.ApiOperation)({ summary: 'Record a product click (public)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], ProductsController.prototype, "recordClick", null);
 __decorate([
     (0, common_1.Post)(),
     (0, swagger_1.ApiBearerAuth)(),

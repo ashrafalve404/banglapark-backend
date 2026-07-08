@@ -26,6 +26,7 @@ export declare class OrdersService {
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
+                clicks: number;
             };
         } & {
             id: string;
@@ -113,6 +114,7 @@ export declare class OrdersService {
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
+                clicks: number;
             };
         } & {
             id: string;

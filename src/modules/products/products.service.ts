@@ -45,6 +45,7 @@ export class ProductsService {
         let orderBy: Prisma.ProductOrderByWithRelationInput[] = [{ createdAt: 'desc' }];
         if (sort === 'price_asc') orderBy = [{ price: 'asc' }];
         else if (sort === 'price_desc') orderBy = [{ price: 'desc' }];
+        else if (sort === 'popular') orderBy = [{ clicks: 'desc' }];
         else orderBy = [{ createdAt: 'desc' }];
 
         const [products, total] = await Promise.all([
@@ -73,6 +74,13 @@ export class ProductsService {
         });
         if (!product) throw new NotFoundException('Product not found');
         return product;
+    }
+
+    async recordClick(id: string) {
+        return this.prisma.product.update({
+            where: { id },
+            data: { clicks: { increment: 1 } },
+        });
     }
 
     async update(id: string, dto: UpdateProductDto) {

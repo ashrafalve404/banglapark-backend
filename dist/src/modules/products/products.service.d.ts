@@ -9,23 +9,24 @@ export declare class ProductsService {
         category: {
             id: string;
             name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            slug: string;
         } | null;
     } & {
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
-        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
+        clicks: number;
+        createdAt: Date;
+        updatedAt: Date;
+        categoryId: string | null;
     }>;
     findAll(query: ProductQueryDto): Promise<{
         products: ({
@@ -36,16 +37,17 @@ export declare class ProductsService {
         } & {
             id: string;
             name: string;
-            createdAt: Date;
-            updatedAt: Date;
             slug: string;
             description: string | null;
             price: Prisma.Decimal;
             stock: number;
-            categoryId: string | null;
             images: string[];
             sizes: string[];
             isActive: boolean;
+            clicks: number;
+            createdAt: Date;
+            updatedAt: Date;
+            categoryId: string | null;
         })[];
         total: number;
         page: number;
@@ -56,58 +58,76 @@ export declare class ProductsService {
         category: {
             id: string;
             name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            slug: string;
         } | null;
     } & {
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
-        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
+        clicks: number;
+        createdAt: Date;
+        updatedAt: Date;
+        categoryId: string | null;
+    }>;
+    recordClick(id: string): Promise<{
+        id: string;
+        name: string;
+        slug: string;
+        description: string | null;
+        price: Prisma.Decimal;
+        stock: number;
+        images: string[];
+        sizes: string[];
+        isActive: boolean;
+        clicks: number;
+        createdAt: Date;
+        updatedAt: Date;
+        categoryId: string | null;
     }>;
     update(id: string, dto: UpdateProductDto): Promise<{
         category: {
             id: string;
             name: string;
+            slug: string;
             createdAt: Date;
             updatedAt: Date;
-            slug: string;
         } | null;
     } & {
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
-        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
+        clicks: number;
+        createdAt: Date;
+        updatedAt: Date;
+        categoryId: string | null;
     }>;
     remove(id: string): Promise<{
         id: string;
         name: string;
-        createdAt: Date;
-        updatedAt: Date;
         slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
-        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
+        clicks: number;
+        createdAt: Date;
+        updatedAt: Date;
+        categoryId: string | null;
     }>;
 }

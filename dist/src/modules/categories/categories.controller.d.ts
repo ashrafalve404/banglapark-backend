@@ -28,6 +28,7 @@ export declare class CategoriesController {
             images: string[];
             sizes: string[];
             isActive: boolean;
+            clicks: number;
         }[];
     } & {
         id: string;

@@ -53,6 +53,8 @@ let ProductsService = class ProductsService {
             orderBy = [{ price: 'asc' }];
         else if (sort === 'price_desc')
             orderBy = [{ price: 'desc' }];
+        else if (sort === 'popular')
+            orderBy = [{ clicks: 'desc' }];
         else
             orderBy = [{ createdAt: 'desc' }];
         const [products, total] = await Promise.all([
@@ -80,6 +82,12 @@ let ProductsService = class ProductsService {
         if (!product)
             throw new common_1.NotFoundException('Product not found');
         return product;
+    }
+    async recordClick(id) {
+        return this.prisma.product.update({
+            where: { id },
+            data: { clicks: { increment: 1 } },
+        });
     }
     async update(id, dto) {
         await this.findOne(id);
