@@ -17,9 +17,27 @@ export declare class AdminService {
         totalCommissionsPaid: number | import("@prisma/client/runtime/library").Decimal;
         pendingWithdrawals: number;
     }>;
+    createUser(dto: {
+        name: string;
+        email: string;
+        phone: string;
+        password: string;
+        role?: string;
+    }): Promise<{
+        id: string;
+        memberId: number | null;
+        email: string;
+        phone: string;
+        referralCode: string;
+        name: string;
+        role: import("@prisma/client").$Enums.Role;
+        status: import("@prisma/client").$Enums.UserStatus;
+        createdAt: Date;
+    }>;
     getUsers(page?: number, limit?: number, search?: string): Promise<{
         users: {
             id: string;
+            memberId: number | null;
             email: string;
             phone: string;
             referralCode: string;

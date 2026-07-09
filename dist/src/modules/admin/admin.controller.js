@@ -36,6 +36,41 @@ __decorate([
     (0, class_validator_1.IsObject)(),
     __metadata("design:type", Object)
 ], SetConfigDto.prototype, "value", void 0);
+class CreateUserDto {
+    name;
+    email;
+    phone;
+    password;
+    role;
+}
+__decorate([
+    (0, swagger_2.ApiProperty)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "name", void 0);
+__decorate([
+    (0, swagger_2.ApiProperty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "email", void 0);
+__decorate([
+    (0, swagger_2.ApiProperty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "phone", void 0);
+__decorate([
+    (0, swagger_2.ApiProperty)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(6),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "password", void 0);
+__decorate([
+    (0, swagger_2.ApiPropertyOptional)({ enum: [client_1.Role.USER, client_1.Role.ADMIN] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.Role),
+    __metadata("design:type", String)
+], CreateUserDto.prototype, "role", void 0);
 let AdminController = class AdminController {
     adminService;
     constructor(adminService) {
@@ -45,6 +80,7 @@ let AdminController = class AdminController {
     getUsers(page = 1, limit = 20, search) {
         return this.adminService.getUsers(+page, +limit, search);
     }
+    createUser(dto) { return this.adminService.createUser(dto); }
     ban(id) { return this.adminService.banUser(id); }
     unban(id) { return this.adminService.unbanUser(id); }
     activate(id) { return this.adminService.overrideActivation(id, true); }
@@ -75,6 +111,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object, String]),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "getUsers", null);
+__decorate([
+    (0, common_1.Post)('users'),
+    (0, swagger_1.ApiOperation)({ summary: 'Create a user or admin (by admin)' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [CreateUserDto]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "createUser", null);
 __decorate([
     (0, common_1.Patch)('users/:id/ban'),
     (0, swagger_1.ApiOperation)({ summary: 'Ban a user' }),

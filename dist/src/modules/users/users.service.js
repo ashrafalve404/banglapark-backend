@@ -53,6 +53,7 @@ let UsersService = class UsersService {
     }
     selectSafeUser = {
         id: true,
+        memberId: true,
         name: true,
         email: true,
         phone: true,
@@ -85,7 +86,15 @@ let UsersService = class UsersService {
         const daysLeft = user.activeUntil
             ? Math.max(0, Math.ceil((new Date(user.activeUntil).getTime() - Date.now()) / 86_400_000))
             : null;
-        return { ...user, wallet, activeDaysRemaining: daysLeft };
+        let usedReferralCode = null;
+        if (user.parentId) {
+            const p = await this.prisma.user.findUnique({
+                where: { id: user.parentId },
+                select: { referralCode: true },
+            });
+            usedReferralCode = p?.referralCode || null;
+        }
+        return { ...user, usedReferralCode, wallet, activeDaysRemaining: daysLeft };
     }
     async updateProfile(id, dto) {
         const data = {};
@@ -93,11 +102,20 @@ let UsersService = class UsersService {
             data.name = dto.name;
         if (dto.password)
             data.passwordHash = await bcrypt.hash(dto.password, 12);
-        return this.prisma.user.update({
+        const updated = await this.prisma.user.update({
             where: { id },
             data,
             select: this.selectSafeUser,
         });
+        let usedReferralCode = null;
+        if (updated.parentId) {
+            const p = await this.prisma.user.findUnique({
+                where: { id: updated.parentId },
+                select: { referralCode: true },
+            });
+            usedReferralCode = p?.referralCode || null;
+        }
+        return { ...updated, usedReferralCode };
     }
     async getActivationStatus(id) {
         const user = await this.prisma.user.findUnique({

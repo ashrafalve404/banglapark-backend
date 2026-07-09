@@ -13,6 +13,8 @@ import {
     ApiBearerAuth,
 } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
+import { IsString } from 'class-validator';
+import { ApiProperty } from '@nestjs/swagger';
 import { AuthService } from './auth.service';
 import {
     RegisterDto,
@@ -21,6 +23,10 @@ import {
     ForgotPasswordDto,
     ResetPasswordDto,
 } from './dto/auth.dto';
+
+class GoogleLoginDto {
+    @ApiProperty() @IsString() idToken: string;
+}
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { CurrentUser } from '../../common/decorators/current-user.decorator';
 
@@ -44,6 +50,14 @@ export class AuthController {
     @ApiOperation({ summary: 'Login and receive access + refresh tokens' })
     login(@Body() dto: LoginDto) {
         return this.authService.login(dto);
+    }
+
+    @Post('google')
+    @HttpCode(HttpStatus.OK)
+    @Throttle({ default: { ttl: 60000, limit: 5 } })
+    @ApiOperation({ summary: 'Login or register with Google' })
+    googleLogin(@Body() dto: GoogleLoginDto) {
+        return this.authService.googleLogin(dto.idToken);
     }
 
     @Post('refresh')

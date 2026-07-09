@@ -7,6 +7,7 @@ import {
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
+import { OAuth2Client } from 'google-auth-library';
 import { PrismaService } from '../../prisma/prisma.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 
@@ -42,6 +43,9 @@ export class AuthService {
         const baseUrl = this.configService.get<string>('app.referralBaseUrl');
         const referralLink = `${baseUrl}?ref=${referralCode}`;
 
+        const maxMemberId = await this.prisma.user.aggregate({ _max: { memberId: true } });
+        const nextMemberId = (maxMemberId._max.memberId ?? 100) + 1;
+
         const user = await this.prisma.$transaction(async (tx) => {
             const newUser = await tx.user.create({
                 data: {
@@ -52,6 +56,7 @@ export class AuthService {
                     referralCode,
                     referralLink,
                     parentId,
+                    memberId: nextMemberId,
                 },
                 select: {
                     id: true,
@@ -60,6 +65,7 @@ export class AuthService {
                     phone: true,
                     role: true,
                     status: true,
+                    memberId: true,
                     referralCode: true,
                     referralLink: true,
                     createdAt: true,
@@ -73,7 +79,19 @@ export class AuthService {
         });
 
         const tokens = await this.generateTokens(user.id, user.email, user.role);
-        return { user, ...tokens };
+        return { user: { ...user, usedReferralCode: dto.referralCode || null }, ...tokens };
+    }
+
+    private async addParentReferralCode(userObj: any) {
+        let usedReferralCode: string | null = null;
+        if (userObj.parentId) {
+            const parent = await this.prisma.user.findUnique({
+                where: { id: userObj.parentId },
+                select: { referralCode: true },
+            });
+            usedReferralCode = parent?.referralCode || null;
+        }
+        return { ...userObj, usedReferralCode };
     }
 
     // ── Login ─────────────────────────────────────────────────────────────────
@@ -91,16 +109,90 @@ export class AuthService {
         }
 
         const tokens = await this.generateTokens(user.id, user.email, user.role);
-        return {
-            user: {
-                id: user.id,
-                name: user.name,
-                email: user.email,
-                role: user.role,
-                status: user.status,
-            },
-            ...tokens,
-        };
+        const userObj = await this.addParentReferralCode({
+            id: user.id,
+            memberId: user.memberId,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            status: user.status,
+            referralCode: user.referralCode,
+            referralLink: user.referralLink,
+            parentId: user.parentId,
+        });
+        return { user: userObj, ...tokens };
+    }
+
+    // ── Google Login ─────────────────────────────────────────────────────────
+    async googleLogin(idToken: string) {
+        const clientId = this.configService.get<string>('app.googleClientId');
+        if (!clientId) throw new BadRequestException('Google login not configured');
+
+        const client = new OAuth2Client(clientId);
+        let payload;
+        try {
+            const ticket = await client.verifyIdToken({
+                idToken,
+                audience: clientId,
+            });
+            payload = ticket.getPayload();
+        } catch {
+            throw new UnauthorizedException('Invalid Google token');
+        }
+
+        if (!payload?.email) {
+            throw new BadRequestException('Google account has no email');
+        }
+
+        const googleId = payload.sub;
+        const email = payload.email;
+        const name = payload.name || email.split('@')[0];
+
+        // Find existing user by Google ID or email
+        let user = await this.prisma.user.findFirst({
+            where: { OR: [{ email }, { id: googleId }] },
+        });
+
+        if (!user) {
+            // Create new user from Google profile
+            const referralCode = await this.generateUniqueReferralCode();
+            const baseUrl = this.configService.get<string>('app.referralBaseUrl');
+            user = await this.prisma.$transaction(async (tx) => {
+                const newUser = await tx.user.create({
+                    data: {
+                        id: googleId,
+                        name,
+                        email,
+                        phone: '',
+                        passwordHash: '',
+                        referralCode,
+                        referralLink: `${baseUrl}?ref=${referralCode}`,
+                    },
+                });
+                await tx.wallet.create({ data: { userId: newUser.id } });
+                return newUser;
+            });
+        }
+
+        if (user.isBanned) {
+            throw new UnauthorizedException('Account is banned');
+        }
+
+        const tokens = await this.generateTokens(user.id, user.email, user.role);
+        const userObj = await this.addParentReferralCode({
+            id: user.id,
+            memberId: user.memberId,
+            name: user.name,
+            email: user.email,
+            phone: user.phone,
+            role: user.role,
+            status: user.status,
+            referralCode: user.referralCode,
+            referralLink: user.referralLink,
+            parentId: user.parentId,
+        });
+        return { user: userObj, ...tokens };
     }
 
     // ── Refresh tokens ─────────────────────────────────────────────────────────

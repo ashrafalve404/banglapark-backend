@@ -1,4 +1,5 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UsersService } from '../users/users.service';
 
@@ -34,6 +35,41 @@ export class AdminService {
             totalCommissionsPaid: totalCommissions._sum.amount ?? 0,
             pendingWithdrawals,
         };
+    }
+
+    async createUser(dto: { name: string; email: string; phone: string; password: string; role?: string }) {
+        const existing = await this.prisma.user.findFirst({
+            where: { OR: [{ email: dto.email }, { phone: dto.phone }] },
+        });
+        if (existing) {
+            throw new ConflictException('Email or phone already in use');
+        }
+
+        const passwordHash = await bcrypt.hash(dto.password, 12);
+        const maxMemberId = await this.prisma.user.aggregate({ _max: { memberId: true } });
+        const nextMemberId = (maxMemberId._max.memberId ?? 100) + 1;
+
+        const user = await this.prisma.user.create({
+            data: {
+                name: dto.name,
+                email: dto.email,
+                phone: dto.phone,
+                passwordHash,
+                role: (dto.role as any) || 'USER',
+                memberId: nextMemberId,
+                referralCode: `BP${Date.now()}${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+                referralLink: '',
+            },
+            select: {
+                id: true, name: true, email: true, phone: true, role: true,
+                status: true, memberId: true, referralCode: true, createdAt: true,
+            },
+        });
+
+        // Create wallet
+        await this.prisma.wallet.create({ data: { userId: user.id } });
+
+        return user;
     }
 
     async getUsers(page = 1, limit = 20, search?: string) {

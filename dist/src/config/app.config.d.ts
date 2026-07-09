@@ -17,6 +17,8 @@ export declare const appConfig: (() => {
     activationPeriodDays: number;
     minWithdrawalAmount: number;
     referralBaseUrl: string;
+    googleClientId: string;
+    googleClientSecret: string;
 }) & import("@nestjs/config").ConfigFactoryKeyHost<{
     nodeEnv: string;
     port: number;
@@ -36,4 +38,6 @@ export declare const appConfig: (() => {
     activationPeriodDays: number;
     minWithdrawalAmount: number;
     referralBaseUrl: string;
+    googleClientId: string;
+    googleClientSecret: string;
 }>;

@@ -21,5 +21,7 @@ exports.appConfig = (0, config_1.registerAs)('app', () => ({
     activationPeriodDays: parseInt(process.env.ACTIVATION_PERIOD_DAYS ?? '30'),
     minWithdrawalAmount: parseInt(process.env.MIN_WITHDRAWAL_AMOUNT ?? '1000'),
     referralBaseUrl: process.env.REFERRAL_BASE_URL ?? 'http://localhost:3000/register',
+    googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
 }));
 //# sourceMappingURL=app.config.js.map

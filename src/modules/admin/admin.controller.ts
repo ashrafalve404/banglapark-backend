@@ -2,8 +2,8 @@ import {
     Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
-import { IsObject, IsString } from 'class-validator';
-import { ApiProperty } from '@nestjs/swagger';
+import { IsObject, IsString, IsOptional, IsEnum, MinLength, MaxLength } from 'class-validator';
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { AdminService } from './admin.service';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
@@ -13,6 +13,15 @@ import { Role } from '@prisma/client';
 class SetConfigDto {
     @ApiProperty() @IsString() key: string;
     @ApiProperty() @IsObject() value: Record<string, unknown>;
+}
+
+class CreateUserDto {
+    @ApiProperty() @IsString() @MaxLength(100) name: string;
+    @ApiProperty() @IsString() email: string;
+    @ApiProperty() @IsString() phone: string;
+    @ApiProperty() @IsString() @MinLength(6) password: string;
+    @ApiPropertyOptional({ enum: [Role.USER, Role.ADMIN] })
+    @IsOptional() @IsEnum(Role) role?: Role;
 }
 
 @ApiTags('Admin')
@@ -39,6 +48,10 @@ export class AdminController {
     ) {
         return this.adminService.getUsers(+page, +limit, search);
     }
+
+    @Post('users')
+    @ApiOperation({ summary: 'Create a user or admin (by admin)' })
+    createUser(@Body() dto: CreateUserDto) { return this.adminService.createUser(dto); }
 
     @Patch('users/:id/ban')
     @ApiOperation({ summary: 'Ban a user' })

@@ -6,11 +6,15 @@ export declare class ProductsController {
     findAll(query: ProductQueryDto): Promise<{
         products: ({
             category: {
-                name: string;
                 id: string;
+                name: string;
             } | null;
         } & {
+            id: string;
             name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            slug: string;
             description: string | null;
             price: import("@prisma/client/runtime/library").Decimal;
             stock: number;
@@ -18,11 +22,7 @@ export declare class ProductsController {
             images: string[];
             sizes: string[];
             isActive: boolean;
-            id: string;
-            slug: string;
             clicks: number;
-            createdAt: Date;
-            updatedAt: Date;
         })[];
         total: number;
         page: number;
@@ -31,14 +31,18 @@ export declare class ProductsController {
     }>;
     findOne(id: string): Promise<{
         category: {
-            name: string;
             id: string;
-            slug: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            slug: string;
         } | null;
     } & {
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
         stock: number;
@@ -46,14 +50,14 @@ export declare class ProductsController {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     recordClick(id: string): Promise<{
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
         stock: number;
@@ -61,22 +65,22 @@ export declare class ProductsController {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     create(dto: CreateProductDto): Promise<{
         category: {
-            name: string;
             id: string;
-            slug: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            slug: string;
         } | null;
     } & {
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
         stock: number;
@@ -84,22 +88,22 @@ export declare class ProductsController {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     update(id: string, dto: UpdateProductDto): Promise<{
         category: {
-            name: string;
             id: string;
-            slug: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            slug: string;
         } | null;
     } & {
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
         stock: number;
@@ -107,14 +111,14 @@ export declare class ProductsController {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     remove(id: string): Promise<{
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: import("@prisma/client/runtime/library").Decimal;
         stock: number;
@@ -122,10 +126,6 @@ export declare class ProductsController {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
 }

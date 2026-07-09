@@ -16,8 +16,18 @@ exports.AuthController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const throttler_1 = require("@nestjs/throttler");
+const class_validator_1 = require("class-validator");
+const swagger_2 = require("@nestjs/swagger");
 const auth_service_1 = require("./auth.service");
 const auth_dto_1 = require("./dto/auth.dto");
+class GoogleLoginDto {
+    idToken;
+}
+__decorate([
+    (0, swagger_2.ApiProperty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], GoogleLoginDto.prototype, "idToken", void 0);
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
 let AuthController = class AuthController {
@@ -30,6 +40,9 @@ let AuthController = class AuthController {
     }
     login(dto) {
         return this.authService.login(dto);
+    }
+    googleLogin(dto) {
+        return this.authService.googleLogin(dto.idToken);
     }
     refresh(dto) {
         return this.authService.refreshTokens(dto.refreshToken);
@@ -66,6 +79,16 @@ __decorate([
     __metadata("design:paramtypes", [auth_dto_1.LoginDto]),
     __metadata("design:returntype", void 0)
 ], AuthController.prototype, "login", null);
+__decorate([
+    (0, common_1.Post)('google'),
+    (0, common_1.HttpCode)(common_1.HttpStatus.OK),
+    (0, throttler_1.Throttle)({ default: { ttl: 60000, limit: 5 } }),
+    (0, swagger_1.ApiOperation)({ summary: 'Login or register with Google' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [GoogleLoginDto]),
+    __metadata("design:returntype", void 0)
+], AuthController.prototype, "googleLogin", null);
 __decorate([
     (0, common_1.Post)('refresh'),
     (0, common_1.HttpCode)(common_1.HttpStatus.OK),

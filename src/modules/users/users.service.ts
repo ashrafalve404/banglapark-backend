@@ -9,14 +9,15 @@ export class UsersService {
 
     private selectSafeUser = {
         id: true,
+        memberId: true,
         name: true,
         email: true,
         phone: true,
         role: true,
-    status: true,
-    activeFrom: true,
-    activeUntil: true,
-    isFirstActivated: true,
+        status: true,
+        activeFrom: true,
+        activeUntil: true,
+        isFirstActivated: true,
         referralCode: true,
         referralLink: true,
         parentId: true,
@@ -48,7 +49,16 @@ export class UsersService {
             )
             : null;
 
-        return { ...user, wallet, activeDaysRemaining: daysLeft };
+        let usedReferralCode: string | null = null;
+        if (user.parentId) {
+            const p = await this.prisma.user.findUnique({
+                where: { id: user.parentId },
+                select: { referralCode: true },
+            });
+            usedReferralCode = p?.referralCode || null;
+        }
+
+        return { ...user, usedReferralCode, wallet, activeDaysRemaining: daysLeft };
     }
 
     async updateProfile(id: string, dto: UpdateProfileDto) {
@@ -56,11 +66,22 @@ export class UsersService {
         if (dto.name) data.name = dto.name;
         if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
 
-        return this.prisma.user.update({
+        const updated = await this.prisma.user.update({
             where: { id },
             data,
             select: this.selectSafeUser,
         });
+
+        let usedReferralCode: string | null = null;
+        if (updated.parentId) {
+            const p = await this.prisma.user.findUnique({
+                where: { id: updated.parentId },
+                select: { referralCode: true },
+            });
+            usedReferralCode = p?.referralCode || null;
+        }
+
+        return { ...updated, usedReferralCode };
     }
 
     async getActivationStatus(id: string) {

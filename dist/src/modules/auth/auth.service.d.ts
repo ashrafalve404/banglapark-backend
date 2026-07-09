@@ -11,27 +11,29 @@ export declare class AuthService {
         accessToken: string;
         refreshToken: string;
         user: {
+            usedReferralCode: string | null;
             id: string;
+            memberId: number | null;
+            name: string;
             email: string;
             phone: string;
-            referralCode: string;
-            name: string;
             role: import("@prisma/client").$Enums.Role;
+            referralCode: string;
             referralLink: string | null;
             status: import("@prisma/client").$Enums.UserStatus;
             createdAt: Date;
         };
     }>;
+    private addParentReferralCode;
     login(dto: LoginDto): Promise<{
         accessToken: string;
         refreshToken: string;
-        user: {
-            id: string;
-            name: string;
-            email: string;
-            role: import("@prisma/client").$Enums.Role;
-            status: import("@prisma/client").$Enums.UserStatus;
-        };
+        user: any;
+    }>;
+    googleLogin(idToken: string): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        user: any;
     }>;
     refreshTokens(refreshToken: string): Promise<{
         accessToken: string;

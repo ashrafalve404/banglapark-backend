@@ -4,12 +4,14 @@ export declare class UsersController {
     private readonly usersService;
     constructor(usersService: UsersService);
     getMyProfile(id: string): Promise<{
+        usedReferralCode: string | null;
         wallet: {
             balance: import("@prisma/client/runtime/library").Decimal;
             pendingWithdrawal: import("@prisma/client/runtime/library").Decimal;
         } | null;
         activeDaysRemaining: number | null;
         id: string;
+        memberId: number | null;
         email: string;
         phone: string;
         referralCode: string;
@@ -25,7 +27,9 @@ export declare class UsersController {
         updatedAt: Date;
     }>;
     updateProfile(id: string, dto: UpdateProfileDto): Promise<{
+        usedReferralCode: string | null;
         id: string;
+        memberId: number | null;
         email: string;
         phone: string;
         referralCode: string;
@@ -49,6 +53,7 @@ export declare class UsersController {
     }>;
     getUser(id: string): Promise<{
         id: string;
+        memberId: number | null;
         email: string;
         phone: string;
         referralCode: string;

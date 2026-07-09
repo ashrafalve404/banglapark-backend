@@ -1,7 +1,15 @@
 import { AdminService } from './admin.service';
+import { Role } from '@prisma/client';
 declare class SetConfigDto {
     key: string;
     value: Record<string, unknown>;
+}
+declare class CreateUserDto {
+    name: string;
+    email: string;
+    phone: string;
+    password: string;
+    role?: Role;
 }
 export declare class AdminController {
     private readonly adminService;
@@ -22,6 +30,7 @@ export declare class AdminController {
     getUsers(page?: number, limit?: number, search?: string): Promise<{
         users: {
             id: string;
+            memberId: number | null;
             email: string;
             phone: string;
             referralCode: string;
@@ -40,6 +49,17 @@ export declare class AdminController {
         page: number;
         limit: number;
         totalPages: number;
+    }>;
+    createUser(dto: CreateUserDto): Promise<{
+        id: string;
+        memberId: number | null;
+        email: string;
+        phone: string;
+        referralCode: string;
+        name: string;
+        role: import("@prisma/client").$Enums.Role;
+        status: import("@prisma/client").$Enums.UserStatus;
+        createdAt: Date;
     }>;
     ban(id: string): Promise<{
         id: string;

@@ -1,5 +1,8 @@
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, RefreshTokenDto, ForgotPasswordDto, ResetPasswordDto } from './dto/auth.dto';
+declare class GoogleLoginDto {
+    idToken: string;
+}
 export declare class AuthController {
     private readonly authService;
     constructor(authService: AuthService);
@@ -7,12 +10,14 @@ export declare class AuthController {
         accessToken: string;
         refreshToken: string;
         user: {
+            usedReferralCode: string | null;
             id: string;
+            memberId: number | null;
+            name: string;
             email: string;
             phone: string;
-            referralCode: string;
-            name: string;
             role: import("@prisma/client").$Enums.Role;
+            referralCode: string;
             referralLink: string | null;
             status: import("@prisma/client").$Enums.UserStatus;
             createdAt: Date;
@@ -21,13 +26,12 @@ export declare class AuthController {
     login(dto: LoginDto): Promise<{
         accessToken: string;
         refreshToken: string;
-        user: {
-            id: string;
-            name: string;
-            email: string;
-            role: import("@prisma/client").$Enums.Role;
-            status: import("@prisma/client").$Enums.UserStatus;
-        };
+        user: any;
+    }>;
+    googleLogin(dto: GoogleLoginDto): Promise<{
+        accessToken: string;
+        refreshToken: string;
+        user: any;
     }>;
     refresh(dto: RefreshTokenDto): Promise<{
         accessToken: string;
@@ -44,3 +48,4 @@ export declare class AuthController {
         message: string;
     };
 }
+export {};

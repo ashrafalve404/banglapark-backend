@@ -6,6 +6,7 @@ export declare class UsersService {
     private selectSafeUser;
     findById(id: string): Promise<{
         id: string;
+        memberId: number | null;
         email: string;
         phone: string;
         referralCode: string;
@@ -21,12 +22,14 @@ export declare class UsersService {
         updatedAt: Date;
     }>;
     getProfile(id: string): Promise<{
+        usedReferralCode: string | null;
         wallet: {
             balance: import("@prisma/client/runtime/library").Decimal;
             pendingWithdrawal: import("@prisma/client/runtime/library").Decimal;
         } | null;
         activeDaysRemaining: number | null;
         id: string;
+        memberId: number | null;
         email: string;
         phone: string;
         referralCode: string;
@@ -42,7 +45,9 @@ export declare class UsersService {
         updatedAt: Date;
     }>;
     updateProfile(id: string, dto: UpdateProfileDto): Promise<{
+        usedReferralCode: string | null;
         id: string;
+        memberId: number | null;
         email: string;
         phone: string;
         referralCode: string;
@@ -67,6 +72,7 @@ export declare class UsersService {
     findAll(page?: number, limit?: number, search?: string): Promise<{
         users: {
             id: string;
+            memberId: number | null;
             email: string;
             phone: string;
             referralCode: string;

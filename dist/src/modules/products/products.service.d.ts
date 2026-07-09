@@ -7,14 +7,18 @@ export declare class ProductsService {
     private toSlug;
     create(dto: CreateProductDto): Promise<{
         category: {
-            name: string;
             id: string;
-            slug: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            slug: string;
         } | null;
     } & {
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
@@ -22,20 +26,20 @@ export declare class ProductsService {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     findAll(query: ProductQueryDto): Promise<{
         products: ({
             category: {
-                name: string;
                 id: string;
+                name: string;
             } | null;
         } & {
+            id: string;
             name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            slug: string;
             description: string | null;
             price: Prisma.Decimal;
             stock: number;
@@ -43,11 +47,7 @@ export declare class ProductsService {
             images: string[];
             sizes: string[];
             isActive: boolean;
-            id: string;
-            slug: string;
             clicks: number;
-            createdAt: Date;
-            updatedAt: Date;
         })[];
         total: number;
         page: number;
@@ -56,14 +56,18 @@ export declare class ProductsService {
     }>;
     findOne(idOrSlug: string): Promise<{
         category: {
-            name: string;
             id: string;
-            slug: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            slug: string;
         } | null;
     } & {
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
@@ -71,14 +75,14 @@ export declare class ProductsService {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     recordClick(id: string): Promise<{
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
@@ -86,22 +90,22 @@ export declare class ProductsService {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     update(id: string, dto: UpdateProductDto): Promise<{
         category: {
-            name: string;
             id: string;
-            slug: string;
+            name: string;
             createdAt: Date;
             updatedAt: Date;
+            slug: string;
         } | null;
     } & {
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
@@ -109,14 +113,14 @@ export declare class ProductsService {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
     remove(id: string): Promise<{
+        id: string;
         name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
@@ -124,10 +128,6 @@ export declare class ProductsService {
         images: string[];
         sizes: string[];
         isActive: boolean;
-        id: string;
-        slug: string;
         clicks: number;
-        createdAt: Date;
-        updatedAt: Date;
     }>;
 }
