@@ -33,7 +33,7 @@ async function bootstrap() {
   // ── CORS ──────────────────────────────────────────────────────────────────
   const devOrigin = process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : [];
   app.enableCors({
-    origin: ['https://www.banglapark.com', 'https://banglapark.vercel.app', ...devOrigin],
+    origin: ['https://www.banglapark.com', 'https://banglapark.vercel.app', 'https://api.banglapark.com', ...devOrigin],
   });
 
   // ── API versioning ────────────────────────────────────────────────────────
