@@ -1,5 +1,5 @@
 import {
-    IsString, IsNumber, IsOptional, IsArray, IsBoolean,
+    IsString, IsNumber, IsOptional, IsArray, IsBoolean, ArrayMaxSize,
     Min, MaxLength,
 } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
@@ -11,7 +11,7 @@ export class CreateProductDto {
     @ApiProperty() @IsNumber() @Min(0) @Type(() => Number) price: number;
     @ApiProperty() @IsNumber() @Min(0) @Type(() => Number) stock: number;
     @ApiPropertyOptional() @IsOptional() @IsString() categoryId?: string;
-    @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) images?: string[];
+    @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @ArrayMaxSize(4) @IsString({ each: true }) images?: string[];
     @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) sizes?: string[];
 }
 
@@ -21,7 +21,7 @@ export class UpdateProductDto {
     @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Type(() => Number) price?: number;
     @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Type(() => Number) stock?: number;
     @ApiPropertyOptional() @IsOptional() @IsString() categoryId?: string;
-    @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) images?: string[];
+    @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @ArrayMaxSize(4) @IsString({ each: true }) images?: string[];
     @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @IsString({ each: true }) sizes?: string[];
     @ApiPropertyOptional() @IsOptional() @IsBoolean() isActive?: boolean;
 }

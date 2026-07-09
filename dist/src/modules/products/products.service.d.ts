@@ -7,47 +7,47 @@ export declare class ProductsService {
     private toSlug;
     create(dto: CreateProductDto): Promise<{
         category: {
-            id: string;
             name: string;
+            id: string;
             slug: string;
             createdAt: Date;
             updatedAt: Date;
         } | null;
     } & {
-        id: string;
         name: string;
-        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
+        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
+        id: string;
+        slug: string;
         clicks: number;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string | null;
     }>;
     findAll(query: ProductQueryDto): Promise<{
         products: ({
             category: {
-                id: string;
                 name: string;
+                id: string;
             } | null;
         } & {
-            id: string;
             name: string;
-            slug: string;
             description: string | null;
             price: Prisma.Decimal;
             stock: number;
+            categoryId: string | null;
             images: string[];
             sizes: string[];
             isActive: boolean;
+            id: string;
+            slug: string;
             clicks: number;
             createdAt: Date;
             updatedAt: Date;
-            categoryId: string | null;
         })[];
         total: number;
         page: number;
@@ -56,78 +56,78 @@ export declare class ProductsService {
     }>;
     findOne(idOrSlug: string): Promise<{
         category: {
-            id: string;
             name: string;
+            id: string;
             slug: string;
             createdAt: Date;
             updatedAt: Date;
         } | null;
     } & {
-        id: string;
         name: string;
-        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
+        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
+        id: string;
+        slug: string;
         clicks: number;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string | null;
     }>;
     recordClick(id: string): Promise<{
-        id: string;
         name: string;
-        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
+        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
+        id: string;
+        slug: string;
         clicks: number;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string | null;
     }>;
     update(id: string, dto: UpdateProductDto): Promise<{
         category: {
-            id: string;
             name: string;
+            id: string;
             slug: string;
             createdAt: Date;
             updatedAt: Date;
         } | null;
     } & {
-        id: string;
         name: string;
-        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
+        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
+        id: string;
+        slug: string;
         clicks: number;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string | null;
     }>;
     remove(id: string): Promise<{
-        id: string;
         name: string;
-        slug: string;
         description: string | null;
         price: Prisma.Decimal;
         stock: number;
+        categoryId: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
+        id: string;
+        slug: string;
         clicks: number;
         createdAt: Date;
         updatedAt: Date;
-        categoryId: string | null;
     }>;
 }
