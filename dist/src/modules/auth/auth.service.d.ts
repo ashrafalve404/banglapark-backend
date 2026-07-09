@@ -14,11 +14,11 @@ export declare class AuthService {
             usedReferralCode: string | null;
             id: string;
             memberId: number | null;
-            name: string;
             email: string;
             phone: string;
-            role: import("@prisma/client").$Enums.Role;
             referralCode: string;
+            name: string;
+            role: import("@prisma/client").$Enums.Role;
             referralLink: string | null;
             status: import("@prisma/client").$Enums.UserStatus;
             createdAt: Date;
