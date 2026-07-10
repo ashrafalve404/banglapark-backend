@@ -66,11 +66,7 @@ exports.AppModule = AppModule = __decorate([
                     port: parseInt(process.env.REDIS_PORT ?? '6379'),
                     password: process.env.REDIS_PASSWORD || undefined,
                     maxRetriesPerRequest: null,
-                    tls: process.env.REDIS_TLS === 'true' ||
-                        (process.env.REDIS_HOST &&
-                            !['localhost', '127.0.0.1', '::1'].includes(process.env.REDIS_HOST))
-                        ? {}
-                        : undefined,
+                    tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
                 },
             }),
             prisma_module_1.PrismaModule,

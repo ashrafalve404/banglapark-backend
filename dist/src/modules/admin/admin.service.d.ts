@@ -14,6 +14,7 @@ export declare class AdminService {
             total: number;
             delivered: number;
         };
+        totalRevenue: number | import("@prisma/client/runtime/library").Decimal;
         totalCommissionsPaid: number | import("@prisma/client/runtime/library").Decimal;
         pendingWithdrawals: number;
     }>;

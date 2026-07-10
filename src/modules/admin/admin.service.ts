@@ -17,6 +17,7 @@ export class AdminService {
             inactiveUsers,
             totalOrders,
             deliveredOrders,
+            totalRevenue,
             totalCommissions,
             pendingWithdrawals,
         ] = await Promise.all([
@@ -25,6 +26,7 @@ export class AdminService {
             this.prisma.user.count({ where: { status: 'INACTIVE' } }),
             this.prisma.order.count(),
             this.prisma.order.count({ where: { status: 'DELIVERED' } }),
+            this.prisma.order.aggregate({ _sum: { total: true } }),
             this.prisma.generationCommission.aggregate({ _sum: { amount: true } }),
             this.prisma.withdrawalRequest.count({ where: { status: 'PENDING' } }),
         ]);
@@ -32,6 +34,7 @@ export class AdminService {
         return {
             users: { total: totalUsers, active: activeUsers, inactive: inactiveUsers },
             orders: { total: totalOrders, delivered: deliveredOrders },
+            totalRevenue: totalRevenue._sum.total ?? 0,
             totalCommissionsPaid: totalCommissions._sum.amount ?? 0,
             pendingWithdrawals,
         };

@@ -20,7 +20,10 @@ async function bootstrap() {
         transform: true,
         transformOptions: { enableImplicitConversion: true },
     }));
-    app.enableCors();
+    const devOrigin = process.env.NODE_ENV === 'development' ? ['http://localhost:3000'] : [];
+    app.enableCors({
+        origin: ['https://www.banglapark.com', 'https://banglapark.vercel.app', 'https://api.banglapark.com', ...devOrigin],
+    });
     app.enableVersioning({ type: common_1.VersioningType.URI, defaultVersion: '1' });
     const config = new swagger_1.DocumentBuilder()
         .setTitle('Bangla Park API')
