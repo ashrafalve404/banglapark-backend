@@ -23,7 +23,7 @@ exports.CreateWithdrawalDto = CreateWithdrawalDto;
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 1500 }),
     (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(1000),
+    (0, class_validator_1.Min)(2000),
     (0, class_transformer_1.Type)(() => Number),
     __metadata("design:type", Number)
 ], CreateWithdrawalDto.prototype, "amount", void 0);

@@ -9,7 +9,7 @@ import { WithdrawMethod, WithdrawStatus } from '@prisma/client';
 export class CreateWithdrawalDto {
     @ApiProperty({ example: 1500 })
     @IsNumber()
-    @Min(1000)
+    @Min(2000)
     @Type(() => Number)
     amount: number;
 

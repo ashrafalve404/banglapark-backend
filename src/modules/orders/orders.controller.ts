@@ -6,7 +6,7 @@ import {
 } from '@nestjs/swagger';
 import { OrderStatus } from '@prisma/client';
 import { OrdersService } from './orders.service';
-import { CreateOrderDto, UpdateOrderStatusDto } from './dto/order.dto';
+import { CreateOrderDto, UpdateOrderStatusDto, UpdateOrderItemQuantityDto } from './dto/order.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -68,5 +68,16 @@ export class OrdersController {
     @ApiOperation({ summary: '[Admin] Update order status (triggers activation + commission on DELIVERED)' })
     updateStatus(@Param('id') id: string, @Body() dto: UpdateOrderStatusDto) {
         return this.ordersService.updateStatus(id, dto);
+    }
+
+    @Patch('admin/:orderId/items/:itemId')
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiOperation({ summary: '[Admin] Reduce quantity of an order item (restocks the difference)' })
+    updateItemQuantity(
+        @Param('orderId') orderId: string,
+        @Param('itemId') itemId: string,
+        @Body() dto: UpdateOrderItemQuantityDto,
+    ) {
+        return this.ordersService.updateItemQuantity(orderId, itemId, dto.quantity);
     }
 }

@@ -45,3 +45,9 @@ export class UpdateOrderStatusDto {
     @IsEnum(OrderStatus)
     status: OrderStatus;
 }
+
+export class UpdateOrderItemQuantityDto {
+    @ApiProperty({ description: 'New quantity (must be less than current)' })
+    @IsInt() @Min(1) @Type(() => Number)
+    quantity: number;
+}

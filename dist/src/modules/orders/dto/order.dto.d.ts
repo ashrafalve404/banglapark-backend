@@ -16,3 +16,6 @@ export declare class CreateOrderDto {
 export declare class UpdateOrderStatusDto {
     status: OrderStatus;
 }
+export declare class UpdateOrderItemQuantityDto {
+    quantity: number;
+}

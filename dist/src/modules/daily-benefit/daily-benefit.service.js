@@ -36,7 +36,7 @@ function calculateDailyBenefit(activeTeamCount) {
         if (activeTeamCount >= tier.minCount)
             return tier.amount;
     }
-    return 0;
+    return 100;
 }
 exports.DAILY_BENEFIT_QUEUE = 'daily-benefit';
 let DailyBenefitService = DailyBenefitService_1 = class DailyBenefitService {
@@ -81,7 +81,7 @@ let DailyBenefitService = DailyBenefitService_1 = class DailyBenefitService {
     `;
         const activeTeamCount = Number(result[0]?.count ?? 0);
         const amount = calculateDailyBenefit(activeTeamCount);
-        if (amount === 0)
+        if (amount <= 0)
             return;
         await this.prisma.$transaction(async (tx) => {
             const walletId = await this.walletService.getWalletId(userId);

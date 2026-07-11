@@ -25,7 +25,11 @@ let WithdrawalService = class WithdrawalService {
         this.configService = configService;
     }
     async request(userId, dto) {
-        const minAmount = this.configService.get('app.minWithdrawalAmount') ?? 1000;
+        const today = new Date().getDay();
+        if (today !== 5) {
+            throw new common_1.BadRequestException('Withdrawal requests are only accepted on Friday');
+        }
+        const minAmount = this.configService.get('app.minWithdrawalAmount') ?? 2000;
         if (dto.amount < minAmount) {
             throw new common_1.BadRequestException(`Minimum withdrawal amount is BDT ${minAmount}`);
         }

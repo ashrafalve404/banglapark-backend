@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateOrderStatusDto = exports.CreateOrderDto = exports.OrderItemDto = void 0;
+exports.UpdateOrderItemQuantityDto = exports.UpdateOrderStatusDto = exports.CreateOrderDto = exports.OrderItemDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
@@ -99,4 +99,15 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.OrderStatus),
     __metadata("design:type", String)
 ], UpdateOrderStatusDto.prototype, "status", void 0);
+class UpdateOrderItemQuantityDto {
+    quantity;
+}
+exports.UpdateOrderItemQuantityDto = UpdateOrderItemQuantityDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ description: 'New quantity (must be less than current)' }),
+    (0, class_validator_1.IsInt)(),
+    (0, class_validator_1.Min)(1),
+    (0, class_transformer_1.Type)(() => Number),
+    __metadata("design:type", Number)
+], UpdateOrderItemQuantityDto.prototype, "quantity", void 0);
 //# sourceMappingURL=order.dto.js.map

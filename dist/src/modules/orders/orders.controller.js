@@ -46,6 +46,9 @@ let OrdersController = class OrdersController {
     updateStatus(id, dto) {
         return this.ordersService.updateStatus(id, dto);
     }
+    updateItemQuantity(orderId, itemId, dto) {
+        return this.ordersService.updateItemQuantity(orderId, itemId, dto.quantity);
+    }
 };
 exports.OrdersController = OrdersController;
 __decorate([
@@ -109,6 +112,17 @@ __decorate([
     __metadata("design:paramtypes", [String, order_dto_1.UpdateOrderStatusDto]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "updateStatus", null);
+__decorate([
+    (0, common_1.Patch)('admin/:orderId/items/:itemId'),
+    (0, roles_decorator_1.Roles)(client_2.Role.ADMIN, client_2.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Reduce quantity of an order item (restocks the difference)' }),
+    __param(0, (0, common_1.Param)('orderId')),
+    __param(1, (0, common_1.Param)('itemId')),
+    __param(2, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String, order_dto_1.UpdateOrderItemQuantityDto]),
+    __metadata("design:returntype", void 0)
+], OrdersController.prototype, "updateItemQuantity", null);
 exports.OrdersController = OrdersController = __decorate([
     (0, swagger_1.ApiTags)('Orders'),
     (0, swagger_1.ApiBearerAuth)(),

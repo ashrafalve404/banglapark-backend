@@ -199,6 +199,33 @@ let OrdersService = OrdersService_1 = class OrdersService {
             include: { items: true },
         });
     }
+    async updateItemQuantity(orderId, itemId, newQty) {
+        const order = await this.findOne(orderId);
+        const item = order.items.find((i) => i.id === itemId);
+        if (!item)
+            throw new common_1.NotFoundException('Order item not found');
+        if (newQty >= item.quantity) {
+            throw new common_1.BadRequestException('New quantity must be less than current quantity');
+        }
+        const diff = item.quantity - newQty;
+        const priceDelta = Number(item.price) * diff;
+        await this.prisma.$transaction(async (tx) => {
+            await tx.orderItem.update({
+                where: { id: itemId },
+                data: { quantity: newQty },
+            });
+            await tx.product.update({
+                where: { id: item.productId },
+                data: { stock: { increment: diff } },
+            });
+            const newTotal = Number(order.total) - priceDelta;
+            await tx.order.update({
+                where: { id: orderId },
+                data: { total: newTotal < 0 ? 0 : newTotal },
+            });
+        });
+        return this.findOne(orderId);
+    }
     async findAll(page = 1, limit = 20, status) {
         const skip = (page - 1) * limit;
         const where = status ? { status } : {};
