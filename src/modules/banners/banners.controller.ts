@@ -22,6 +22,10 @@ export class BannersController {
     @ApiOperation({ summary: 'List active banners only (public)' })
     findActive() { return this.bannersService.findActive(); }
 
+    @Get('offers')
+    @ApiOperation({ summary: 'List active offer section images (public)' })
+    findOffers() { return this.bannersService.findOffers(); }
+
     @Post()
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)

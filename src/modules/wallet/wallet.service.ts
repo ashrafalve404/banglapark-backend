@@ -98,9 +98,37 @@ export class WalletService {
 
         const balance = Number(wallet.balance);
         const pending = Number(wallet.pendingWithdrawal);
+
+        const [dailyBenefitResult, generationIncomeResult, dailyRewardResult, tierBonusResult] = await Promise.all([
+            this.prisma.walletTransaction.aggregate({
+                where: { walletId: wallet.id, type: 'DAILY_BENEFIT' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { walletId: wallet.id, type: 'GENERATION_COMMISSION' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', amount: 100 },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', amount: { gt: 100 } },
+                _sum: { amount: true },
+            }),
+        ]);
+
         return {
             ...wallet,
             availableBalance: balance - pending,
+            dailyBenefit: Number(dailyBenefitResult._sum.amount ?? 0),
+            dailyReward: Number(dailyRewardResult._sum.amount ?? 0),
+            tierBonus: Number(tierBonusResult._sum.amount ?? 0),
+            generationIncome: Number(generationIncomeResult._sum.amount ?? 0),
+            reward: 0,
+            salary: 0,
+            travelling: 0,
+            share: 0,
         };
     }
 

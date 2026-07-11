@@ -18,9 +18,9 @@ export class RegisterDto {
     @IsEmail()
     email: string;
 
-    @ApiProperty({ example: '01712345678' })
+    @ApiProperty({ example: '+8801712345678' })
     @IsString()
-    @Matches(/^01[3-9]\d{8}$/, { message: 'Phone must be a valid BD mobile number' })
+    @Matches(/^\+?\d{7,15}$/, { message: 'Phone must be a valid number (7-15 digits, optional + prefix)' })
     phone: string;
 
     @ApiProperty({ example: 'StrongPass@123', minLength: 8 })

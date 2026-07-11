@@ -12,13 +12,23 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.UpdateBannerDto = exports.CreateBannerDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
+const client_1 = require("@prisma/client");
 class CreateBannerDto {
+    section;
     imageUrl;
     linkUrl;
+    title;
+    badge;
     isActive;
     sortOrder;
 }
 exports.CreateBannerDto = CreateBannerDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.BannerSection, default: 'SLIDER' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.BannerSection),
+    __metadata("design:type", String)
+], CreateBannerDto.prototype, "section", void 0);
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 'https://example.com/banner.jpg' }),
     (0, class_validator_1.IsUrl)({ require_tld: false }),
@@ -30,6 +40,18 @@ __decorate([
     (0, class_validator_1.IsUrl)({ require_tld: false }),
     __metadata("design:type", String)
 ], CreateBannerDto.prototype, "linkUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Special Deals' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateBannerDto.prototype, "title", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Offer' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], CreateBannerDto.prototype, "badge", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ default: true }),
     (0, class_validator_1.IsOptional)(),
@@ -44,12 +66,21 @@ __decorate([
     __metadata("design:type", Number)
 ], CreateBannerDto.prototype, "sortOrder", void 0);
 class UpdateBannerDto {
+    section;
     imageUrl;
     linkUrl;
+    title;
+    badge;
     isActive;
     sortOrder;
 }
 exports.UpdateBannerDto = UpdateBannerDto;
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ enum: client_1.BannerSection }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.BannerSection),
+    __metadata("design:type", String)
+], UpdateBannerDto.prototype, "section", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
@@ -62,6 +93,18 @@ __decorate([
     (0, class_validator_1.IsUrl)(),
     __metadata("design:type", String)
 ], UpdateBannerDto.prototype, "linkUrl", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateBannerDto.prototype, "title", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateBannerDto.prototype, "badge", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),

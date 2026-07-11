@@ -24,6 +24,14 @@ export declare class WalletService {
     }>;
     getBalance(userId: string): Promise<{
         availableBalance: number;
+        dailyBenefit: number;
+        dailyReward: number;
+        tierBonus: number;
+        generationIncome: number;
+        reward: number;
+        salary: number;
+        travelling: number;
+        share: number;
         id: string;
         balance: Prisma.Decimal;
         pendingWithdrawal: Prisma.Decimal;

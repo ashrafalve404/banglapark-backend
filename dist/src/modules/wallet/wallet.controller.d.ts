@@ -5,6 +5,14 @@ export declare class WalletController {
     constructor(walletService: WalletService);
     getBalance(userId: string): Promise<{
         availableBalance: number;
+        dailyBenefit: number;
+        dailyReward: number;
+        tierBonus: number;
+        generationIncome: number;
+        reward: number;
+        salary: number;
+        travelling: number;
+        share: number;
         id: string;
         balance: import("@prisma/client/runtime/library").Decimal;
         pendingWithdrawal: import("@prisma/client/runtime/library").Decimal;

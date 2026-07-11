@@ -19,6 +19,13 @@ export class BannersService {
         });
     }
 
+    async findOffers() {
+        return this.prisma.banner.findMany({
+            where: { section: 'OFFER', isActive: true },
+            orderBy: { sortOrder: 'asc' },
+        });
+    }
+
     async create(dto: CreateBannerDto) {
         return this.prisma.banner.create({ data: dto });
     }

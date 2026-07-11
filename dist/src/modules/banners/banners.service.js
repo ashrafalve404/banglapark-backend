@@ -28,6 +28,12 @@ let BannersService = class BannersService {
             orderBy: { sortOrder: 'asc' },
         });
     }
+    async findOffers() {
+        return this.prisma.banner.findMany({
+            where: { section: 'OFFER', isActive: true },
+            orderBy: { sortOrder: 'asc' },
+        });
+    }
     async create(dto) {
         return this.prisma.banner.create({ data: dto });
     }

@@ -8,8 +8,11 @@ export declare class BannersService {
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        section: import("@prisma/client").$Enums.BannerSection;
         imageUrl: string;
         linkUrl: string | null;
+        title: string | null;
+        badge: string | null;
         sortOrder: number;
     }[]>;
     findActive(): Promise<{
@@ -17,8 +20,23 @@ export declare class BannersService {
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        section: import("@prisma/client").$Enums.BannerSection;
         imageUrl: string;
         linkUrl: string | null;
+        title: string | null;
+        badge: string | null;
+        sortOrder: number;
+    }[]>;
+    findOffers(): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        section: import("@prisma/client").$Enums.BannerSection;
+        imageUrl: string;
+        linkUrl: string | null;
+        title: string | null;
+        badge: string | null;
         sortOrder: number;
     }[]>;
     create(dto: CreateBannerDto): Promise<{
@@ -26,8 +44,11 @@ export declare class BannersService {
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        section: import("@prisma/client").$Enums.BannerSection;
         imageUrl: string;
         linkUrl: string | null;
+        title: string | null;
+        badge: string | null;
         sortOrder: number;
     }>;
     update(id: string, dto: UpdateBannerDto): Promise<{
@@ -35,8 +56,11 @@ export declare class BannersService {
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        section: import("@prisma/client").$Enums.BannerSection;
         imageUrl: string;
         linkUrl: string | null;
+        title: string | null;
+        badge: string | null;
         sortOrder: number;
     }>;
     remove(id: string): Promise<{
@@ -44,8 +68,11 @@ export declare class BannersService {
         createdAt: Date;
         updatedAt: Date;
         isActive: boolean;
+        section: import("@prisma/client").$Enums.BannerSection;
         imageUrl: string;
         linkUrl: string | null;
+        title: string | null;
+        badge: string | null;
         sortOrder: number;
     }>;
 }

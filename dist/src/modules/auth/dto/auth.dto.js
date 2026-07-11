@@ -32,9 +32,9 @@ __decorate([
     __metadata("design:type", String)
 ], RegisterDto.prototype, "email", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: '01712345678' }),
+    (0, swagger_1.ApiProperty)({ example: '+8801712345678' }),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.Matches)(/^01[3-9]\d{8}$/, { message: 'Phone must be a valid BD mobile number' }),
+    (0, class_validator_1.Matches)(/^\+?\d{7,15}$/, { message: 'Phone must be a valid number (7-15 digits, optional + prefix)' }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "phone", void 0);
 __decorate([
