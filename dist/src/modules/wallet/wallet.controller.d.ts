@@ -25,6 +25,7 @@ export declare class WalletController {
             amount: import("@prisma/client/runtime/library").Decimal;
             type: import("@prisma/client").$Enums.TxType;
             walletId: string;
+            benefitCategory: import("@prisma/client").$Enums.BenefitCategory | null;
             balanceAfter: import("@prisma/client/runtime/library").Decimal;
             referenceId: string | null;
         }[];

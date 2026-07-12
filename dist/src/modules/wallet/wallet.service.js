@@ -17,7 +17,7 @@ let WalletService = class WalletService {
     constructor(prisma) {
         this.prisma = prisma;
     }
-    async credit(tx, walletId, amount, type, description, referenceId) {
+    async credit(tx, walletId, amount, type, description, referenceId, benefitCategory) {
         const wallet = await tx.wallet.update({
             where: { id: walletId },
             data: { balance: { increment: amount } },
@@ -30,6 +30,7 @@ let WalletService = class WalletService {
                 balanceAfter: wallet.balance,
                 referenceId: referenceId ?? null,
                 description,
+                benefitCategory: benefitCategory ?? null,
             },
         });
         return wallet;
@@ -79,11 +80,11 @@ let WalletService = class WalletService {
                 _sum: { amount: true },
             }),
             this.prisma.walletTransaction.aggregate({
-                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', amount: 100 },
+                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', benefitCategory: 'BASE' },
                 _sum: { amount: true },
             }),
             this.prisma.walletTransaction.aggregate({
-                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', amount: { gt: 100 } },
+                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', benefitCategory: 'TIER' },
                 _sum: { amount: true },
             }),
         ]);

@@ -29,6 +29,7 @@ export class WalletService {
         type: string,
         description: string,
         referenceId?: string,
+        benefitCategory?: string,
     ) {
         const wallet = await (tx.wallet.update as (args: Record<string, unknown>) => Promise<{ balance: unknown }>)({
             where: { id: walletId },
@@ -43,6 +44,7 @@ export class WalletService {
                 balanceAfter: wallet.balance,
                 referenceId: referenceId ?? null,
                 description,
+                benefitCategory: benefitCategory ?? null,
             },
         });
 
@@ -109,11 +111,11 @@ export class WalletService {
                 _sum: { amount: true },
             }),
             this.prisma.walletTransaction.aggregate({
-                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', amount: 100 },
+                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', benefitCategory: 'BASE' },
                 _sum: { amount: true },
             }),
             this.prisma.walletTransaction.aggregate({
-                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', amount: { gt: 100 } },
+                where: { walletId: wallet.id, type: 'DAILY_BENEFIT', benefitCategory: 'TIER' },
                 _sum: { amount: true },
             }),
         ]);

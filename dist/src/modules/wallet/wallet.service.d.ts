@@ -16,7 +16,7 @@ type AnyPrismaTx = {
 export declare class WalletService {
     private readonly prisma;
     constructor(prisma: PrismaService);
-    credit(tx: AnyPrismaTx, walletId: string, amount: number, type: string, description: string, referenceId?: string): Promise<{
+    credit(tx: AnyPrismaTx, walletId: string, amount: number, type: string, description: string, referenceId?: string, benefitCategory?: string): Promise<{
         balance: unknown;
     }>;
     debit(tx: AnyPrismaTx, walletId: string, amount: number, type: string, description: string, referenceId?: string): Promise<{
@@ -44,6 +44,7 @@ export declare class WalletService {
             amount: Prisma.Decimal;
             type: import("@prisma/client").$Enums.TxType;
             walletId: string;
+            benefitCategory: import("@prisma/client").$Enums.BenefitCategory | null;
             balanceAfter: Prisma.Decimal;
             referenceId: string | null;
         }[];

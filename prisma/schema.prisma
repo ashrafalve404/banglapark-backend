@@ -64,6 +64,11 @@ enum WithdrawStatus {
   REJECTED
 }
 
+enum BenefitCategory {
+  BASE
+  TIER
+}
+
 enum NotificationType {
   ACTIVATION_REMINDER
   COMMISSION_RECEIVED
@@ -131,9 +136,10 @@ model WalletTransaction {
   type         TxType
   amount       Decimal  @db.Decimal(12, 2)
   balanceAfter Decimal  @db.Decimal(12, 2)
-  referenceId  String?
-  description  String
-  createdAt    DateTime @default(now())
+  referenceId    String?
+  description    String
+  benefitCategory BenefitCategory?
+  createdAt      DateTime @default(now())
 
   @@index([walletId])
   @@index([type])

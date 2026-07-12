@@ -83,9 +83,10 @@ let DailyBenefitService = DailyBenefitService_1 = class DailyBenefitService {
         const amount = calculateDailyBenefit(activeTeamCount);
         if (amount <= 0)
             return;
+        const isBase = activeTeamCount < 5;
         await this.prisma.$transaction(async (tx) => {
             const walletId = await this.walletService.getWalletId(userId);
-            await this.walletService.credit(tx, walletId, amount, client_1.TxType.DAILY_BENEFIT, `Daily benefit for ${dateStr} — active team: ${activeTeamCount}`, dateStr);
+            await this.walletService.credit(tx, walletId, amount, client_1.TxType.DAILY_BENEFIT, `Daily benefit for ${dateStr} — active team: ${activeTeamCount}`, dateStr, isBase ? 'BASE' : 'TIER');
             await tx.dailyBenefitLog.create({
                 data: { userId, date, teamCount: activeTeamCount, amount },
             });
