@@ -1,5 +1,5 @@
 import {
-    Controller, Get, Post, Patch, Delete, Param, Body, UseGuards,
+    Controller, Get, Post, Patch, Delete, Param, Body, Query, UseGuards,
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { BannersService } from './banners.service';
@@ -20,7 +20,7 @@ export class BannersController {
 
     @Get('active')
     @ApiOperation({ summary: 'List active banners only (public)' })
-    findActive() { return this.bannersService.findActive(); }
+    findActive(@Query('section') section?: string) { return this.bannersService.findActive(section); }
 
     @Get('offers')
     @ApiOperation({ summary: 'List active offer section images (public)' })

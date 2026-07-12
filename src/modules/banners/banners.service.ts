@@ -12,9 +12,9 @@ export class BannersService {
         });
     }
 
-    async findActive() {
+    async findActive(section?: string) {
         return this.prisma.banner.findMany({
-            where: { isActive: true },
+            where: { isActive: true, ...(section ? { section: section as any } : {}) },
             orderBy: { sortOrder: 'asc' },
         });
     }
