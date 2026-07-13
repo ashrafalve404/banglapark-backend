@@ -84,6 +84,104 @@ export class UsersService {
         return { ...updated, usedReferralCode };
     }
 
+    async getStatement(id: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { id },
+            select: {
+                ...this.selectSafeUser,
+                parentId: true,
+                isBanned: true,
+            },
+        });
+        if (!user) throw new NotFoundException('User not found');
+
+        let usedReferralCode: string | null = null;
+        if (user.parentId) {
+            const p = await this.prisma.user.findUnique({
+                where: { id: user.parentId },
+                select: { referralCode: true },
+            });
+            usedReferralCode = p?.referralCode || null;
+        }
+
+        const [wallet, transactions, withdrawals, teamCount, orderAgg] = await Promise.all([
+            this.prisma.wallet.findUnique({
+                where: { userId: id },
+                select: { balance: true, pendingWithdrawal: true },
+            }),
+            this.prisma.walletTransaction.findMany({
+                where: { wallet: { userId: id } },
+                orderBy: { createdAt: 'desc' },
+                take: 50,
+                select: {
+                    id: true,
+                    type: true,
+                    amount: true,
+                    balanceAfter: true,
+                    description: true,
+                    benefitCategory: true,
+                    createdAt: true,
+                },
+            }),
+            this.prisma.withdrawalRequest.findMany({
+                where: { userId: id },
+                orderBy: { createdAt: 'desc' },
+                take: 50,
+                select: {
+                    id: true,
+                    amount: true,
+                    method: true,
+                    accountDetails: true,
+                    status: true,
+                    createdAt: true,
+                    reviewedAt: true,
+                },
+            }),
+            this.prisma.user.count({ where: { parentId: id } }),
+            this.prisma.order.aggregate({
+                where: { userId: id },
+                _count: { id: true },
+                _sum: { total: true },
+            }),
+        ]);
+
+        const dailyReward = transactions
+            .filter((t) => t.type === 'DAILY_BENEFIT' && t.benefitCategory === 'BASE')
+            .reduce((sum, t) => sum + Number(t.amount), 0);
+        const tierBonus = transactions
+            .filter((t) => t.type === 'DAILY_BENEFIT' && t.benefitCategory === 'TIER')
+            .reduce((sum, t) => sum + Number(t.amount), 0);
+        const generationIncome = transactions
+            .filter((t) => t.type === 'GENERATION_COMMISSION')
+            .reduce((sum, t) => sum + Number(t.amount), 0);
+
+        const { parentId, ...safeUser } = user;
+
+        return {
+            account: {
+                ...safeUser,
+                usedReferralCode,
+                walletBalance: wallet ? Number(wallet.balance) : 0,
+                pendingWithdrawal: wallet ? Number(wallet.pendingWithdrawal) : 0,
+                dailyReward,
+                tierBonus,
+                generationIncome,
+                withdrawable: wallet
+                    ? Math.max(0, Number(wallet.balance) - Number(wallet.pendingWithdrawal))
+                    : 0,
+            },
+            transactions,
+            withdrawals,
+            team: {
+                totalTeam: teamCount,
+            },
+            orders: {
+                totalOrders: orderAgg._count.id,
+                totalSpent: orderAgg._sum.total ? Number(orderAgg._sum.total) : 0,
+            },
+        };
+    }
+
     async getActivationStatus(id: string) {
         const user = await this.prisma.user.findUnique({
             where: { id },

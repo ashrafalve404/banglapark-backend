@@ -24,6 +24,12 @@ export class UsersController {
         return this.usersService.updateProfile(id, dto);
     }
 
+    @Get('me/statement')
+    @ApiOperation({ summary: 'Get full account statement for PDF download' })
+    getStatement(@CurrentUser('id') id: string) {
+        return this.usersService.getStatement(id);
+    }
+
     @Get('me/activation')
     @ApiOperation({ summary: 'Get activation status and days remaining' })
     getActivation(@CurrentUser('id') id: string) {
