@@ -24,6 +24,15 @@ class CreateUserDto {
     @IsOptional() @IsEnum(Role) role?: Role;
 }
 
+class UpdateUserDto {
+    @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(100) name?: string;
+    @ApiPropertyOptional() @IsOptional() @IsString() email?: string;
+    @ApiPropertyOptional() @IsOptional() @IsString() phone?: string;
+    @ApiPropertyOptional() @IsOptional() @IsString() @MinLength(6) password?: string;
+    @ApiPropertyOptional({ enum: [Role.USER, Role.ADMIN, Role.SUPER_ADMIN] })
+    @IsOptional() @IsEnum(Role) role?: Role;
+}
+
 @ApiTags('Admin')
 @ApiBearerAuth()
 @UseGuards(JwtAuthGuard, RolesGuard)
@@ -68,6 +77,18 @@ export class AdminController {
     @Patch('users/:id/deactivate')
     @ApiOperation({ summary: 'Force-deactivate a user' })
     deactivate(@Param('id') id: string) { return this.adminService.overrideActivation(id, false); }
+
+    @Get('users/:id/details')
+    @ApiOperation({ summary: 'Get full user details (wallet, orders, referrals)' })
+    getUserDetails(@Param('id') id: string) { return this.adminService.getUserDetails(id); }
+
+    @Get('users/:id/statement')
+    @ApiOperation({ summary: 'Get full statement for any user (wallet, txs, withdrawals)' })
+    getUserStatement(@Param('id') id: string) { return this.adminService.getUserStatement(id); }
+
+    @Patch('users/:id')
+    @ApiOperation({ summary: 'Update a user (name, email, phone, role, password)' })
+    updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) { return this.adminService.updateUser(id, dto); }
 
     @Delete('users/:id')
     @ApiOperation({ summary: 'Delete a user permanently' })
