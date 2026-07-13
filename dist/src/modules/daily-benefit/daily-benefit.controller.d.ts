@@ -36,8 +36,8 @@ export declare class DailyBenefitController {
             createdAt: Date;
             userId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
-            date: Date;
             teamCount: number;
+            date: Date;
         })[];
         total: number;
         page: number;
@@ -55,8 +55,8 @@ export declare class DailyBenefitController {
             createdAt: Date;
             userId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
-            date: Date;
             teamCount: number;
+            date: Date;
         })[];
         total: number;
         page: number;

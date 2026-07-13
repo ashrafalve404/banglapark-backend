@@ -27,7 +27,7 @@ let BannersController = class BannersController {
         this.bannersService = bannersService;
     }
     findAll() { return this.bannersService.findAll(); }
-    findActive() { return this.bannersService.findActive(); }
+    findActive(section) { return this.bannersService.findActive(section); }
     findOffers() { return this.bannersService.findOffers(); }
     create(dto) { return this.bannersService.create(dto); }
     update(id, dto) {
@@ -46,8 +46,9 @@ __decorate([
 __decorate([
     (0, common_1.Get)('active'),
     (0, swagger_1.ApiOperation)({ summary: 'List active banners only (public)' }),
+    __param(0, (0, common_1.Query)('section')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], BannersController.prototype, "findActive", null);
 __decorate([

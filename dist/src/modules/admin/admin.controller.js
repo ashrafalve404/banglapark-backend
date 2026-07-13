@@ -71,6 +71,45 @@ __decorate([
     (0, class_validator_1.IsEnum)(client_1.Role),
     __metadata("design:type", String)
 ], CreateUserDto.prototype, "role", void 0);
+class UpdateUserDto {
+    name;
+    email;
+    phone;
+    password;
+    role;
+}
+__decorate([
+    (0, swagger_2.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MaxLength)(100),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "name", void 0);
+__decorate([
+    (0, swagger_2.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "email", void 0);
+__decorate([
+    (0, swagger_2.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "phone", void 0);
+__decorate([
+    (0, swagger_2.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(6),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "password", void 0);
+__decorate([
+    (0, swagger_2.ApiPropertyOptional)({ enum: [client_1.Role.USER, client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN] }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsEnum)(client_1.Role),
+    __metadata("design:type", String)
+], UpdateUserDto.prototype, "role", void 0);
 let AdminController = class AdminController {
     adminService;
     constructor(adminService) {
@@ -85,6 +124,9 @@ let AdminController = class AdminController {
     unban(id) { return this.adminService.unbanUser(id); }
     activate(id) { return this.adminService.overrideActivation(id, true); }
     deactivate(id) { return this.adminService.overrideActivation(id, false); }
+    getUserDetails(id) { return this.adminService.getUserDetails(id); }
+    getUserStatement(id) { return this.adminService.getUserStatement(id); }
+    updateUser(id, dto) { return this.adminService.updateUser(id, dto); }
     deleteUser(id) { return this.adminService.deleteUser(id); }
     deleteOrder(id) { return this.adminService.deleteOrder(id); }
     getConfigs() { return this.adminService.getAllConfigs(); }
@@ -151,6 +193,31 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], AdminController.prototype, "deactivate", null);
+__decorate([
+    (0, common_1.Get)('users/:id/details'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get full user details (wallet, orders, referrals)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "getUserDetails", null);
+__decorate([
+    (0, common_1.Get)('users/:id/statement'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get full statement for any user (wallet, txs, withdrawals)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "getUserStatement", null);
+__decorate([
+    (0, common_1.Patch)('users/:id'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update a user (name, email, phone, role, password)' }),
+    __param(0, (0, common_1.Param)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, UpdateUserDto]),
+    __metadata("design:returntype", void 0)
+], AdminController.prototype, "updateUser", null);
 __decorate([
     (0, common_1.Delete)('users/:id'),
     (0, swagger_1.ApiOperation)({ summary: 'Delete a user permanently' }),

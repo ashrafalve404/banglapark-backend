@@ -28,14 +28,14 @@ export declare class ReportsController {
             updatedAt: Date;
             userId: string;
             total: import("@prisma/client/runtime/library").Decimal;
-            shippingAddress: import("@prisma/client/runtime/library").JsonValue | null;
-            notes: string | null;
             paymentMethod: import("@prisma/client").$Enums.PaymentMethod;
             transactionId: string | null;
             userBkashNumber: string | null;
             deliveryArea: import("@prisma/client").$Enums.DeliveryArea | null;
             deliveryCharge: import("@prisma/client/runtime/library").Decimal;
             isQualifying: boolean;
+            shippingAddress: import("@prisma/client/runtime/library").JsonValue | null;
+            notes: string | null;
             deliveredAt: Date | null;
             commissionTriggered: boolean;
             commissionReversed: boolean;

@@ -75,6 +75,108 @@ export declare class AdminService {
         activeFrom: Date | null;
         activeUntil: Date | null;
     }>;
+    getUserDetails(userId: string): Promise<{
+        wallet: {
+            balance: number | import("@prisma/client/runtime/library").Decimal;
+            pendingWithdrawal: number | import("@prisma/client/runtime/library").Decimal;
+            totalEarned: number | import("@prisma/client/runtime/library").Decimal;
+        };
+        ordersCount: number;
+        referralsCount: number;
+        totalCommission: number | import("@prisma/client/runtime/library").Decimal;
+        totalWithdrawnApproved: number | import("@prisma/client/runtime/library").Decimal;
+        parent: {
+            id: string;
+            memberId: number | null;
+            email: string;
+            name: string;
+        } | null;
+        id: string;
+        memberId: number | null;
+        email: string;
+        phone: string;
+        referralCode: string;
+        name: string;
+        role: import("@prisma/client").$Enums.Role;
+        referralLink: string | null;
+        parentId: string | null;
+        status: import("@prisma/client").$Enums.UserStatus;
+        activeFrom: Date | null;
+        activeUntil: Date | null;
+        isBanned: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    getUserStatement(userId: string): Promise<{
+        account: {
+            usedReferralCode: string | null;
+            walletBalance: number;
+            pendingWithdrawal: number;
+            dailyReward: number;
+            tierBonus: number;
+            generationIncome: number;
+            withdrawable: number;
+            id: string;
+            memberId: number | null;
+            email: string;
+            phone: string;
+            referralCode: string;
+            name: string;
+            role: import("@prisma/client").$Enums.Role;
+            referralLink: string | null;
+            status: import("@prisma/client").$Enums.UserStatus;
+            activeFrom: Date | null;
+            activeUntil: Date | null;
+            isFirstActivated: boolean;
+            isBanned: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+        };
+        transactions: {
+            id: string;
+            createdAt: Date;
+            description: string;
+            amount: import("@prisma/client/runtime/library").Decimal;
+            type: import("@prisma/client").$Enums.TxType;
+            balanceAfter: import("@prisma/client/runtime/library").Decimal;
+            benefitCategory: import("@prisma/client").$Enums.BenefitCategory | null;
+        }[];
+        withdrawals: {
+            id: string;
+            status: import("@prisma/client").$Enums.WithdrawStatus;
+            createdAt: Date;
+            amount: import("@prisma/client/runtime/library").Decimal;
+            method: import("@prisma/client").$Enums.WithdrawMethod;
+            accountDetails: import("@prisma/client/runtime/library").JsonValue;
+            reviewedAt: Date | null;
+        }[];
+        team: {
+            totalTeam: number;
+        };
+        orders: {
+            totalOrders: number;
+            totalSpent: number;
+        };
+    }>;
+    updateUser(userId: string, dto: {
+        name?: string;
+        email?: string;
+        phone?: string;
+        password?: string;
+        role?: string;
+    }): Promise<{
+        id: string;
+        memberId: number | null;
+        email: string;
+        phone: string;
+        referralCode: string;
+        name: string;
+        role: import("@prisma/client").$Enums.Role;
+        status: import("@prisma/client").$Enums.UserStatus;
+        isBanned: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
     deleteUser(userId: string): Promise<{
         message: string;
     }>;

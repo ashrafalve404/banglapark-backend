@@ -44,9 +44,9 @@ export declare class WalletService {
             amount: Prisma.Decimal;
             type: import("@prisma/client").$Enums.TxType;
             walletId: string;
-            benefitCategory: import("@prisma/client").$Enums.BenefitCategory | null;
             balanceAfter: Prisma.Decimal;
             referenceId: string | null;
+            benefitCategory: import("@prisma/client").$Enums.BenefitCategory | null;
         }[];
         total: number;
         page: number;

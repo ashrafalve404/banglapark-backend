@@ -22,9 +22,9 @@ let BannersService = class BannersService {
             orderBy: { sortOrder: 'asc' },
         });
     }
-    async findActive() {
+    async findActive(section) {
         return this.prisma.banner.findMany({
-            where: { isActive: true },
+            where: { isActive: true, ...(section ? { section: section } : {}) },
             orderBy: { sortOrder: 'asc' },
         });
     }

@@ -45,6 +45,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AdminService = void 0;
 const common_1 = require("@nestjs/common");
 const bcrypt = __importStar(require("bcryptjs"));
+const client_1 = require("@prisma/client");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const users_service_1 = require("../users/users.service");
 let AdminService = class AdminService {
@@ -121,6 +122,103 @@ let AdminService = class AdminService {
                 activeUntil: activate ? new Date(now.getTime() + 30 * 86_400_000) : null,
             },
             select: { id: true, name: true, status: true, activeFrom: true, activeUntil: true },
+        });
+    }
+    async getUserDetails(userId) {
+        const user = await this.prisma.user.findUnique({
+            where: { id: userId },
+            select: {
+                id: true, name: true, email: true, phone: true, role: true,
+                status: true, memberId: true, referralCode: true, referralLink: true,
+                parentId: true, isBanned: true, activeFrom: true, activeUntil: true,
+                createdAt: true, updatedAt: true,
+            },
+        });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        const [wallet, ordersCount, referralsCount, earningsAgg, totalCommission, totalWithdrawn] = await Promise.all([
+            this.prisma.wallet.findUnique({
+                where: { userId },
+                select: { balance: true, pendingWithdrawal: true },
+            }),
+            this.prisma.order.count({ where: { userId } }),
+            this.prisma.user.count({ where: { parentId: userId } }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId }, amount: { gt: 0 } },
+                _sum: { amount: true },
+            }),
+            this.prisma.generationCommission.aggregate({
+                where: { toUserId: userId },
+                _sum: { amount: true },
+            }),
+            this.prisma.withdrawalRequest.aggregate({
+                where: { userId, status: 'APPROVED' },
+                _sum: { amount: true },
+            }),
+        ]);
+        const parent = user.parentId
+            ? await this.prisma.user.findUnique({
+                where: { id: user.parentId },
+                select: { id: true, name: true, email: true, memberId: true },
+            })
+            : null;
+        return {
+            ...user,
+            wallet: {
+                balance: wallet?.balance ?? 0,
+                pendingWithdrawal: wallet?.pendingWithdrawal ?? 0,
+                totalEarned: earningsAgg._sum?.amount ?? 0,
+            },
+            ordersCount,
+            referralsCount,
+            totalCommission: totalCommission._sum?.amount ?? 0,
+            totalWithdrawnApproved: totalWithdrawn._sum?.amount ?? 0,
+            parent,
+        };
+    }
+    async getUserStatement(userId) {
+        return this.usersService.getStatement(userId);
+    }
+    async updateUser(userId, dto) {
+        const user = await this.prisma.user.findUnique({ where: { id: userId } });
+        if (!user)
+            throw new common_1.NotFoundException('User not found');
+        const data = {};
+        if (dto.name !== undefined)
+            data.name = dto.name;
+        if (dto.email !== undefined)
+            data.email = dto.email;
+        if (dto.phone !== undefined)
+            data.phone = dto.phone;
+        if (dto.password !== undefined)
+            data.passwordHash = await bcrypt.hash(dto.password, 12);
+        if (dto.role !== undefined) {
+            if (![client_1.Role.USER, client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN].includes(dto.role)) {
+                throw new common_1.BadRequestException('Invalid role');
+            }
+            data.role = dto.role;
+        }
+        if (dto.email || dto.phone) {
+            const conflicts = await this.prisma.user.findFirst({
+                where: {
+                    OR: [
+                        dto.email ? { email: dto.email } : null,
+                        dto.phone ? { phone: dto.phone } : null,
+                    ].filter(Boolean),
+                    NOT: { id: userId },
+                },
+            });
+            if (conflicts)
+                throw new common_1.ConflictException('Email or phone already in use');
+        }
+        return this.prisma.user.update({
+            where: { id: userId },
+            data,
+            select: {
+                id: true, name: true, email: true, phone: true, role: true,
+                status: true, memberId: true, referralCode: true, isBanned: true,
+                createdAt: true, updatedAt: true,
+            },
         });
     }
     async deleteUser(userId) {

@@ -15,7 +15,7 @@ export declare class BannersController {
         badge: string | null;
         sortOrder: number;
     }[]>;
-    findActive(): Promise<{
+    findActive(section?: string): Promise<{
         id: string;
         createdAt: Date;
         updatedAt: Date;

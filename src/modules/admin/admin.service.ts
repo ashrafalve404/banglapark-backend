@@ -113,15 +113,19 @@ export class AdminService {
         });
         if (!user) throw new NotFoundException('User not found');
 
-        const [wallet, ordersCount, referralsCount, totalCommission, totalWithdrawn] = await Promise.all([
+        const [wallet, ordersCount, referralsCount, earningsAgg, totalCommission, totalWithdrawn] = await Promise.all([
             this.prisma.wallet.findUnique({
                 where: { userId },
-                select: { balance: true, totalEarned: true, totalWithdrawn: true },
+                select: { balance: true, pendingWithdrawal: true },
             }),
             this.prisma.order.count({ where: { userId } }),
             this.prisma.user.count({ where: { parentId: userId } }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId }, amount: { gt: 0 } },
+                _sum: { amount: true },
+            }),
             this.prisma.generationCommission.aggregate({
-                where: { toUserId: userId, status: 'APPROVED' },
+                where: { toUserId: userId },
                 _sum: { amount: true },
             }),
             this.prisma.withdrawalRequest.aggregate({
@@ -130,22 +134,24 @@ export class AdminService {
             }),
         ]);
 
-        let parent = null;
-        if (user.parentId) {
-            const p = await this.prisma.user.findUnique({
+        const parent = user.parentId
+            ? await this.prisma.user.findUnique({
                 where: { id: user.parentId },
                 select: { id: true, name: true, email: true, memberId: true },
-            });
-            if (p) parent = p;
-        }
+            })
+            : null;
 
         return {
             ...user,
-            wallet: wallet ?? { balance: 0, totalEarned: 0, totalWithdrawn: 0 },
+            wallet: {
+                balance: wallet?.balance ?? 0,
+                pendingWithdrawal: wallet?.pendingWithdrawal ?? 0,
+                totalEarned: earningsAgg._sum?.amount ?? 0,
+            },
             ordersCount,
             referralsCount,
-            totalCommission: totalCommission._sum.amount ?? 0,
-            totalWithdrawnApproved: totalWithdrawn._sum.amount ?? 0,
+            totalCommission: totalCommission._sum?.amount ?? 0,
+            totalWithdrawnApproved: totalWithdrawn._sum?.amount ?? 0,
             parent,
         };
     }
