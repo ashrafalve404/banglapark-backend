@@ -21,6 +21,11 @@ export class AdminService {
             totalRevenue,
             totalCommissions,
             pendingWithdrawals,
+            totalProducts,
+            totalProductValue,
+            totalCostValue,
+            deliveredOrderIds,
+            approvedWithdrawals,
         ] = await Promise.all([
             this.prisma.user.count({ where: { role: 'USER' } }),
             this.prisma.user.count({ where: { status: 'ACTIVE' } }),
@@ -30,14 +35,57 @@ export class AdminService {
             this.prisma.order.aggregate({ _sum: { total: true } }),
             this.prisma.generationCommission.aggregate({ _sum: { amount: true } }),
             this.prisma.withdrawalRequest.count({ where: { status: 'PENDING' } }),
+            this.prisma.product.count({ where: { isActive: true } }),
+            this.prisma.product.aggregate({ where: { isActive: true }, _sum: { price: true } }),
+            this.prisma.product.aggregate({ where: { isActive: true }, _sum: { costPrice: true } }),
+            this.prisma.order.findMany({
+                where: { status: 'DELIVERED' },
+                select: { id: true },
+            }),
+            this.prisma.withdrawalRequest.aggregate({
+                where: { status: 'APPROVED' },
+                _sum: { amount: true },
+            }),
         ]);
+
+        // Calculate sold product cost from delivered orders
+        const deliveredIdList = deliveredOrderIds.map((o) => o.id);
+        let soldCost = 0;
+        if (deliveredIdList.length > 0) {
+            const deliveredItems = await this.prisma.orderItem.findMany({
+                where: { orderId: { in: deliveredIdList } },
+                include: { product: { select: { costPrice: true, price: true } } },
+            });
+            for (const item of deliveredItems) {
+                const cost = item.product.costPrice ?? item.product.price;
+                soldCost += Number(cost) * item.quantity;
+            }
+        }
+
+        const salesRevenue = totalRevenue._sum.total ?? 0;
+        const commissionsPaid = totalCommissions._sum.amount ?? 0;
+        const withdrawalsApproved = approvedWithdrawals._sum.amount ?? 0;
+        const productValue = totalProductValue._sum.price ?? 0;
+        const costValue = totalCostValue._sum.costPrice ?? 0;
+
+        // Profit = Sales Revenue - Cost of Sold Goods - Commissions - Withdrawals
+        const grossProfit = salesRevenue - soldCost;
+        const netProfit = grossProfit - Number(commissionsPaid) - Number(withdrawalsApproved);
 
         return {
             users: { total: totalUsers, active: activeUsers, inactive: inactiveUsers },
             orders: { total: totalOrders, delivered: deliveredOrders },
-            totalRevenue: totalRevenue._sum.total ?? 0,
-            totalCommissionsPaid: totalCommissions._sum.amount ?? 0,
+            totalRevenue: salesRevenue,
+            totalCommissionsPaid: commissionsPaid,
             pendingWithdrawals,
+            totalProducts,
+            totalProductValue: productValue,
+            totalCostValue: costValue,
+            totalWithdrawalsApproved: withdrawalsApproved,
+            totalSales: salesRevenue,
+            totalSoldCost: soldCost,
+            grossProfit,
+            netProfit,
         };
     }
 

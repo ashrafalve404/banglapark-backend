@@ -9,6 +9,7 @@ export class CreateProductDto {
     @ApiProperty() @IsString() @MaxLength(200) name: string;
     @ApiPropertyOptional() @IsOptional() @IsString() description?: string;
     @ApiProperty() @IsNumber() @Min(0) @Type(() => Number) price: number;
+    @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Type(() => Number) costPrice?: number;
     @ApiProperty() @IsNumber() @Min(0) @Type(() => Number) stock: number;
     @ApiPropertyOptional() @IsOptional() @IsString() categoryId?: string;
     @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @ArrayMaxSize(4) @IsString({ each: true }) images?: string[];
@@ -19,6 +20,7 @@ export class UpdateProductDto {
     @ApiPropertyOptional() @IsOptional() @IsString() name?: string;
     @ApiPropertyOptional() @IsOptional() @IsString() description?: string;
     @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Type(() => Number) price?: number;
+    @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Type(() => Number) costPrice?: number;
     @ApiPropertyOptional() @IsOptional() @IsNumber() @Min(0) @Type(() => Number) stock?: number;
     @ApiPropertyOptional() @IsOptional() @IsString() categoryId?: string;
     @ApiPropertyOptional({ type: [String] }) @IsOptional() @IsArray() @ArrayMaxSize(4) @IsString({ each: true }) images?: string[];
