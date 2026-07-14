@@ -62,15 +62,14 @@ export class AdminService {
             }
         }
 
-        const salesRevenue = totalRevenue._sum.total ?? 0;
-        const commissionsPaid = totalCommissions._sum.amount ?? 0;
-        const withdrawalsApproved = approvedWithdrawals._sum.amount ?? 0;
-        const productValue = totalProductValue._sum.price ?? 0;
-        const costValue = totalCostValue._sum.costPrice ?? 0;
+        const salesRevenue = Number(totalRevenue._sum.total ?? 0);
+        const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
+        const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
+        const productValue = Number(totalProductValue._sum.price ?? 0);
+        const costValue = Number(totalCostValue._sum.costPrice ?? 0);
 
-        // Profit = Sales Revenue - Cost of Sold Goods - Commissions - Withdrawals
         const grossProfit = salesRevenue - soldCost;
-        const netProfit = grossProfit - Number(commissionsPaid) - Number(withdrawalsApproved);
+        const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
 
         return {
             users: { total: totalUsers, active: activeUsers, inactive: inactiveUsers },

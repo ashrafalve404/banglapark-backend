@@ -27,6 +27,7 @@ let ProductsService = class ProductsService {
                 slug: this.toSlug(dto.name),
                 description: dto.description,
                 price: dto.price,
+                costPrice: dto.costPrice,
                 stock: dto.stock,
                 categoryId: dto.categoryId,
                 images: dto.images ?? [],

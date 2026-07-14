@@ -56,7 +56,7 @@ let AdminService = class AdminService {
         this.usersService = usersService;
     }
     async getPlatformStats() {
-        const [totalUsers, activeUsers, inactiveUsers, totalOrders, deliveredOrders, totalRevenue, totalCommissions, pendingWithdrawals,] = await Promise.all([
+        const [totalUsers, activeUsers, inactiveUsers, totalOrders, deliveredOrders, totalRevenue, totalCommissions, pendingWithdrawals, totalProducts, totalProductValue, totalCostValue, deliveredOrderIds, approvedWithdrawals,] = await Promise.all([
             this.prisma.user.count({ where: { role: 'USER' } }),
             this.prisma.user.count({ where: { status: 'ACTIVE' } }),
             this.prisma.user.count({ where: { status: 'INACTIVE' } }),
@@ -65,13 +65,51 @@ let AdminService = class AdminService {
             this.prisma.order.aggregate({ _sum: { total: true } }),
             this.prisma.generationCommission.aggregate({ _sum: { amount: true } }),
             this.prisma.withdrawalRequest.count({ where: { status: 'PENDING' } }),
+            this.prisma.product.count({ where: { isActive: true } }),
+            this.prisma.product.aggregate({ where: { isActive: true }, _sum: { price: true } }),
+            this.prisma.product.aggregate({ where: { isActive: true }, _sum: { costPrice: true } }),
+            this.prisma.order.findMany({
+                where: { status: 'DELIVERED' },
+                select: { id: true },
+            }),
+            this.prisma.withdrawalRequest.aggregate({
+                where: { status: 'APPROVED' },
+                _sum: { amount: true },
+            }),
         ]);
+        const deliveredIdList = deliveredOrderIds.map((o) => o.id);
+        let soldCost = 0;
+        if (deliveredIdList.length > 0) {
+            const deliveredItems = await this.prisma.orderItem.findMany({
+                where: { orderId: { in: deliveredIdList } },
+                include: { product: { select: { costPrice: true, price: true } } },
+            });
+            for (const item of deliveredItems) {
+                const cost = item.product.costPrice ?? item.product.price;
+                soldCost += Number(cost) * item.quantity;
+            }
+        }
+        const salesRevenue = Number(totalRevenue._sum.total ?? 0);
+        const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
+        const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
+        const productValue = Number(totalProductValue._sum.price ?? 0);
+        const costValue = Number(totalCostValue._sum.costPrice ?? 0);
+        const grossProfit = salesRevenue - soldCost;
+        const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
         return {
             users: { total: totalUsers, active: activeUsers, inactive: inactiveUsers },
             orders: { total: totalOrders, delivered: deliveredOrders },
-            totalRevenue: totalRevenue._sum.total ?? 0,
-            totalCommissionsPaid: totalCommissions._sum.amount ?? 0,
+            totalRevenue: salesRevenue,
+            totalCommissionsPaid: commissionsPaid,
             pendingWithdrawals,
+            totalProducts,
+            totalProductValue: productValue,
+            totalCostValue: costValue,
+            totalWithdrawalsApproved: withdrawalsApproved,
+            totalSales: salesRevenue,
+            totalSoldCost: soldCost,
+            grossProfit,
+            netProfit,
         };
     }
     async createUser(dto) {

@@ -21,6 +21,7 @@ export declare class OrdersService {
                 slug: string;
                 description: string | null;
                 price: import("@prisma/client/runtime/library").Decimal;
+                costPrice: import("@prisma/client/runtime/library").Decimal | null;
                 stock: number;
                 categoryId: string | null;
                 images: string[];
@@ -109,6 +110,7 @@ export declare class OrdersService {
                 slug: string;
                 description: string | null;
                 price: import("@prisma/client/runtime/library").Decimal;
+                costPrice: import("@prisma/client/runtime/library").Decimal | null;
                 stock: number;
                 categoryId: string | null;
                 images: string[];
@@ -186,6 +188,7 @@ export declare class OrdersService {
                 slug: string;
                 description: string | null;
                 price: import("@prisma/client/runtime/library").Decimal;
+                costPrice: import("@prisma/client/runtime/library").Decimal | null;
                 stock: number;
                 categoryId: string | null;
                 images: string[];

@@ -21,6 +21,7 @@ export declare class ProductsService {
         slug: string;
         description: string | null;
         price: Prisma.Decimal;
+        costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
         images: string[];
@@ -42,6 +43,7 @@ export declare class ProductsService {
             slug: string;
             description: string | null;
             price: Prisma.Decimal;
+            costPrice: Prisma.Decimal | null;
             stock: number;
             categoryId: string | null;
             images: string[];
@@ -70,6 +72,7 @@ export declare class ProductsService {
         slug: string;
         description: string | null;
         price: Prisma.Decimal;
+        costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
         images: string[];
@@ -85,6 +88,7 @@ export declare class ProductsService {
         slug: string;
         description: string | null;
         price: Prisma.Decimal;
+        costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
         images: string[];
@@ -108,6 +112,7 @@ export declare class ProductsService {
         slug: string;
         description: string | null;
         price: Prisma.Decimal;
+        costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
         images: string[];
@@ -123,6 +128,7 @@ export declare class ProductsService {
         slug: string;
         description: string | null;
         price: Prisma.Decimal;
+        costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
         images: string[];
