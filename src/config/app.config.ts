@@ -18,7 +18,7 @@ export const appConfig = registerAs('app', () => ({
     generationCommissionLevels: parseInt(process.env.GENERATION_COMMISSION_LEVELS ?? '10'),
     activationPeriodDays: parseInt(process.env.ACTIVATION_PERIOD_DAYS ?? '30'),
     minWithdrawalAmount: parseInt(process.env.MIN_WITHDRAWAL_AMOUNT ?? '2000'),
-    referralBaseUrl: process.env.REFERRAL_BASE_URL ?? 'http://localhost:3000/register',
+    referralBaseUrl: process.env.REFERRAL_BASE_URL ?? `${process.env.APP_URL ?? 'http://localhost:3000'}/register`,
     googleClientId: process.env.GOOGLE_CLIENT_ID ?? '',
     googleClientSecret: process.env.GOOGLE_CLIENT_SECRET ?? '',
 }));
