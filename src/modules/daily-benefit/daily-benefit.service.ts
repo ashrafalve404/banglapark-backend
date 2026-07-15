@@ -44,11 +44,25 @@ export class DailyBenefitService {
         @InjectQueue(DAILY_BENEFIT_QUEUE) private readonly benefitQueue: Queue,
     ) { }
 
+    // Deactivate expired users before processing daily benefits
+    async deactivateExpiredUsers() {
+        const now = new Date();
+        const result = await this.prisma.user.updateMany({
+            where: { status: 'ACTIVE', activeUntil: { not: null, lt: now } },
+            data: { status: 'INACTIVE' },
+        });
+        if (result.count > 0) {
+            this.logger.log(`Auto-deactivated ${result.count} expired users`);
+        }
+    }
+
     // Scheduled at midnight Asia/Dhaka — enqueues one job per active user
     @Cron('0 0 * * *', { timeZone: 'Asia/Dhaka', name: 'daily-benefit-cron' })
     async scheduleDailyBenefit() {
         this.logger.log('Daily benefit cron triggered — queuing jobs...');
         const today = new Date().toISOString().split('T')[0];
+
+        await this.deactivateExpiredUsers();
 
         const activeUsers = await this.prisma.user.findMany({
             where: { status: 'ACTIVE' },
