@@ -21,9 +21,7 @@ export class AdminService {
             totalRevenue,
             totalCommissions,
             pendingWithdrawals,
-            totalProducts,
-            totalProductValue,
-            totalCostValue,
+            products,
             deliveredOrderIds,
             approvedWithdrawals,
         ] = await Promise.all([
@@ -35,9 +33,10 @@ export class AdminService {
             this.prisma.order.aggregate({ _sum: { total: true } }),
             this.prisma.generationCommission.aggregate({ _sum: { amount: true } }),
             this.prisma.withdrawalRequest.count({ where: { status: 'PENDING' } }),
-            this.prisma.product.count({ where: { isActive: true } }),
-            this.prisma.product.aggregate({ where: { isActive: true }, _sum: { price: true } }),
-            this.prisma.product.aggregate({ where: { isActive: true }, _sum: { costPrice: true } }),
+            this.prisma.product.findMany({
+                where: { isActive: true },
+                select: { price: true, costPrice: true, stock: true },
+            }),
             this.prisma.order.findMany({
                 where: { status: 'DELIVERED' },
                 select: { id: true },
@@ -65,8 +64,13 @@ export class AdminService {
         const salesRevenue = Number(totalRevenue._sum.total ?? 0);
         const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
         const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
-        const productValue = Number(totalProductValue._sum.price ?? 0);
-        const costValue = Number(totalCostValue._sum.costPrice ?? 0);
+        const totalProducts = products.length;
+        let productValue = 0;
+        let costValue = 0;
+        for (const p of products) {
+            productValue += Number(p.price) * p.stock;
+            if (p.costPrice) costValue += Number(p.costPrice) * p.stock;
+        }
 
         const grossProfit = salesRevenue - soldCost;
         const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
