@@ -24,6 +24,14 @@ export function calculateDailyBenefit(activeTeamCount: number): number {
     return 100; // base daily benefit for every active user
 }
 
+// Returns only the additional tier bonus (0 for <5 team members)
+export function calculateTierBonus(activeTeamCount: number): number {
+    for (const tier of BENEFIT_TIERS) {
+        if (activeTeamCount >= tier.minCount) return tier.amount;
+    }
+    return 0;
+}
+
 export const DAILY_BENEFIT_QUEUE = 'daily-benefit';
 
 @Injectable()
@@ -81,30 +89,43 @@ export class DailyBenefitService {
       SELECT COUNT(*) as count FROM team WHERE status = 'ACTIVE'
     `;
         const activeTeamCount = Number(result[0]?.count ?? 0);
-        const amount = calculateDailyBenefit(activeTeamCount);
-
-        if (amount <= 0) return;
-
-        const isBase = activeTeamCount < 5;
+        const baseAmount = 100;
+        const tierAmount = calculateTierBonus(activeTeamCount);
+        const totalAmount = baseAmount + tierAmount;
 
         await this.prisma.$transaction(async (tx) => {
             const walletId = await this.walletService.getWalletId(userId);
+
+            // Always credit base 100 daily reward
             await this.walletService.credit(
                 tx,
                 walletId,
-                amount,
+                baseAmount,
                 TxType.DAILY_BENEFIT,
-                `Daily benefit for ${dateStr} — active team: ${activeTeamCount}`,
+                `Daily benefit for ${dateStr}`,
                 dateStr,
-                isBase ? 'BASE' : 'TIER',
+                'BASE',
             );
 
+            // Additional tier bonus for users with active team
+            if (tierAmount > 0) {
+                await this.walletService.credit(
+                    tx,
+                    walletId,
+                    tierAmount,
+                    TxType.DAILY_BENEFIT,
+                    `Tier bonus for ${dateStr} — active team: ${activeTeamCount}`,
+                    dateStr,
+                    'TIER',
+                );
+            }
+
             await tx.dailyBenefitLog.create({
-                data: { userId, date, teamCount: activeTeamCount, amount },
+                data: { userId, date, teamCount: activeTeamCount, amount: totalAmount },
             });
         });
 
-        this.logger.log(`Paid BDT ${amount} daily benefit to user ${userId} (team: ${activeTeamCount})`);
+        this.logger.log(`Paid BDT ${totalAmount} daily benefit to user ${userId} (team: ${activeTeamCount})`);
     }
 
     async getLogs(userId?: string, page = 1, limit = 20) {
