@@ -24,6 +24,7 @@ export class AdminService {
             products,
             deliveredOrderIds,
             approvedWithdrawals,
+            deliveryCharges,
         ] = await Promise.all([
             this.prisma.user.count({ where: { role: 'USER' } }),
             this.prisma.user.count({ where: { status: 'ACTIVE' } }),
@@ -45,6 +46,7 @@ export class AdminService {
                 where: { status: 'APPROVED' },
                 _sum: { amount: true },
             }),
+            this.prisma.order.aggregate({ _sum: { deliveryCharge: true } }),
         ]);
 
         // Calculate sold product cost from delivered orders
@@ -64,6 +66,7 @@ export class AdminService {
         const salesRevenue = Number(totalRevenue._sum.total ?? 0);
         const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
         const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
+        const totalDeliveryCharges = Number(deliveryCharges._sum.deliveryCharge ?? 0);
         const totalProducts = products.length;
         let productValue = 0;
         let costValue = 0;
@@ -72,7 +75,7 @@ export class AdminService {
             if (p.costPrice) costValue += Number(p.costPrice) * p.stock;
         }
 
-        const grossProfit = salesRevenue - soldCost;
+        const grossProfit = salesRevenue - soldCost - totalDeliveryCharges;
         const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
 
         return {
@@ -87,6 +90,7 @@ export class AdminService {
             totalWithdrawalsApproved: withdrawalsApproved,
             totalSales: salesRevenue,
             totalSoldCost: soldCost,
+            totalDeliveryCharges,
             grossProfit,
             netProfit,
         };
