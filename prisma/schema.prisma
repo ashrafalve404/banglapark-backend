@@ -305,6 +305,7 @@ model QuizCategory {
   name      String
   imageUrl  String
   isActive  Boolean  @default(true)
+  sortOrder Int      @default(0)
   questions QuizQuestion[]
   purchases QuizPurchase[]
   createdAt DateTime @default(now())

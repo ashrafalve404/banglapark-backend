@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsBoolean, IsUrl } from 'class-validator';
+import { IsString, IsOptional, IsBoolean, IsUrl, IsInt } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateQuizCategoryDto {
@@ -14,6 +14,11 @@ export class CreateQuizCategoryDto {
     @IsOptional()
     @IsBoolean()
     isActive?: boolean;
+
+    @ApiPropertyOptional({ default: 0 })
+    @IsOptional()
+    @IsInt()
+    sortOrder?: number;
 }
 
 export class UpdateQuizCategoryDto {
@@ -31,4 +36,9 @@ export class UpdateQuizCategoryDto {
     @IsOptional()
     @IsBoolean()
     isActive?: boolean;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsInt()
+    sortOrder?: number;
 }

@@ -8,7 +8,7 @@ export class QuizCategoryService {
 
     async findAll() {
         return this.prisma.quizCategory.findMany({
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
             include: { _count: { select: { questions: true } } },
         });
     }
@@ -17,7 +17,7 @@ export class QuizCategoryService {
         return this.prisma.quizCategory.findMany({
             where: { isActive: true },
             include: { _count: { select: { questions: true } } },
-            orderBy: { createdAt: 'desc' },
+            orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
         });
     }
 
