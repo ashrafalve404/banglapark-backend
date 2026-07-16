@@ -15,6 +15,7 @@ var DailyBenefitService_1;
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.DailyBenefitService = exports.DAILY_BENEFIT_QUEUE = exports.BENEFIT_TIERS = void 0;
 exports.calculateDailyBenefit = calculateDailyBenefit;
+exports.calculateTierBonus = calculateTierBonus;
 const common_1 = require("@nestjs/common");
 const schedule_1 = require("@nestjs/schedule");
 const bullmq_1 = require("@nestjs/bullmq");
@@ -38,6 +39,13 @@ function calculateDailyBenefit(activeTeamCount) {
     }
     return 100;
 }
+function calculateTierBonus(activeTeamCount) {
+    for (const tier of exports.BENEFIT_TIERS) {
+        if (activeTeamCount >= tier.minCount)
+            return tier.amount;
+    }
+    return 0;
+}
 exports.DAILY_BENEFIT_QUEUE = 'daily-benefit';
 let DailyBenefitService = DailyBenefitService_1 = class DailyBenefitService {
     prisma;
@@ -49,9 +57,20 @@ let DailyBenefitService = DailyBenefitService_1 = class DailyBenefitService {
         this.walletService = walletService;
         this.benefitQueue = benefitQueue;
     }
+    async deactivateExpiredUsers() {
+        const now = new Date();
+        const result = await this.prisma.user.updateMany({
+            where: { status: 'ACTIVE', activeUntil: { not: null, lt: now } },
+            data: { status: 'INACTIVE' },
+        });
+        if (result.count > 0) {
+            this.logger.log(`Auto-deactivated ${result.count} expired users`);
+        }
+    }
     async scheduleDailyBenefit() {
         this.logger.log('Daily benefit cron triggered — queuing jobs...');
         const today = new Date().toISOString().split('T')[0];
+        await this.deactivateExpiredUsers();
         const activeUsers = await this.prisma.user.findMany({
             where: { status: 'ACTIVE' },
             select: { id: true },
@@ -80,18 +99,20 @@ let DailyBenefitService = DailyBenefitService_1 = class DailyBenefitService {
       SELECT COUNT(*) as count FROM team WHERE status = 'ACTIVE'
     `;
         const activeTeamCount = Number(result[0]?.count ?? 0);
-        const amount = calculateDailyBenefit(activeTeamCount);
-        if (amount <= 0)
-            return;
-        const isBase = activeTeamCount < 5;
+        const baseAmount = 100;
+        const tierAmount = calculateTierBonus(activeTeamCount);
+        const totalAmount = baseAmount + tierAmount;
         await this.prisma.$transaction(async (tx) => {
             const walletId = await this.walletService.getWalletId(userId);
-            await this.walletService.credit(tx, walletId, amount, client_1.TxType.DAILY_BENEFIT, `Daily benefit for ${dateStr} — active team: ${activeTeamCount}`, dateStr, isBase ? 'BASE' : 'TIER');
+            await this.walletService.credit(tx, walletId, baseAmount, client_1.TxType.DAILY_BENEFIT, `Daily benefit for ${dateStr}`, dateStr, 'BASE');
+            if (tierAmount > 0) {
+                await this.walletService.credit(tx, walletId, tierAmount, client_1.TxType.DAILY_BENEFIT, `Tier bonus for ${dateStr} — active team: ${activeTeamCount}`, dateStr, 'TIER');
+            }
             await tx.dailyBenefitLog.create({
-                data: { userId, date, teamCount: activeTeamCount, amount },
+                data: { userId, date, teamCount: activeTeamCount, amount: totalAmount },
             });
         });
-        this.logger.log(`Paid BDT ${amount} daily benefit to user ${userId} (team: ${activeTeamCount})`);
+        this.logger.log(`Paid BDT ${totalAmount} daily benefit to user ${userId} (team: ${activeTeamCount})`);
     }
     async getLogs(userId, page = 1, limit = 20) {
         const skip = (page - 1) * limit;

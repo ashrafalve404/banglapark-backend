@@ -24,6 +24,7 @@ import { AdminModule } from './modules/admin/admin.module';
 import { ReportsModule } from './modules/reports/reports.module';
 import { BannersModule } from './modules/banners/banners.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
+import { QuizModule } from './modules/quiz/quiz.module';
 
 @Module({
   imports: [
@@ -90,6 +91,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
     ReportsModule,
     BannersModule,
     UploadsModule,
+    QuizModule,
   ],
 })
 export class AppModule { }

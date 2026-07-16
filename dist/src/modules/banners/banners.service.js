@@ -34,6 +34,11 @@ let BannersService = class BannersService {
             orderBy: { sortOrder: 'asc' },
         });
     }
+    async findDailyWork() {
+        return this.prisma.banner.findFirst({
+            where: { section: 'DAILY_WORK', isActive: true },
+        });
+    }
     async create(dto) {
         return this.prisma.banner.create({ data: dto });
     }

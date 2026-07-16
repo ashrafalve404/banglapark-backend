@@ -56,7 +56,7 @@ let AdminService = class AdminService {
         this.usersService = usersService;
     }
     async getPlatformStats() {
-        const [totalUsers, activeUsers, inactiveUsers, totalOrders, deliveredOrders, totalRevenue, totalCommissions, pendingWithdrawals, totalProducts, totalProductValue, totalCostValue, deliveredOrderIds, approvedWithdrawals,] = await Promise.all([
+        const [totalUsers, activeUsers, inactiveUsers, totalOrders, deliveredOrders, totalRevenue, totalCommissions, pendingWithdrawals, products, deliveredOrderIds, approvedWithdrawals, deliveryCharges,] = await Promise.all([
             this.prisma.user.count({ where: { role: 'USER' } }),
             this.prisma.user.count({ where: { status: 'ACTIVE' } }),
             this.prisma.user.count({ where: { status: 'INACTIVE' } }),
@@ -65,9 +65,10 @@ let AdminService = class AdminService {
             this.prisma.order.aggregate({ _sum: { total: true } }),
             this.prisma.generationCommission.aggregate({ _sum: { amount: true } }),
             this.prisma.withdrawalRequest.count({ where: { status: 'PENDING' } }),
-            this.prisma.product.count({ where: { isActive: true } }),
-            this.prisma.product.aggregate({ where: { isActive: true }, _sum: { price: true } }),
-            this.prisma.product.aggregate({ where: { isActive: true }, _sum: { costPrice: true } }),
+            this.prisma.product.findMany({
+                where: { isActive: true },
+                select: { price: true, costPrice: true, stock: true },
+            }),
             this.prisma.order.findMany({
                 where: { status: 'DELIVERED' },
                 select: { id: true },
@@ -76,6 +77,7 @@ let AdminService = class AdminService {
                 where: { status: 'APPROVED' },
                 _sum: { amount: true },
             }),
+            this.prisma.order.aggregate({ _sum: { deliveryCharge: true } }),
         ]);
         const deliveredIdList = deliveredOrderIds.map((o) => o.id);
         let soldCost = 0;
@@ -92,9 +94,16 @@ let AdminService = class AdminService {
         const salesRevenue = Number(totalRevenue._sum.total ?? 0);
         const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
         const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
-        const productValue = Number(totalProductValue._sum.price ?? 0);
-        const costValue = Number(totalCostValue._sum.costPrice ?? 0);
-        const grossProfit = salesRevenue - soldCost;
+        const totalDeliveryCharges = Number(deliveryCharges._sum.deliveryCharge ?? 0);
+        const totalProducts = products.length;
+        let productValue = 0;
+        let costValue = 0;
+        for (const p of products) {
+            productValue += Number(p.price) * p.stock;
+            if (p.costPrice)
+                costValue += Number(p.costPrice) * p.stock;
+        }
+        const grossProfit = salesRevenue - soldCost - totalDeliveryCharges;
         const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
         return {
             users: { total: totalUsers, active: activeUsers, inactive: inactiveUsers },
@@ -108,6 +117,7 @@ let AdminService = class AdminService {
             totalWithdrawalsApproved: withdrawalsApproved,
             totalSales: salesRevenue,
             totalSoldCost: soldCost,
+            totalDeliveryCharges,
             grossProfit,
             netProfit,
         };

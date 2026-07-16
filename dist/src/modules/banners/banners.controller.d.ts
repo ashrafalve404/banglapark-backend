@@ -39,6 +39,18 @@ export declare class BannersController {
         badge: string | null;
         sortOrder: number;
     }[]>;
+    findDailyWork(): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        isActive: boolean;
+        section: import("@prisma/client").$Enums.BannerSection;
+        imageUrl: string;
+        linkUrl: string | null;
+        title: string | null;
+        badge: string | null;
+        sortOrder: number;
+    } | null>;
     create(dto: CreateBannerDto): Promise<{
         id: string;
         createdAt: Date;

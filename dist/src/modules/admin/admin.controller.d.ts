@@ -40,6 +40,7 @@ export declare class AdminController {
         totalWithdrawalsApproved: number;
         totalSales: number;
         totalSoldCost: number;
+        totalDeliveryCharges: number;
         grossProfit: number;
         netProfit: number;
     }>;

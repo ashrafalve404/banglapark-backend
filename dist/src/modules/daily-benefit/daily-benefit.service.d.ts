@@ -24,6 +24,7 @@ export declare const BENEFIT_TIERS: readonly [{
     readonly amount: 100;
 }];
 export declare function calculateDailyBenefit(activeTeamCount: number): number;
+export declare function calculateTierBonus(activeTeamCount: number): number;
 export declare const DAILY_BENEFIT_QUEUE = "daily-benefit";
 export declare class DailyBenefitService {
     private readonly prisma;
@@ -31,6 +32,7 @@ export declare class DailyBenefitService {
     private readonly benefitQueue;
     private readonly logger;
     constructor(prisma: PrismaService, walletService: WalletService, benefitQueue: Queue);
+    deactivateExpiredUsers(): Promise<void>;
     scheduleDailyBenefit(): Promise<void>;
     payBenefitForUser(userId: string, dateStr: string): Promise<void>;
     getLogs(userId?: string, page?: number, limit?: number): Promise<{

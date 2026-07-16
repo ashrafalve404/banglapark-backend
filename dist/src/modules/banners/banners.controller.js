@@ -29,6 +29,7 @@ let BannersController = class BannersController {
     findAll() { return this.bannersService.findAll(); }
     findActive(section) { return this.bannersService.findActive(section); }
     findOffers() { return this.bannersService.findOffers(); }
+    findDailyWork() { return this.bannersService.findDailyWork(); }
     create(dto) { return this.bannersService.create(dto); }
     update(id, dto) {
         return this.bannersService.update(id, dto);
@@ -58,6 +59,13 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", void 0)
 ], BannersController.prototype, "findOffers", null);
+__decorate([
+    (0, common_1.Get)('daily-work'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get active daily work image (public)' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], BannersController.prototype, "findDailyWork", null);
 __decorate([
     (0, common_1.Post)(),
     (0, swagger_1.ApiBearerAuth)(),
