@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { QuizService } from './quiz.service';
-import { CreateQuizDto, UpdateQuizDto, SubmitQuizDto } from './dto/quiz.dto';
+import { CreateQuestionDto, PurchaseDto, SubmitAnswerDto } from './dto/quiz.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -12,70 +12,71 @@ import { Role } from '@prisma/client';
 @ApiTags('Quiz')
 @Controller('quiz')
 export class QuizController {
-    constructor(private readonly quizService: QuizService) { }
+    constructor(private readonly quizService: QuizService) {}
 
-    // ── Admin endpoints ───────────────────────────────────────────────────────
+    // ── Admin: Questions ─────────────────────────────────────────────────────
 
-    @Post('admin')
+    @Post('admin/questions/:categoryId')
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-    @ApiOperation({ summary: '[Admin] Create quiz with questions' })
-    adminCreate(@Body() dto: CreateQuizDto) { return this.quizService.adminCreate(dto); }
-
-    @Get('admin')
-    @ApiBearerAuth()
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-    @ApiOperation({ summary: '[Admin] List all quizzes' })
-    adminFindAll() { return this.quizService.adminFindAll(); }
-
-    @Get('admin/:id')
-    @ApiBearerAuth()
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-    @ApiOperation({ summary: '[Admin] Get quiz details with questions' })
-    adminFindOne(@Param('id') id: string) { return this.quizService.adminFindOne(id); }
-
-    @Patch('admin/:id')
-    @ApiBearerAuth()
-    @UseGuards(JwtAuthGuard, RolesGuard)
-    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-    @ApiOperation({ summary: '[Admin] Update quiz' })
-    adminUpdate(@Param('id') id: string, @Body() dto: UpdateQuizDto) {
-        return this.quizService.adminUpdate(id, dto);
+    @ApiOperation({ summary: '[Admin] Add questions to a category' })
+    addQuestions(@Param('categoryId') categoryId: string, @Body() dtos: CreateQuestionDto[]) {
+        return this.quizService.addQuestions(categoryId, dtos);
     }
 
-    @Delete('admin/:id')
+    @Get('admin/questions/:categoryId')
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-    @ApiOperation({ summary: '[Admin] Delete quiz' })
-    adminDelete(@Param('id') id: string) { return this.quizService.adminDelete(id); }
+    @ApiOperation({ summary: '[Admin] List questions in a category' })
+    getQuestions(
+        @Param('categoryId') categoryId: string,
+        @Query('page') page?: string,
+        @Query('limit') limit?: string,
+    ) {
+        return this.quizService.getQuestions(categoryId, Number(page) || 1, Number(limit) || 50);
+    }
 
-    // ── User endpoints ────────────────────────────────────────────────────────
+    @Patch('admin/questions/:id')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiOperation({ summary: '[Admin] Update a question' })
+    updateQuestion(@Param('id') id: string, @Body() dto: Partial<CreateQuestionDto>) {
+        return this.quizService.updateQuestion(id, dto);
+    }
 
-    @Get()
-    @ApiOperation({ summary: 'List active quizzes (public)' })
-    findActive() { return this.quizService.findActive(); }
+    @Delete('admin/questions/:id')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiOperation({ summary: '[Admin] Delete a question' })
+    deleteQuestion(@Param('id') id: string) {
+        return this.quizService.deleteQuestion(id);
+    }
 
-    @Get(':id')
-    @ApiOperation({ summary: 'Get quiz details (public)' })
-    findOne(@Param('id') id: string) { return this.quizService.findOne(id); }
+    // ── User: Category info & purchase ───────────────────────────────────────
 
-    @Post(':id/purchase')
+    @Get('category/:categoryId/count')
+    @ApiOperation({ summary: 'Get total question count in a category' })
+    getCategoryCount(@Param('categoryId') categoryId: string) {
+        return this.quizService.getQuestions(categoryId, 1, 0).then((r) => ({ total: r.total }));
+    }
+
+    @Post('purchase/:categoryId')
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
-    @ApiOperation({ summary: 'Purchase a quiz' })
+    @ApiOperation({ summary: 'Purchase quiz questions from a category' })
     purchase(
         @Req() req: any,
-        @Param('id') id: string,
-        @Query('method') method?: string,
+        @Param('categoryId') categoryId: string,
+        @Body() dto: PurchaseDto,
     ) {
-        return this.quizService.purchase(req.user.userId, id, method || 'WALLET');
+        return this.quizService.purchase(req.user.userId, categoryId, dto);
     }
 
-    @Get('user/purchased')
+    @Get('purchased')
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'List user purchased quizzes' })
@@ -83,10 +84,12 @@ export class QuizController {
         return this.quizService.getPurchased(req.user.userId);
     }
 
-    @Get('attempt/:purchaseId')
+    // ── User: Attempt ────────────────────────────────────────────────────────
+
+    @Post('attempt/:purchaseId/start')
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
-    @ApiOperation({ summary: 'Start/get quiz attempt questions' })
+    @ApiOperation({ summary: 'Start/get quiz attempt' })
     startAttempt(@Req() req: any, @Param('purchaseId') purchaseId: string) {
         return this.quizService.startAttempt(req.user.userId, purchaseId);
     }
@@ -94,12 +97,28 @@ export class QuizController {
     @Post('attempt/:purchaseId/submit')
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard)
-    @ApiOperation({ summary: 'Submit quiz answers' })
-    submitAttempt(
+    @ApiOperation({ summary: 'Submit answer for current question' })
+    submitAnswer(
         @Req() req: any,
         @Param('purchaseId') purchaseId: string,
-        @Body() dto: SubmitQuizDto,
+        @Body() dto: SubmitAnswerDto,
     ) {
-        return this.quizService.submitAttempt(req.user.userId, purchaseId, dto);
+        return this.quizService.submitAnswer(req.user.userId, purchaseId, dto);
+    }
+
+    @Get('attempt/:purchaseId/next')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Get next unanswered question' })
+    getNextQuestion(@Req() req: any, @Param('purchaseId') purchaseId: string) {
+        return this.quizService.getNextQuestion(req.user.userId, purchaseId);
+    }
+
+    @Get('attempt/:purchaseId/result')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Get quiz result' })
+    getResult(@Req() req: any, @Param('purchaseId') purchaseId: string) {
+        return this.quizService.getResult(req.user.userId, purchaseId);
     }
 }

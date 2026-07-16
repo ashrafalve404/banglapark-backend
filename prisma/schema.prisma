@@ -31,6 +31,7 @@ enum TxType {
   REFUND
   ADMIN_ADJUSTMENT
   QUIZ_PURCHASE
+  QUIZ_EARNING
 }
 
 enum OrderStatus {
@@ -297,53 +298,64 @@ model Banner {
 enum QuizPurchaseStatus {
   PURCHASED
   COMPLETED
-  TIMEOUT
 }
 
-model Quiz {
-  id        String         @id @default(uuid())
-  title     String
-  price     Decimal        @db.Decimal(10, 2)
-  timeLimit Int            @default(2)
-  isActive  Boolean        @default(true)
+model QuizCategory {
+  id        String   @id @default(uuid())
+  name      String
+  imageUrl  String
+  isActive  Boolean  @default(true)
   questions QuizQuestion[]
   purchases QuizPurchase[]
-  createdAt DateTime       @default(now())
-  updatedAt DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model QuizQuestion {
-  id           String @id @default(uuid())
-  quizId       String
-  quiz         Quiz   @relation(fields: [quizId], references: [id], onDelete: Cascade)
+  id           String       @id @default(uuid())
+  categoryId   String
+  category     QuizCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
   question     String
   options      Json
   correctIndex Int
-  sortOrder    Int    @default(0)
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  sortOrder    Int          @default(0)
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
 
-  @@index([quizId])
+  @@index([categoryId])
 }
 
 model QuizPurchase {
-  id             String             @id @default(uuid())
-  userId         String
-  user           User               @relation(fields: [userId], references: [id])
-  quizId         String
-  quiz           Quiz               @relation(fields: [quizId], references: [id])
-  status         QuizPurchaseStatus @default(PURCHASED)
-  score          Int?
-  totalQuestions Int?
-  answers        Json?
-  paymentMethod  String             @default("WALLET")
-  purchasedAt    DateTime           @default(now())
-  startedAt      DateTime?
-  completedAt    DateTime?
+  id            String             @id @default(uuid())
+  userId        String
+  user          User               @relation(fields: [userId], references: [id])
+  categoryId    String
+  category      QuizCategory       @relation(fields: [categoryId], references: [id])
+  questionCount Int
+  totalPrice    Decimal            @db.Decimal(10, 2)
+  status        QuizPurchaseStatus @default(PURCHASED)
+  currentIndex  Int                @default(0)
+  paymentMethod String             @default("WALLET")
+  purchasedAt   DateTime           @default(now())
+  startedAt     DateTime?
+  completedAt   DateTime?
+  answers       QuizAnswer[]
 
   @@index([userId])
-  @@index([quizId])
-  @@index([userId, quizId])
+  @@index([categoryId])
+}
+
+model QuizAnswer {
+  id            String       @id @default(uuid())
+  purchaseId    String
+  purchase      QuizPurchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      QuizQuestion @relation(fields: [questionId], references: [id])
+  selectedIndex Int?
+  isCorrect     Boolean?
+  answeredAt    DateTime     @default(now())
+
+  @@index([purchaseId])
 }
 
 // ─── Platform configuration (admin-adjustable rules) ─────────────────────────

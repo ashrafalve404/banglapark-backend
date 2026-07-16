@@ -1,8 +1,8 @@
-import { IsString, IsNumber, IsBoolean, IsOptional, IsArray, ValidateNested, Min, IsInt, IsEnum } from 'class-validator';
+import { IsString, IsNumber, IsOptional, IsArray, IsInt, Min, ValidateNested } from 'class-validator';
 import { Type } from 'class-transformer';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
-export class QuestionDto {
+export class CreateQuestionDto {
     @ApiProperty({ example: 'What is 2+2?' })
     @IsString()
     question: string;
@@ -12,71 +12,36 @@ export class QuestionDto {
     @IsString({ each: true })
     options: string[];
 
-    @ApiProperty({ example: 3, description: 'Index of the correct answer (0-based)' })
+    @ApiProperty({ example: 3 })
     @IsInt()
     @Min(0)
     correctIndex: number;
 
-    @ApiPropertyOptional({ default: 0 })
+    @ApiPropertyOptional()
     @IsOptional()
     @IsInt()
     sortOrder?: number;
 }
 
-export class CreateQuizDto {
-    @ApiProperty({ example: 'General Knowledge Quiz' })
-    @IsString()
-    title: string;
-
-    @ApiProperty({ example: 50 })
-    @IsNumber()
-    @Min(0)
-    price: number;
-
-    @ApiPropertyOptional({ default: 2 })
-    @IsOptional()
+export class PurchaseDto {
+    @ApiProperty({ example: 10, description: 'Number of questions to buy' })
     @IsInt()
     @Min(1)
-    timeLimit?: number;
+    questionCount: number;
 
-    @ApiPropertyOptional({ default: true })
-    @IsOptional()
-    @IsBoolean()
-    isActive?: boolean;
-
-    @ApiProperty({ type: [QuestionDto] })
-    @IsArray()
-    @ValidateNested({ each: true })
-    @Type(() => QuestionDto)
-    questions: QuestionDto[];
-}
-
-export class UpdateQuizDto {
-    @ApiPropertyOptional()
+    @ApiPropertyOptional({ default: 'WALLET' })
     @IsOptional()
     @IsString()
-    title?: string;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsNumber()
-    @Min(0)
-    price?: number;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsInt()
-    @Min(1)
-    timeLimit?: number;
-
-    @ApiPropertyOptional()
-    @IsOptional()
-    @IsBoolean()
-    isActive?: boolean;
+    paymentMethod?: string;
 }
 
-export class SubmitQuizDto {
-    @ApiProperty({ description: 'Array of { questionId, selectedIndex } answers' })
-    @IsArray()
-    answers: { questionId: string; selectedIndex: number }[];
+export class SubmitAnswerDto {
+    @ApiProperty({ example: 'question-uuid' })
+    @IsString()
+    questionId: string;
+
+    @ApiProperty({ example: 2 })
+    @IsInt()
+    @Min(0)
+    selectedIndex: number;
 }

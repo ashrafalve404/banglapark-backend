@@ -1,7 +1,9 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
-import { CreateQuizDto, UpdateQuizDto, SubmitQuizDto } from './dto/quiz.dto';
+import { CreateQuestionDto, PurchaseDto, SubmitAnswerDto } from './dto/quiz.dto';
+
+const PRICE_PER_QUESTION = 1;
 
 @Injectable()
 export class QuizService {
@@ -10,106 +12,80 @@ export class QuizService {
         private readonly walletService: WalletService,
     ) { }
 
-    // ── Admin: CRUD ───────────────────────────────────────────────────────────
+    // ── Admin: Question CRUD ─────────────────────────────────────────────────
 
-    async adminCreate(dto: CreateQuizDto) {
-        if (!dto.questions || dto.questions.length === 0) {
-            throw new BadRequestException('Quiz must have at least one question');
-        }
-        return this.prisma.quiz.create({
-            data: {
-                title: dto.title,
-                price: dto.price,
-                timeLimit: dto.timeLimit ?? 2,
-                isActive: dto.isActive ?? true,
-                questions: {
-                    create: dto.questions.map((q, i) => ({
-                        question: q.question,
-                        options: q.options,
-                        correctIndex: q.correctIndex,
-                        sortOrder: q.sortOrder ?? i,
-                    })),
-                },
-            },
-            include: { questions: { orderBy: { sortOrder: 'asc' } } },
+    async addQuestions(categoryId: string, dtos: CreateQuestionDto[]) {
+        const cat = await this.prisma.quizCategory.findUnique({ where: { id: categoryId } });
+        if (!cat) throw new NotFoundException('Quiz category not found');
+
+        const maxOrder = await this.prisma.quizQuestion.aggregate({
+            where: { categoryId },
+            _max: { sortOrder: true },
         });
+
+        let startOrder = (maxOrder._max.sortOrder ?? -1) + 1;
+
+        const questions = dtos.map((dto) => ({
+            categoryId,
+            question: dto.question,
+            options: dto.options,
+            correctIndex: dto.correctIndex,
+            sortOrder: dto.sortOrder ?? startOrder++,
+        }));
+
+        await this.prisma.quizQuestion.createMany({ data: questions });
+        return { message: `${questions.length} questions added` };
     }
 
-    async adminFindAll() {
-        return this.prisma.quiz.findMany({
-            include: { _count: { select: { questions: true, purchases: true } } },
-            orderBy: { createdAt: 'desc' },
+    async getQuestions(categoryId: string, page = 1, limit = 50) {
+        const cat = await this.prisma.quizCategory.findUnique({ where: { id: categoryId } });
+        if (!cat) throw new NotFoundException('Quiz category not found');
+
+        const skip = (page - 1) * limit;
+        const [questions, total] = await Promise.all([
+            this.prisma.quizQuestion.findMany({
+                where: { categoryId },
+                orderBy: { sortOrder: 'asc' },
+                skip,
+                take: limit,
+            }),
+            this.prisma.quizQuestion.count({ where: { categoryId } }),
+        ]);
+
+        return { questions, total, page, limit, totalPages: Math.ceil(total / limit) };
+    }
+
+    async updateQuestion(id: string, dto: Partial<CreateQuestionDto>) {
+        const q = await this.prisma.quizQuestion.findUnique({ where: { id } });
+        if (!q) throw new NotFoundException('Question not found');
+        return this.prisma.quizQuestion.update({ where: { id }, data: dto });
+    }
+
+    async deleteQuestion(id: string) {
+        const q = await this.prisma.quizQuestion.findUnique({ where: { id } });
+        if (!q) throw new NotFoundException('Question not found');
+        await this.prisma.quizQuestion.delete({ where: { id } });
+        return { message: 'Question deleted' };
+    }
+
+    // ── User: Purchase ───────────────────────────────────────────────────────
+
+    async purchase(userId: string, categoryId: string, dto: PurchaseDto) {
+        const cat = await this.prisma.quizCategory.findUnique({
+            where: { id: categoryId, isActive: true },
         });
-    }
+        if (!cat) throw new NotFoundException('Category not found');
 
-    async adminFindOne(id: string) {
-        const quiz = await this.prisma.quiz.findUnique({
-            where: { id },
-            include: { questions: { orderBy: { sortOrder: 'asc' } } },
+        const totalQuestions = await this.prisma.quizQuestion.count({
+            where: { categoryId },
         });
-        if (!quiz) throw new NotFoundException('Quiz not found');
-        return quiz;
-    }
+        if (totalQuestions === 0) throw new BadRequestException('No questions available in this category');
 
-    async adminUpdate(id: string, dto: UpdateQuizDto) {
-        const quiz = await this.prisma.quiz.findUnique({ where: { id } });
-        if (!quiz) throw new NotFoundException('Quiz not found');
-        return this.prisma.quiz.update({ where: { id }, data: dto });
-    }
+        const count = Math.min(dto.questionCount, totalQuestions);
+        const price = count * PRICE_PER_QUESTION;
+        const method = dto.paymentMethod || 'WALLET';
 
-    async adminDelete(id: string) {
-        const quiz = await this.prisma.quiz.findUnique({ where: { id } });
-        if (!quiz) throw new NotFoundException('Quiz not found');
-        await this.prisma.quiz.delete({ where: { id } });
-        return { message: 'Quiz deleted' };
-    }
-
-    // ── User: browse & purchase ───────────────────────────────────────────────
-
-    async findActive() {
-        return this.prisma.quiz.findMany({
-            where: { isActive: true },
-            select: {
-                id: true,
-                title: true,
-                price: true,
-                timeLimit: true,
-                _count: { select: { questions: true } },
-            },
-            orderBy: { createdAt: 'desc' },
-        });
-    }
-
-    async findOne(id: string) {
-        const quiz = await this.prisma.quiz.findUnique({
-            where: { id, isActive: true },
-            select: {
-                id: true,
-                title: true,
-                price: true,
-                timeLimit: true,
-                questions: {
-                    select: { id: true, question: true, options: true },
-                    orderBy: { sortOrder: 'asc' },
-                },
-            },
-        });
-        if (!quiz) throw new NotFoundException('Quiz not found');
-        return quiz;
-    }
-
-    async purchase(userId: string, quizId: string, paymentMethod: string) {
-        const quiz = await this.prisma.quiz.findUnique({ where: { id: quizId, isActive: true } });
-        if (!quiz) throw new NotFoundException('Quiz not found');
-
-        const existing = await this.prisma.quizPurchase.findFirst({
-            where: { userId, quizId },
-        });
-        if (existing) throw new BadRequestException('You have already purchased this quiz');
-
-        const price = Number(quiz.price);
-
-        if (paymentMethod === 'WALLET') {
+        if (method === 'WALLET') {
             const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
             if (!wallet) throw new NotFoundException('Wallet not found');
             if (Number(wallet.balance) < price) {
@@ -117,16 +93,16 @@ export class QuizService {
             }
 
             return this.prisma.$transaction(async (tx: any) => {
-                await this.walletService.debit(tx, wallet.id, price, 'QUIZ_PURCHASE', `Quiz purchase: ${quiz.title}`, quizId);
+                await this.walletService.debit(tx, wallet.id, price, 'QUIZ_PURCHASE', `Quiz purchase: ${count} questions from ${cat.name}`, categoryId);
 
                 const purchase = await tx.quizPurchase.create({
-                    data: { userId, quizId, paymentMethod: 'WALLET' },
+                    data: { userId, categoryId, questionCount: count, totalPrice: price, paymentMethod: 'WALLET' },
                 });
                 return purchase;
             });
-        } else if (paymentMethod === 'BKASH') {
+        } else if (method === 'BKASH') {
             return this.prisma.quizPurchase.create({
-                data: { userId, quizId, paymentMethod: 'BKASH' },
+                data: { userId, categoryId, questionCount: count, totalPrice: price, paymentMethod: 'BKASH' },
             });
         } else {
             throw new BadRequestException('Invalid payment method');
@@ -137,26 +113,34 @@ export class QuizService {
         return this.prisma.quizPurchase.findMany({
             where: { userId },
             include: {
-                quiz: {
-                    select: { id: true, title: true, price: true, timeLimit: true, _count: { select: { questions: true } } },
-                },
+                category: { select: { id: true, name: true, imageUrl: true } },
+                _count: { select: { answers: true } },
             },
             orderBy: { purchasedAt: 'desc' },
         });
     }
 
-    // ── Attempt ───────────────────────────────────────────────────────────────
+    // ── User: Attempt ────────────────────────────────────────────────────────
 
     async startAttempt(userId: string, purchaseId: string) {
         const purchase = await this.prisma.quizPurchase.findUnique({
             where: { id: purchaseId },
-            include: { quiz: { include: { questions: { orderBy: { sortOrder: 'asc' } } } } },
+            include: { category: { include: { questions: { orderBy: { sortOrder: 'asc' } } } } },
         });
         if (!purchase) throw new NotFoundException('Purchase not found');
         if (purchase.userId !== userId) throw new ForbiddenException('Not your purchase');
-        if (purchase.status !== 'PURCHASED') throw new BadRequestException('Quiz already completed or timed out');
+        if (purchase.status !== 'PURCHASED') throw new BadRequestException('Quiz already completed');
 
-        // Start timer on first access
+        // Select N random questions from the category
+        const allQuestions = purchase.category.questions;
+        const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, purchase.questionCount).map((q) => ({
+            id: q.id,
+            question: q.question,
+            options: q.options as string[],
+        }));
+
+        // Initialize start time if first access
         if (!purchase.startedAt) {
             await this.prisma.quizPurchase.update({
                 where: { id: purchaseId },
@@ -164,59 +148,192 @@ export class QuizService {
             });
         }
 
-        // Return questions WITHOUT correctIndex
-        const questions = purchase.quiz.questions.map((q) => ({
-            id: q.id,
-            question: q.question,
-            options: q.options as string[],
-        }));
-
         return {
-            purchase,
-            quiz: { title: purchase.quiz.title, timeLimit: purchase.quiz.timeLimit },
-            questions,
+            purchaseId: purchase.id,
+            category: { id: purchase.categoryId, name: purchase.category.name, imageUrl: purchase.category.imageUrl },
+            questionCount: purchase.questionCount,
+            questions: selected,
+            currentIndex: purchase.currentIndex,
             startedAt: purchase.startedAt || new Date(),
         };
     }
 
-    async submitAttempt(userId: string, purchaseId: string, dto: SubmitQuizDto) {
+    async submitAnswer(userId: string, purchaseId: string, dto: SubmitAnswerDto) {
         const purchase = await this.prisma.quizPurchase.findUnique({
             where: { id: purchaseId },
-            include: { quiz: { include: { questions: true } } },
+            include: { category: { include: { questions: true } } },
         });
         if (!purchase) throw new NotFoundException('Purchase not found');
         if (purchase.userId !== userId) throw new ForbiddenException('Not your purchase');
-        if (purchase.status !== 'PURCHASED') throw new BadRequestException('Quiz already completed or timed out');
+        if (purchase.status !== 'PURCHASED') throw new BadRequestException('Quiz already completed');
 
-        // Check time limit
-        const timeLimitMs = purchase.quiz.timeLimit * 60 * 1000;
-        const startedAt = purchase.startedAt || new Date();
-        const elapsed = Date.now() - startedAt.getTime();
-        const timedOut = elapsed > timeLimitMs;
+        // Check if already answered this question
+        const existing = await this.prisma.quizAnswer.findFirst({
+            where: { purchaseId, questionId: dto.questionId },
+        });
+        if (existing) throw new BadRequestException('Already answered this question');
 
-        // Grade
-        const questions = purchase.quiz.questions;
-        let score = 0;
-        for (const answer of dto.answers) {
-            const q = questions.find((qq) => qq.id === answer.questionId);
-            if (q && q.correctIndex === answer.selectedIndex) {
-                score++;
-            }
-        }
+        // Find the question and check answer
+        const question = purchase.category.questions.find((q) => q.id === dto.questionId);
+        if (!question) throw new BadRequestException('Question not found in this category');
 
-        const status = timedOut ? 'TIMEOUT' : 'COMPLETED';
+        const isCorrect = question.correctIndex === dto.selectedIndex;
 
-        await this.prisma.quizPurchase.update({
-            where: { id: purchaseId },
+        await this.prisma.quizAnswer.create({
             data: {
-                status,
-                score,
-                totalQuestions: questions.length,
-                answers: dto.answers as any,
-                completedAt: new Date(),
+                purchaseId,
+                questionId: dto.questionId,
+                selectedIndex: dto.selectedIndex,
+                isCorrect,
             },
         });
 
-        return { status, score, totalQuestions: questions.length, timedOut };
+        // Advance to next
+        const nextIndex = purchase.currentIndex + 1;
+        const isLast = nextIndex >= purchase.questionCount;
+
+        if (isLast) {
+            // Calculate score and reward
+            const answers = await this.prisma.quizAnswer.findMany({
+                where: { purchaseId },
+            });
+            const correctCount = answers.filter((a) => a.isCorrect).length;
+            const wrongCount = answers.length - correctCount;
+            const netReward = correctCount * 2 - wrongCount * 1;
+
+            // Award or deduct reward to wallet
+            const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+            if (wallet && netReward !== 0) {
+                const catName = purchase.category?.name || 'Quiz';
+                if (netReward > 0) {
+                    await this.walletService.credit(
+                        this.prisma,
+                        wallet.id,
+                        netReward,
+                        'QUIZ_EARNING',
+                        `Quiz reward: ${correctCount} correct × 2tk - ${wrongCount} wrong × 1tk = ${netReward}tk (${catName})`,
+                        purchaseId,
+                    );
+                } else {
+                    const debitAmount = Math.abs(netReward);
+                    try {
+                        await this.walletService.debit(
+                            this.prisma,
+                            wallet.id,
+                            debitAmount,
+                            'QUIZ_EARNING',
+                            `Quiz penalty: ${wrongCount} wrong × 1tk = ${debitAmount}tk (${catName})`,
+                            purchaseId,
+                        );
+                    } catch {
+                        // Allow completion even if wallet has insufficient balance for penalty
+                    }
+                }
+            }
+
+            await this.prisma.quizPurchase.update({
+                where: { id: purchaseId },
+                data: { currentIndex: nextIndex, status: 'COMPLETED', completedAt: new Date() },
+            });
+
+            return { status: 'COMPLETED', score: correctCount, totalQuestions: purchase.questionCount, isLast: true, netReward };
+        } else {
+            await this.prisma.quizPurchase.update({
+                where: { id: purchaseId },
+                data: { currentIndex: nextIndex },
+            });
+
+            return { status: 'IN_PROGRESS', currentIndex: nextIndex, isLast: false };
+        }
+    }
+
+    async getNextQuestion(userId: string, purchaseId: string) {
+        const purchase = await this.prisma.quizPurchase.findUnique({
+            where: { id: purchaseId },
+            include: { category: { include: { questions: { orderBy: { sortOrder: 'asc' } } } } },
+        });
+        if (!purchase) throw new NotFoundException('Purchase not found');
+        if (purchase.userId !== userId) throw new ForbiddenException('Not your purchase');
+
+        if (purchase.status !== 'PURCHASED') {
+            // Return results with reward
+            const answers = await this.prisma.quizAnswer.findMany({ where: { purchaseId } });
+            const correctCount = answers.filter((a) => a.isCorrect).length;
+            const wrongCount = answers.length - correctCount;
+            const netReward = correctCount * 2 - wrongCount * 1;
+            return { status: purchase.status, score: correctCount, totalQuestions: purchase.questionCount, completed: true, netReward };
+        }
+
+        const answeredIds = new Set(
+            (await this.prisma.quizAnswer.findMany({
+                where: { purchaseId },
+                select: { questionId: true },
+            })).map((a) => a.questionId),
+        );
+
+        // Get all category questions shuffled, pick the ones not answered yet
+        const shuffled = [...purchase.category.questions].sort(() => Math.random() - 0.5);
+        const selected = shuffled.slice(0, purchase.questionCount);
+        const unanswered = selected.filter((q) => !answeredIds.has(q.id));
+
+        if (unanswered.length === 0) {
+            const answers = await this.prisma.quizAnswer.findMany({ where: { purchaseId } });
+            const score = answers.filter((a) => a.isCorrect).length;
+            await this.prisma.quizPurchase.update({
+                where: { id: purchaseId },
+                data: { status: 'COMPLETED', completedAt: new Date() },
+            });
+            return { status: 'COMPLETED', score, totalQuestions: purchase.questionCount, completed: true };
+        }
+
+        return {
+            status: 'IN_PROGRESS',
+            question: {
+                id: unanswered[0].id,
+                question: unanswered[0].question,
+                options: unanswered[0].options as string[],
+            },
+            currentIndex: purchase.currentIndex,
+            totalQuestions: purchase.questionCount,
+            answeredCount: answeredIds.size,
+            completed: false,
+        };
+    }
+
+    async getResult(userId: string, purchaseId: string) {
+        const purchase = await this.prisma.quizPurchase.findUnique({
+            where: { id: purchaseId },
+            include: {
+                category: { select: { id: true, name: true, imageUrl: true } },
+                answers: {
+                    include: { question: { select: { question: true, options: true, correctIndex: true } } },
+                    orderBy: { answeredAt: 'asc' },
+                },
+            },
+        });
+        if (!purchase) throw new NotFoundException('Purchase not found');
+        if (purchase.userId !== userId) throw new ForbiddenException('Not your purchase');
+
+        const correctCount = purchase.answers.filter((a) => a.isCorrect).length;
+        const wrongCount = purchase.answers.length - correctCount;
+        const netReward = correctCount * 2 - wrongCount * 1;
+
+        return {
+            purchaseId: purchase.id,
+            category: purchase.category,
+            questionCount: purchase.questionCount,
+            score: correctCount,
+            netReward,
+            status: purchase.status,
+            startedAt: purchase.startedAt,
+            completedAt: purchase.completedAt,
+            answers: purchase.answers.map((a) => ({
+                question: a.question.question,
+                options: a.question.options as string[],
+                correctIndex: a.question.correctIndex,
+                selectedIndex: a.selectedIndex,
+                isCorrect: a.isCorrect,
+            })),
+        };
     }
 }
