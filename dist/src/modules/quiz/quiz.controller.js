@@ -26,17 +26,23 @@ let QuizController = class QuizController {
     constructor(quizService) {
         this.quizService = quizService;
     }
-    adminCreate(dto) { return this.quizService.adminCreate(dto); }
-    adminFindAll() { return this.quizService.adminFindAll(); }
-    adminFindOne(id) { return this.quizService.adminFindOne(id); }
-    adminUpdate(id, dto) {
-        return this.quizService.adminUpdate(id, dto);
+    addQuestions(categoryId, dtos) {
+        return this.quizService.addQuestions(categoryId, dtos);
     }
-    adminDelete(id) { return this.quizService.adminDelete(id); }
-    findActive() { return this.quizService.findActive(); }
-    findOne(id) { return this.quizService.findOne(id); }
-    purchase(req, id, method) {
-        return this.quizService.purchase(req.user.userId, id, method || 'WALLET');
+    getQuestions(categoryId, page, limit) {
+        return this.quizService.getQuestions(categoryId, Number(page) || 1, Number(limit) || 50);
+    }
+    updateQuestion(id, dto) {
+        return this.quizService.updateQuestion(id, dto);
+    }
+    deleteQuestion(id) {
+        return this.quizService.deleteQuestion(id);
+    }
+    getCategoryCount(categoryId) {
+        return this.quizService.getQuestions(categoryId, 1, 0).then((r) => ({ total: r.total }));
+    }
+    purchase(req, categoryId, dto) {
+        return this.quizService.purchase(req.user.userId, categoryId, dto);
     }
     getPurchased(req) {
         return this.quizService.getPurchased(req.user.userId);
@@ -44,95 +50,87 @@ let QuizController = class QuizController {
     startAttempt(req, purchaseId) {
         return this.quizService.startAttempt(req.user.userId, purchaseId);
     }
-    submitAttempt(req, purchaseId, dto) {
-        return this.quizService.submitAttempt(req.user.userId, purchaseId, dto);
+    submitAnswer(req, purchaseId, dto) {
+        return this.quizService.submitAnswer(req.user.userId, purchaseId, dto);
+    }
+    getNextQuestion(req, purchaseId) {
+        return this.quizService.getNextQuestion(req.user.userId, purchaseId);
+    }
+    getResult(req, purchaseId) {
+        return this.quizService.getResult(req.user.userId, purchaseId);
     }
 };
 exports.QuizController = QuizController;
 __decorate([
-    (0, common_1.Post)('admin'),
+    (0, common_1.Post)('admin/questions/:categoryId'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: '[Admin] Create quiz with questions' }),
-    __param(0, (0, common_1.Body)()),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Add questions to a category' }),
+    __param(0, (0, common_1.Param)('categoryId')),
+    __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [quiz_dto_1.CreateQuizDto]),
+    __metadata("design:paramtypes", [String, Array]),
     __metadata("design:returntype", void 0)
-], QuizController.prototype, "adminCreate", null);
+], QuizController.prototype, "addQuestions", null);
 __decorate([
-    (0, common_1.Get)('admin'),
+    (0, common_1.Get)('admin/questions/:categoryId'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: '[Admin] List all quizzes' }),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] List questions in a category' }),
+    __param(0, (0, common_1.Param)('categoryId')),
+    __param(1, (0, common_1.Query)('page')),
+    __param(2, (0, common_1.Query)('limit')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String, String, String]),
     __metadata("design:returntype", void 0)
-], QuizController.prototype, "adminFindAll", null);
+], QuizController.prototype, "getQuestions", null);
 __decorate([
-    (0, common_1.Get)('admin/:id'),
+    (0, common_1.Patch)('admin/questions/:id'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: '[Admin] Get quiz details with questions' }),
-    __param(0, (0, common_1.Param)('id')),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String]),
-    __metadata("design:returntype", void 0)
-], QuizController.prototype, "adminFindOne", null);
-__decorate([
-    (0, common_1.Patch)('admin/:id'),
-    (0, swagger_1.ApiBearerAuth)(),
-    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
-    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: '[Admin] Update quiz' }),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Update a question' }),
     __param(0, (0, common_1.Param)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, quiz_dto_1.UpdateQuizDto]),
+    __metadata("design:paramtypes", [String, Object]),
     __metadata("design:returntype", void 0)
-], QuizController.prototype, "adminUpdate", null);
+], QuizController.prototype, "updateQuestion", null);
 __decorate([
-    (0, common_1.Delete)('admin/:id'),
+    (0, common_1.Delete)('admin/questions/:id'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: '[Admin] Delete quiz' }),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Delete a question' }),
     __param(0, (0, common_1.Param)('id')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], QuizController.prototype, "adminDelete", null);
+], QuizController.prototype, "deleteQuestion", null);
 __decorate([
-    (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'List active quizzes (public)' }),
-    __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
-    __metadata("design:returntype", void 0)
-], QuizController.prototype, "findActive", null);
-__decorate([
-    (0, common_1.Get)(':id'),
-    (0, swagger_1.ApiOperation)({ summary: 'Get quiz details (public)' }),
-    __param(0, (0, common_1.Param)('id')),
+    (0, common_1.Get)('category/:categoryId/count'),
+    (0, swagger_1.ApiOperation)({ summary: 'Get total question count in a category' }),
+    __param(0, (0, common_1.Param)('categoryId')),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
-], QuizController.prototype, "findOne", null);
+], QuizController.prototype, "getCategoryCount", null);
 __decorate([
-    (0, common_1.Post)(':id/purchase'),
+    (0, common_1.Post)('purchase/:categoryId'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiOperation)({ summary: 'Purchase a quiz' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Purchase quiz questions from a category' }),
     __param(0, (0, common_1.Req)()),
-    __param(1, (0, common_1.Param)('id')),
-    __param(2, (0, common_1.Query)('method')),
+    __param(1, (0, common_1.Param)('categoryId')),
+    __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, String]),
+    __metadata("design:paramtypes", [Object, String, quiz_dto_1.PurchaseDto]),
     __metadata("design:returntype", void 0)
 ], QuizController.prototype, "purchase", null);
 __decorate([
-    (0, common_1.Get)('user/purchased'),
+    (0, common_1.Get)('purchased'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
     (0, swagger_1.ApiOperation)({ summary: 'List user purchased quizzes' }),
@@ -142,10 +140,10 @@ __decorate([
     __metadata("design:returntype", void 0)
 ], QuizController.prototype, "getPurchased", null);
 __decorate([
-    (0, common_1.Get)('attempt/:purchaseId'),
+    (0, common_1.Post)('attempt/:purchaseId/start'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiOperation)({ summary: 'Start/get quiz attempt questions' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Start/get quiz attempt' }),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('purchaseId')),
     __metadata("design:type", Function),
@@ -156,14 +154,36 @@ __decorate([
     (0, common_1.Post)('attempt/:purchaseId/submit'),
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
-    (0, swagger_1.ApiOperation)({ summary: 'Submit quiz answers' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Submit answer for current question' }),
     __param(0, (0, common_1.Req)()),
     __param(1, (0, common_1.Param)('purchaseId')),
     __param(2, (0, common_1.Body)()),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, String, quiz_dto_1.SubmitQuizDto]),
+    __metadata("design:paramtypes", [Object, String, quiz_dto_1.SubmitAnswerDto]),
     __metadata("design:returntype", void 0)
-], QuizController.prototype, "submitAttempt", null);
+], QuizController.prototype, "submitAnswer", null);
+__decorate([
+    (0, common_1.Get)('attempt/:purchaseId/next'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Get next unanswered question' }),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('purchaseId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], QuizController.prototype, "getNextQuestion", null);
+__decorate([
+    (0, common_1.Get)('attempt/:purchaseId/result'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Get quiz result' }),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('purchaseId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], QuizController.prototype, "getResult", null);
 exports.QuizController = QuizController = __decorate([
     (0, swagger_1.ApiTags)('Quiz'),
     (0, common_1.Controller)('quiz'),

@@ -1,170 +1,147 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
-import { CreateQuizDto, UpdateQuizDto, SubmitQuizDto } from './dto/quiz.dto';
+import { CreateQuestionDto, PurchaseDto, SubmitAnswerDto } from './dto/quiz.dto';
 export declare class QuizService {
     private readonly prisma;
     private readonly walletService;
     constructor(prisma: PrismaService, walletService: WalletService);
-    adminCreate(dto: CreateQuizDto): Promise<{
-        questions: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            sortOrder: number;
-            question: string;
-            options: import("@prisma/client/runtime/library").JsonValue;
-            correctIndex: number;
-            quizId: string;
-        }[];
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        price: import("@prisma/client/runtime/library").Decimal;
-        isActive: boolean;
-        title: string;
-        timeLimit: number;
-    }>;
-    adminFindAll(): Promise<({
-        _count: {
-            questions: number;
-            purchases: number;
-        };
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        price: import("@prisma/client/runtime/library").Decimal;
-        isActive: boolean;
-        title: string;
-        timeLimit: number;
-    })[]>;
-    adminFindOne(id: string): Promise<{
-        questions: {
-            id: string;
-            createdAt: Date;
-            updatedAt: Date;
-            sortOrder: number;
-            question: string;
-            options: import("@prisma/client/runtime/library").JsonValue;
-            correctIndex: number;
-            quizId: string;
-        }[];
-    } & {
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        price: import("@prisma/client/runtime/library").Decimal;
-        isActive: boolean;
-        title: string;
-        timeLimit: number;
-    }>;
-    adminUpdate(id: string, dto: UpdateQuizDto): Promise<{
-        id: string;
-        createdAt: Date;
-        updatedAt: Date;
-        price: import("@prisma/client/runtime/library").Decimal;
-        isActive: boolean;
-        title: string;
-        timeLimit: number;
-    }>;
-    adminDelete(id: string): Promise<{
+    addQuestions(categoryId: string, dtos: CreateQuestionDto[]): Promise<{
         message: string;
     }>;
-    findActive(): Promise<{
-        id: string;
-        price: import("@prisma/client/runtime/library").Decimal;
-        title: string;
-        _count: {
-            questions: number;
-        };
-        timeLimit: number;
-    }[]>;
-    findOne(id: string): Promise<{
-        id: string;
-        price: import("@prisma/client/runtime/library").Decimal;
-        title: string;
-        timeLimit: number;
+    getQuestions(categoryId: string, page?: number, limit?: number): Promise<{
         questions: {
             id: string;
+            createdAt: Date;
+            updatedAt: Date;
+            categoryId: string;
+            sortOrder: number;
             question: string;
             options: import("@prisma/client/runtime/library").JsonValue;
+            correctIndex: number;
         }[];
+        total: number;
+        page: number;
+        limit: number;
+        totalPages: number;
     }>;
-    purchase(userId: string, quizId: string, paymentMethod: string): Promise<any>;
+    updateQuestion(id: string, dto: Partial<CreateQuestionDto>): Promise<{
+        id: string;
+        createdAt: Date;
+        updatedAt: Date;
+        categoryId: string;
+        sortOrder: number;
+        question: string;
+        options: import("@prisma/client/runtime/library").JsonValue;
+        correctIndex: number;
+    }>;
+    deleteQuestion(id: string): Promise<{
+        message: string;
+    }>;
+    purchase(userId: string, categoryId: string, dto: PurchaseDto): Promise<any>;
     getPurchased(userId: string): Promise<({
-        quiz: {
+        category: {
             id: string;
-            price: import("@prisma/client/runtime/library").Decimal;
-            title: string;
-            _count: {
-                questions: number;
-            };
-            timeLimit: number;
+            name: string;
+            imageUrl: string;
+        };
+        _count: {
+            answers: number;
         };
     } & {
         id: string;
         status: import("@prisma/client").$Enums.QuizPurchaseStatus;
         userId: string;
+        categoryId: string;
         paymentMethod: string;
-        answers: import("@prisma/client/runtime/library").JsonValue | null;
-        quizId: string;
-        score: number | null;
-        totalQuestions: number | null;
+        questionCount: number;
+        totalPrice: import("@prisma/client/runtime/library").Decimal;
+        currentIndex: number;
         purchasedAt: Date;
         startedAt: Date | null;
         completedAt: Date | null;
     })[]>;
     startAttempt(userId: string, purchaseId: string): Promise<{
-        purchase: {
-            quiz: {
-                questions: {
-                    id: string;
-                    createdAt: Date;
-                    updatedAt: Date;
-                    sortOrder: number;
-                    question: string;
-                    options: import("@prisma/client/runtime/library").JsonValue;
-                    correctIndex: number;
-                    quizId: string;
-                }[];
-            } & {
-                id: string;
-                createdAt: Date;
-                updatedAt: Date;
-                price: import("@prisma/client/runtime/library").Decimal;
-                isActive: boolean;
-                title: string;
-                timeLimit: number;
-            };
-        } & {
+        purchaseId: string;
+        category: {
             id: string;
-            status: import("@prisma/client").$Enums.QuizPurchaseStatus;
-            userId: string;
-            paymentMethod: string;
-            answers: import("@prisma/client/runtime/library").JsonValue | null;
-            quizId: string;
-            score: number | null;
-            totalQuestions: number | null;
-            purchasedAt: Date;
-            startedAt: Date | null;
-            completedAt: Date | null;
+            name: string;
+            imageUrl: string;
         };
-        quiz: {
-            title: string;
-            timeLimit: number;
-        };
+        questionCount: number;
         questions: {
             id: string;
             question: string;
             options: string[];
         }[];
+        currentIndex: number;
         startedAt: Date;
     }>;
-    submitAttempt(userId: string, purchaseId: string, dto: SubmitQuizDto): Promise<{
+    submitAnswer(userId: string, purchaseId: string, dto: SubmitAnswerDto): Promise<{
         status: string;
         score: number;
         totalQuestions: number;
-        timedOut: boolean;
+        isLast: boolean;
+        netReward: number;
+        currentIndex?: undefined;
+    } | {
+        status: string;
+        currentIndex: number;
+        isLast: boolean;
+        score?: undefined;
+        totalQuestions?: undefined;
+        netReward?: undefined;
+    }>;
+    getNextQuestion(userId: string, purchaseId: string): Promise<{
+        status: "COMPLETED";
+        score: number;
+        totalQuestions: number;
+        completed: boolean;
+        netReward: number;
+        question?: undefined;
+        currentIndex?: undefined;
+        answeredCount?: undefined;
+    } | {
+        status: string;
+        score: number;
+        totalQuestions: number;
+        completed: boolean;
+        netReward?: undefined;
+        question?: undefined;
+        currentIndex?: undefined;
+        answeredCount?: undefined;
+    } | {
+        status: string;
+        question: {
+            id: string;
+            question: string;
+            options: string[];
+        };
+        currentIndex: number;
+        totalQuestions: number;
+        answeredCount: number;
+        completed: boolean;
+        score?: undefined;
+        netReward?: undefined;
+    }>;
+    getResult(userId: string, purchaseId: string): Promise<{
+        purchaseId: string;
+        category: {
+            id: string;
+            name: string;
+            imageUrl: string;
+        };
+        questionCount: number;
+        score: number;
+        netReward: number;
+        status: import("@prisma/client").$Enums.QuizPurchaseStatus;
+        startedAt: Date | null;
+        completedAt: Date | null;
+        answers: {
+            question: string;
+            options: string[];
+            correctIndex: number;
+            selectedIndex: number | null;
+            isCorrect: boolean | null;
+        }[];
     }>;
 }
