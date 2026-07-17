@@ -306,16 +306,33 @@ model QuizCategory {
   imageUrl  String
   isActive  Boolean  @default(true)
   sortOrder Int      @default(0)
+  levels    QuizLevel[]
   questions QuizQuestion[]
   purchases QuizPurchase[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
+model QuizLevel {
+  id         String       @id @default(uuid())
+  categoryId String
+  category   QuizCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  name       String
+  sortOrder  Int          @default(0)
+  questions  QuizQuestion[]
+  purchases  QuizPurchase[]
+  createdAt  DateTime     @default(now())
+  updatedAt  DateTime     @updatedAt
+
+  @@index([categoryId])
+}
+
 model QuizQuestion {
   id           String       @id @default(uuid())
   categoryId   String
   category     QuizCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  levelId      String?
+  level        QuizLevel?   @relation(fields: [levelId], references: [id], onDelete: SetNull)
   question     String
   options      Json
   correctIndex Int
@@ -325,6 +342,7 @@ model QuizQuestion {
   updatedAt    DateTime     @updatedAt
 
   @@index([categoryId])
+  @@index([levelId])
 }
 
 model QuizPurchase {
@@ -333,6 +351,8 @@ model QuizPurchase {
   user          User               @relation(fields: [userId], references: [id])
   categoryId    String
   category      QuizCategory       @relation(fields: [categoryId], references: [id])
+  levelId       String?
+  level         QuizLevel?         @relation(fields: [levelId], references: [id], onDelete: SetNull)
   questionCount Int
   totalPrice    Decimal            @db.Decimal(10, 2)
   status        QuizPurchaseStatus @default(PURCHASED)
@@ -345,6 +365,7 @@ model QuizPurchase {
 
   @@index([userId])
   @@index([categoryId])
+  @@index([levelId])
 }
 
 model QuizAnswer {

@@ -1,7 +1,9 @@
 import {
-    Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Req,
+    Controller, Get, Post, Patch, Delete, Body, Param, Query, UseGuards, Req, UseInterceptors, UploadedFile, BadRequestException,
 } from '@nestjs/common';
-import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { memoryStorage } from 'multer';
+import { ApiTags, ApiOperation, ApiBearerAuth, ApiConsumes } from '@nestjs/swagger';
 import { QuizService } from './quiz.service';
 import { CreateQuestionDto, PurchaseDto, SubmitAnswerDto } from './dto/quiz.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
@@ -20,9 +22,13 @@ export class QuizController {
     @ApiBearerAuth()
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
-    @ApiOperation({ summary: '[Admin] Add questions to a category' })
-    addQuestions(@Param('categoryId') categoryId: string, @Body() dtos: CreateQuestionDto[]) {
-        return this.quizService.addQuestions(categoryId, dtos);
+    @ApiOperation({ summary: '[Admin] Add questions to a category (optionally to a level)' })
+    addQuestions(
+        @Param('categoryId') categoryId: string,
+        @Body() dtos: CreateQuestionDto[],
+        @Query('levelId') levelId?: string,
+    ) {
+        return this.quizService.addQuestions(categoryId, dtos, levelId);
     }
 
     @Get('admin/questions/:categoryId')
@@ -54,6 +60,22 @@ export class QuizController {
     @ApiOperation({ summary: '[Admin] Delete a question' })
     deleteQuestion(@Param('id') id: string) {
         return this.quizService.deleteQuestion(id);
+    }
+
+    @Post('admin/import-csv/:categoryId')
+    @ApiBearerAuth()
+    @ApiConsumes('multipart/form-data')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @UseInterceptors(FileInterceptor('file', { storage: memoryStorage() }))
+    @ApiOperation({ summary: '[Admin] Bulk import questions from CSV' })
+    importCsv(
+        @Param('categoryId') categoryId: string,
+        @UploadedFile() file: Express.Multer.File,
+    ) {
+        if (!file) throw new BadRequestException('CSV file is required');
+        if (!file.originalname.endsWith('.csv')) throw new BadRequestException('Only .csv files allowed');
+        return this.quizService.importCsv(categoryId, file);
     }
 
     // ── User: Category info & purchase ───────────────────────────────────────

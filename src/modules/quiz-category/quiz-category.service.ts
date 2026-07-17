@@ -9,14 +9,20 @@ export class QuizCategoryService {
     async findAll() {
         return this.prisma.quizCategory.findMany({
             orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
-            include: { _count: { select: { questions: true } } },
+            include: {
+                _count: { select: { questions: true } },
+                levels: { include: { _count: { select: { questions: true } } }, orderBy: { sortOrder: 'asc' } },
+            },
         });
     }
 
     async findActive() {
         return this.prisma.quizCategory.findMany({
             where: { isActive: true },
-            include: { _count: { select: { questions: true } } },
+            include: {
+                _count: { select: { questions: true } },
+                levels: { include: { _count: { select: { questions: true } } }, orderBy: { sortOrder: 'asc' } },
+            },
             orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
         });
     }
@@ -24,7 +30,10 @@ export class QuizCategoryService {
     async findOne(id: string) {
         const cat = await this.prisma.quizCategory.findUnique({
             where: { id },
-            include: { _count: { select: { questions: true } } },
+            include: {
+                _count: { select: { questions: true } },
+                levels: { include: { _count: { select: { questions: true } } }, orderBy: { sortOrder: 'asc' } },
+            },
         });
         if (!cat) throw new NotFoundException('Quiz category not found');
         return cat;

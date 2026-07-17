@@ -33,6 +33,11 @@ export class PurchaseDto {
     @IsOptional()
     @IsString()
     paymentMethod?: string;
+
+    @ApiPropertyOptional({ description: 'Optional level ID to filter questions' })
+    @IsOptional()
+    @IsString()
+    levelId?: string;
 }
 
 export class SubmitAnswerDto {

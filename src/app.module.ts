@@ -26,6 +26,7 @@ import { BannersModule } from './modules/banners/banners.module';
 import { UploadsModule } from './modules/uploads/uploads.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { QuizCategoryModule } from './modules/quiz-category/quiz-category.module';
+import { QuizLevelModule } from './modules/quiz-level/quiz-level.module';
 
 @Module({
   imports: [
@@ -94,6 +95,7 @@ import { QuizCategoryModule } from './modules/quiz-category/quiz-category.module
     UploadsModule,
     QuizModule,
     QuizCategoryModule,
+    QuizLevelModule,
   ],
 })
 export class AppModule { }
