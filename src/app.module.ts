@@ -28,6 +28,7 @@ import { QuizModule } from './modules/quiz/quiz.module';
 import { QuizCategoryModule } from './modules/quiz-category/quiz-category.module';
 import { QuizLevelModule } from './modules/quiz-level/quiz-level.module';
 
+
 @Module({
   imports: [
     // ── Config ────────────────────────────────────────────────────────────
@@ -96,6 +97,7 @@ import { QuizLevelModule } from './modules/quiz-level/quiz-level.module';
     QuizModule,
     QuizCategoryModule,
     QuizLevelModule,
+
   ],
 })
 export class AppModule { }
