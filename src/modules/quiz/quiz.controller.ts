@@ -95,7 +95,7 @@ export class QuizController {
         @Param('categoryId') categoryId: string,
         @Body() dto: PurchaseDto,
     ) {
-        return this.quizService.purchase(req.user.userId, categoryId, dto);
+        return this.quizService.purchase(req.user.id, categoryId, dto);
     }
 
     @Get('purchased')
@@ -103,7 +103,7 @@ export class QuizController {
     @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'List user purchased quizzes' })
     getPurchased(@Req() req: any) {
-        return this.quizService.getPurchased(req.user.userId);
+        return this.quizService.getPurchased(req.user.id);
     }
 
     // ── User: Attempt ────────────────────────────────────────────────────────
@@ -113,7 +113,7 @@ export class QuizController {
     @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Start/get quiz attempt' })
     startAttempt(@Req() req: any, @Param('purchaseId') purchaseId: string) {
-        return this.quizService.startAttempt(req.user.userId, purchaseId);
+        return this.quizService.startAttempt(req.user.id, purchaseId);
     }
 
     @Post('attempt/:purchaseId/submit')
@@ -125,7 +125,7 @@ export class QuizController {
         @Param('purchaseId') purchaseId: string,
         @Body() dto: SubmitAnswerDto,
     ) {
-        return this.quizService.submitAnswer(req.user.userId, purchaseId, dto);
+        return this.quizService.submitAnswer(req.user.id, purchaseId, dto);
     }
 
     @Get('attempt/:purchaseId/next')
@@ -133,7 +133,7 @@ export class QuizController {
     @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Get next unanswered question' })
     getNextQuestion(@Req() req: any, @Param('purchaseId') purchaseId: string) {
-        return this.quizService.getNextQuestion(req.user.userId, purchaseId);
+        return this.quizService.getNextQuestion(req.user.id, purchaseId);
     }
 
     @Get('attempt/:purchaseId/result')
@@ -141,6 +141,6 @@ export class QuizController {
     @UseGuards(JwtAuthGuard)
     @ApiOperation({ summary: 'Get quiz result' })
     getResult(@Req() req: any, @Param('purchaseId') purchaseId: string) {
-        return this.quizService.getResult(req.user.userId, purchaseId);
+        return this.quizService.getResult(req.user.id, purchaseId);
     }
 }

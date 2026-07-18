@@ -33,7 +33,6 @@ export class GlobalExceptionFilter implements ExceptionFilter {
             }
         } else if (exception instanceof Error) {
             this.logger.error(exception.message, exception.stack);
-            message = exception.message;
         }
 
         response.status(statusCode).json({
