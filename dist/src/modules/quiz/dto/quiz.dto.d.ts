@@ -7,6 +7,7 @@ export declare class CreateQuestionDto {
 export declare class PurchaseDto {
     questionCount: number;
     paymentMethod?: string;
+    levelId?: string;
 }
 export declare class SubmitAnswerDto {
     questionId: string;

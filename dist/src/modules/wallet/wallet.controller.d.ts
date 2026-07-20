@@ -9,6 +9,7 @@ export declare class WalletController {
         dailyReward: number;
         tierBonus: number;
         generationIncome: number;
+        quizEarning: number;
         reward: number;
         salary: number;
         travelling: number;

@@ -13,6 +13,7 @@ exports.QuizService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const wallet_service_1 = require("../wallet/wallet.service");
+const sync_1 = require("csv-parse/sync");
 const PRICE_PER_QUESTION = 1;
 let QuizService = class QuizService {
     prisma;
@@ -21,10 +22,15 @@ let QuizService = class QuizService {
         this.prisma = prisma;
         this.walletService = walletService;
     }
-    async addQuestions(categoryId, dtos) {
+    async addQuestions(categoryId, dtos, levelId) {
         const cat = await this.prisma.quizCategory.findUnique({ where: { id: categoryId } });
         if (!cat)
             throw new common_1.NotFoundException('Quiz category not found');
+        if (levelId) {
+            const level = await this.prisma.quizLevel.findUnique({ where: { id: levelId } });
+            if (!level || level.categoryId !== categoryId)
+                throw new common_1.NotFoundException('Quiz level not found in this category');
+        }
         const maxOrder = await this.prisma.quizQuestion.aggregate({
             where: { categoryId },
             _max: { sortOrder: true },
@@ -32,6 +38,7 @@ let QuizService = class QuizService {
         let startOrder = (maxOrder._max.sortOrder ?? -1) + 1;
         const questions = dtos.map((dto) => ({
             categoryId,
+            levelId: levelId ?? null,
             question: dto.question,
             options: dto.options,
             correctIndex: dto.correctIndex,
@@ -39,6 +46,87 @@ let QuizService = class QuizService {
         }));
         await this.prisma.quizQuestion.createMany({ data: questions });
         return { message: `${questions.length} questions added` };
+    }
+    async importCsv(categoryId, file) {
+        const cat = await this.prisma.quizCategory.findUnique({ where: { id: categoryId } });
+        if (!cat)
+            throw new common_1.NotFoundException('Quiz category not found');
+        const csv = file.buffer.toString('utf-8');
+        let records;
+        try {
+            records = (0, sync_1.parse)(csv, {
+                columns: true,
+                skip_empty_lines: true,
+                trim: true,
+                relax_column_count: true,
+            });
+        }
+        catch {
+            throw new common_1.BadRequestException('Invalid CSV format');
+        }
+        if (records.length === 0)
+            throw new common_1.BadRequestException('CSV is empty');
+        const levels = await this.prisma.quizLevel.findMany({
+            where: { categoryId },
+            select: { id: true, name: true },
+        });
+        const levelMap = new Map();
+        for (const l of levels)
+            levelMap.set(l.name.toLowerCase(), l.id);
+        const errors = [];
+        const questions = [];
+        let maxOrder = (await this.prisma.quizQuestion.aggregate({
+            where: { categoryId },
+            _max: { sortOrder: true },
+        }))._max.sortOrder ?? -1;
+        for (let i = 0; i < records.length; i++) {
+            const row = records[i];
+            const rowNum = i + 2;
+            if (!row.question || !row.question.trim()) {
+                errors.push({ row: rowNum, message: 'question is required' });
+                continue;
+            }
+            const options = [row.option1, row.option2, row.option3, row.option4];
+            if (options.some((o) => !o || !o.trim())) {
+                errors.push({ row: rowNum, message: 'all 4 options (option1-option4) are required' });
+                continue;
+            }
+            const correctIndex = Number(row.correctIndex);
+            if (isNaN(correctIndex) || correctIndex < 0 || correctIndex > 3) {
+                errors.push({ row: rowNum, message: 'correctIndex must be 0, 1, 2, or 3' });
+                continue;
+            }
+            let levelId = null;
+            if (row.level && row.level.trim()) {
+                const found = levelMap.get(row.level.trim().toLowerCase());
+                if (found) {
+                    levelId = found;
+                }
+                else {
+                    errors.push({ row: rowNum, message: `level "${row.level}" not found in this category` });
+                    continue;
+                }
+            }
+            const sortOrder = row.sortOrder !== undefined && row.sortOrder !== ''
+                ? Number(row.sortOrder)
+                : ++maxOrder;
+            questions.push({
+                categoryId,
+                levelId,
+                question: row.question.trim(),
+                options,
+                correctIndex,
+                sortOrder,
+            });
+        }
+        if (questions.length > 0) {
+            await this.prisma.quizQuestion.createMany({ data: questions });
+        }
+        return {
+            imported: questions.length,
+            errors,
+            total: records.length,
+        };
     }
     async getQuestions(categoryId, page = 1, limit = 50) {
         const cat = await this.prisma.quizCategory.findUnique({ where: { id: categoryId } });
@@ -51,6 +139,7 @@ let QuizService = class QuizService {
                 orderBy: { sortOrder: 'asc' },
                 skip,
                 take: limit,
+                include: { level: { select: { id: true, name: true } } },
             }),
             this.prisma.quizQuestion.count({ where: { categoryId } }),
         ]);
@@ -75,11 +164,20 @@ let QuizService = class QuizService {
         });
         if (!cat)
             throw new common_1.NotFoundException('Category not found');
+        const questionWhere = { categoryId };
+        let levelName = null;
+        if (dto.levelId) {
+            const level = await this.prisma.quizLevel.findUnique({ where: { id: dto.levelId } });
+            if (!level || level.categoryId !== categoryId)
+                throw new common_1.NotFoundException('Quiz level not found');
+            questionWhere.levelId = dto.levelId;
+            levelName = level.name;
+        }
         const totalQuestions = await this.prisma.quizQuestion.count({
-            where: { categoryId },
+            where: questionWhere,
         });
         if (totalQuestions === 0)
-            throw new common_1.BadRequestException('No questions available in this category');
+            throw new common_1.BadRequestException('No questions available');
         const count = Math.min(dto.questionCount, totalQuestions);
         const price = count * PRICE_PER_QUESTION;
         const method = dto.paymentMethod || 'WALLET';
@@ -91,16 +189,16 @@ let QuizService = class QuizService {
                 throw new common_1.BadRequestException('Insufficient wallet balance');
             }
             return this.prisma.$transaction(async (tx) => {
-                await this.walletService.debit(tx, wallet.id, price, 'QUIZ_PURCHASE', `Quiz purchase: ${count} questions from ${cat.name}`, categoryId);
+                await this.walletService.debit(tx, wallet.id, price, 'QUIZ_PURCHASE', `Quiz purchase: ${count} questions from ${cat.name}${levelName ? ` (${levelName})` : ''}`, categoryId);
                 const purchase = await tx.quizPurchase.create({
-                    data: { userId, categoryId, questionCount: count, totalPrice: price, paymentMethod: 'WALLET' },
+                    data: { userId, categoryId, levelId: dto.levelId ?? null, questionCount: count, totalPrice: price, paymentMethod: 'WALLET' },
                 });
                 return purchase;
             });
         }
         else if (method === 'BKASH') {
             return this.prisma.quizPurchase.create({
-                data: { userId, categoryId, questionCount: count, totalPrice: price, paymentMethod: 'BKASH' },
+                data: { userId, categoryId, levelId: dto.levelId ?? null, questionCount: count, totalPrice: price, paymentMethod: 'BKASH' },
             });
         }
         else {
@@ -112,6 +210,7 @@ let QuizService = class QuizService {
             where: { userId },
             include: {
                 category: { select: { id: true, name: true, imageUrl: true } },
+                level: { select: { id: true, name: true } },
                 _count: { select: { answers: true } },
             },
             orderBy: { purchasedAt: 'desc' },
@@ -120,7 +219,6 @@ let QuizService = class QuizService {
     async startAttempt(userId, purchaseId) {
         const purchase = await this.prisma.quizPurchase.findUnique({
             where: { id: purchaseId },
-            include: { category: { include: { questions: { orderBy: { sortOrder: 'asc' } } } } },
         });
         if (!purchase)
             throw new common_1.NotFoundException('Purchase not found');
@@ -128,7 +226,20 @@ let QuizService = class QuizService {
             throw new common_1.ForbiddenException('Not your purchase');
         if (purchase.status !== 'PURCHASED')
             throw new common_1.BadRequestException('Quiz already completed');
-        const allQuestions = purchase.category.questions;
+        const full = await this.prisma.quizPurchase.findUnique({
+            where: { id: purchaseId },
+            include: {
+                category: {
+                    include: {
+                        questions: {
+                            where: purchase.levelId ? { levelId: purchase.levelId } : undefined,
+                            orderBy: { sortOrder: 'asc' },
+                        },
+                    },
+                },
+            },
+        });
+        const allQuestions = full?.category.questions ?? [];
         const shuffled = [...allQuestions].sort(() => Math.random() - 0.5);
         const selected = shuffled.slice(0, purchase.questionCount).map((q) => ({
             id: q.id,
@@ -143,7 +254,7 @@ let QuizService = class QuizService {
         }
         return {
             purchaseId: purchase.id,
-            category: { id: purchase.categoryId, name: purchase.category.name, imageUrl: purchase.category.imageUrl },
+            category: { id: purchase.categoryId, name: full.category.name, imageUrl: full.category.imageUrl },
             questionCount: purchase.questionCount,
             questions: selected,
             currentIndex: purchase.currentIndex,
@@ -151,22 +262,31 @@ let QuizService = class QuizService {
         };
     }
     async submitAnswer(userId, purchaseId, dto) {
-        const purchase = await this.prisma.quizPurchase.findUnique({
-            where: { id: purchaseId },
-            include: { category: { include: { questions: true } } },
-        });
+        const purchase = await this.prisma.quizPurchase.findUnique({ where: { id: purchaseId } });
         if (!purchase)
             throw new common_1.NotFoundException('Purchase not found');
         if (purchase.userId !== userId)
             throw new common_1.ForbiddenException('Not your purchase');
         if (purchase.status !== 'PURCHASED')
             throw new common_1.BadRequestException('Quiz already completed');
+        const full = await this.prisma.quizPurchase.findUnique({
+            where: { id: purchaseId },
+            include: {
+                category: {
+                    include: {
+                        questions: {
+                            where: purchase.levelId ? { levelId: purchase.levelId } : undefined,
+                        },
+                    },
+                },
+            },
+        });
         const existing = await this.prisma.quizAnswer.findFirst({
             where: { purchaseId, questionId: dto.questionId },
         });
         if (existing)
             throw new common_1.BadRequestException('Already answered this question');
-        const question = purchase.category.questions.find((q) => q.id === dto.questionId);
+        const question = full.category.questions.find((q) => q.id === dto.questionId);
         if (!question)
             throw new common_1.BadRequestException('Question not found in this category');
         const isCorrect = question.correctIndex === dto.selectedIndex;
@@ -189,7 +309,7 @@ let QuizService = class QuizService {
             const netReward = correctCount * 2 - wrongCount * 1;
             const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
             if (wallet && netReward !== 0) {
-                const catName = purchase.category?.name || 'Quiz';
+                const catName = full.category?.name || 'Quiz';
                 if (netReward > 0) {
                     await this.walletService.credit(this.prisma, wallet.id, netReward, 'QUIZ_EARNING', `Quiz reward: ${correctCount} correct × 2tk - ${wrongCount} wrong × 1tk = ${netReward}tk (${catName})`, purchaseId);
                 }
@@ -219,12 +339,24 @@ let QuizService = class QuizService {
     async getNextQuestion(userId, purchaseId) {
         const purchase = await this.prisma.quizPurchase.findUnique({
             where: { id: purchaseId },
-            include: { category: { include: { questions: { orderBy: { sortOrder: 'asc' } } } } },
         });
         if (!purchase)
             throw new common_1.NotFoundException('Purchase not found');
         if (purchase.userId !== userId)
             throw new common_1.ForbiddenException('Not your purchase');
+        const full = await this.prisma.quizPurchase.findUnique({
+            where: { id: purchaseId },
+            include: {
+                category: {
+                    include: {
+                        questions: {
+                            where: purchase.levelId ? { levelId: purchase.levelId } : undefined,
+                            orderBy: { sortOrder: 'asc' },
+                        },
+                    },
+                },
+            },
+        });
         if (purchase.status !== 'PURCHASED') {
             const answers = await this.prisma.quizAnswer.findMany({ where: { purchaseId } });
             const correctCount = answers.filter((a) => a.isCorrect).length;
@@ -236,7 +368,7 @@ let QuizService = class QuizService {
             where: { purchaseId },
             select: { questionId: true },
         })).map((a) => a.questionId));
-        const shuffled = [...purchase.category.questions].sort(() => Math.random() - 0.5);
+        const shuffled = [...(full?.category.questions ?? [])].sort(() => Math.random() - 0.5);
         const selected = shuffled.slice(0, purchase.questionCount);
         const unanswered = selected.filter((q) => !answeredIds.has(q.id));
         if (unanswered.length === 0) {

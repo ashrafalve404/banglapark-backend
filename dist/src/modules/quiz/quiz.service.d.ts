@@ -5,11 +5,24 @@ export declare class QuizService {
     private readonly prisma;
     private readonly walletService;
     constructor(prisma: PrismaService, walletService: WalletService);
-    addQuestions(categoryId: string, dtos: CreateQuestionDto[]): Promise<{
+    addQuestions(categoryId: string, dtos: CreateQuestionDto[], levelId?: string): Promise<{
         message: string;
     }>;
+    importCsv(categoryId: string, file: Express.Multer.File): Promise<{
+        imported: number;
+        errors: {
+            row: number;
+            message: string;
+        }[];
+        total: number;
+    }>;
     getQuestions(categoryId: string, page?: number, limit?: number): Promise<{
-        questions: {
+        questions: ({
+            level: {
+                id: string;
+                name: string;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
@@ -18,7 +31,8 @@ export declare class QuizService {
             question: string;
             options: import("@prisma/client/runtime/library").JsonValue;
             correctIndex: number;
-        }[];
+            levelId: string | null;
+        })[];
         total: number;
         page: number;
         limit: number;
@@ -33,6 +47,7 @@ export declare class QuizService {
         question: string;
         options: import("@prisma/client/runtime/library").JsonValue;
         correctIndex: number;
+        levelId: string | null;
     }>;
     deleteQuestion(id: string): Promise<{
         message: string;
@@ -44,6 +59,10 @@ export declare class QuizService {
             name: string;
             imageUrl: string;
         };
+        level: {
+            id: string;
+            name: string;
+        } | null;
         _count: {
             answers: number;
         };
@@ -54,6 +73,7 @@ export declare class QuizService {
         categoryId: string;
         paymentMethod: string;
         questionCount: number;
+        levelId: string | null;
         totalPrice: import("@prisma/client/runtime/library").Decimal;
         currentIndex: number;
         purchasedAt: Date;

@@ -3,11 +3,16 @@ import { CreateQuestionDto, PurchaseDto, SubmitAnswerDto } from './dto/quiz.dto'
 export declare class QuizController {
     private readonly quizService;
     constructor(quizService: QuizService);
-    addQuestions(categoryId: string, dtos: CreateQuestionDto[]): Promise<{
+    addQuestions(categoryId: string, dtos: CreateQuestionDto[], levelId?: string): Promise<{
         message: string;
     }>;
     getQuestions(categoryId: string, page?: string, limit?: string): Promise<{
-        questions: {
+        questions: ({
+            level: {
+                id: string;
+                name: string;
+            } | null;
+        } & {
             id: string;
             createdAt: Date;
             updatedAt: Date;
@@ -16,7 +21,8 @@ export declare class QuizController {
             question: string;
             options: import("@prisma/client/runtime/library").JsonValue;
             correctIndex: number;
-        }[];
+            levelId: string | null;
+        })[];
         total: number;
         page: number;
         limit: number;
@@ -31,9 +37,18 @@ export declare class QuizController {
         question: string;
         options: import("@prisma/client/runtime/library").JsonValue;
         correctIndex: number;
+        levelId: string | null;
     }>;
     deleteQuestion(id: string): Promise<{
         message: string;
+    }>;
+    importCsv(categoryId: string, file: Express.Multer.File): Promise<{
+        imported: number;
+        errors: {
+            row: number;
+            message: string;
+        }[];
+        total: number;
     }>;
     getCategoryCount(categoryId: string): Promise<{
         total: number;
@@ -45,6 +60,10 @@ export declare class QuizController {
             name: string;
             imageUrl: string;
         };
+        level: {
+            id: string;
+            name: string;
+        } | null;
         _count: {
             answers: number;
         };
@@ -55,6 +74,7 @@ export declare class QuizController {
         categoryId: string;
         paymentMethod: string;
         questionCount: number;
+        levelId: string | null;
         totalPrice: import("@prisma/client/runtime/library").Decimal;
         currentIndex: number;
         purchasedAt: Date;

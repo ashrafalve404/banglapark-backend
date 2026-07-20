@@ -8,7 +8,7 @@ import { randomUUID } from 'crypto';
 import type { Request } from 'express';
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_SIZE = 5 * 1024 * 1024;
+const MAX_SIZE = 20 * 1024 * 1024;
 
 function uploadDir(): string {
     return process.env.UPLOAD_DIR || join(process.cwd(), 'uploads');

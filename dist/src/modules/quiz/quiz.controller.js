@@ -14,6 +14,8 @@ var __param = (this && this.__param) || function (paramIndex, decorator) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.QuizController = void 0;
 const common_1 = require("@nestjs/common");
+const platform_express_1 = require("@nestjs/platform-express");
+const multer_1 = require("multer");
 const swagger_1 = require("@nestjs/swagger");
 const quiz_service_1 = require("./quiz.service");
 const quiz_dto_1 = require("./dto/quiz.dto");
@@ -26,8 +28,8 @@ let QuizController = class QuizController {
     constructor(quizService) {
         this.quizService = quizService;
     }
-    addQuestions(categoryId, dtos) {
-        return this.quizService.addQuestions(categoryId, dtos);
+    addQuestions(categoryId, dtos, levelId) {
+        return this.quizService.addQuestions(categoryId, dtos, levelId);
     }
     getQuestions(categoryId, page, limit) {
         return this.quizService.getQuestions(categoryId, Number(page) || 1, Number(limit) || 50);
@@ -38,26 +40,33 @@ let QuizController = class QuizController {
     deleteQuestion(id) {
         return this.quizService.deleteQuestion(id);
     }
+    importCsv(categoryId, file) {
+        if (!file)
+            throw new common_1.BadRequestException('CSV file is required');
+        if (!file.originalname.endsWith('.csv'))
+            throw new common_1.BadRequestException('Only .csv files allowed');
+        return this.quizService.importCsv(categoryId, file);
+    }
     getCategoryCount(categoryId) {
         return this.quizService.getQuestions(categoryId, 1, 0).then((r) => ({ total: r.total }));
     }
     purchase(req, categoryId, dto) {
-        return this.quizService.purchase(req.user.userId, categoryId, dto);
+        return this.quizService.purchase(req.user.id, categoryId, dto);
     }
     getPurchased(req) {
-        return this.quizService.getPurchased(req.user.userId);
+        return this.quizService.getPurchased(req.user.id);
     }
     startAttempt(req, purchaseId) {
-        return this.quizService.startAttempt(req.user.userId, purchaseId);
+        return this.quizService.startAttempt(req.user.id, purchaseId);
     }
     submitAnswer(req, purchaseId, dto) {
-        return this.quizService.submitAnswer(req.user.userId, purchaseId, dto);
+        return this.quizService.submitAnswer(req.user.id, purchaseId, dto);
     }
     getNextQuestion(req, purchaseId) {
-        return this.quizService.getNextQuestion(req.user.userId, purchaseId);
+        return this.quizService.getNextQuestion(req.user.id, purchaseId);
     }
     getResult(req, purchaseId) {
-        return this.quizService.getResult(req.user.userId, purchaseId);
+        return this.quizService.getResult(req.user.id, purchaseId);
     }
 };
 exports.QuizController = QuizController;
@@ -66,11 +75,12 @@ __decorate([
     (0, swagger_1.ApiBearerAuth)(),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
     (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
-    (0, swagger_1.ApiOperation)({ summary: '[Admin] Add questions to a category' }),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Add questions to a category (optionally to a level)' }),
     __param(0, (0, common_1.Param)('categoryId')),
     __param(1, (0, common_1.Body)()),
+    __param(2, (0, common_1.Query)('levelId')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Array]),
+    __metadata("design:paramtypes", [String, Array, String]),
     __metadata("design:returntype", void 0)
 ], QuizController.prototype, "addQuestions", null);
 __decorate([
@@ -109,6 +119,20 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], QuizController.prototype, "deleteQuestion", null);
+__decorate([
+    (0, common_1.Post)('admin/import-csv/:categoryId'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiConsumes)('multipart/form-data'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, common_1.UseInterceptors)((0, platform_express_1.FileInterceptor)('file', { storage: (0, multer_1.memoryStorage)() })),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Bulk import questions from CSV' }),
+    __param(0, (0, common_1.Param)('categoryId')),
+    __param(1, (0, common_1.UploadedFile)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, Object]),
+    __metadata("design:returntype", void 0)
+], QuizController.prototype, "importCsv", null);
 __decorate([
     (0, common_1.Get)('category/:categoryId/count'),
     (0, swagger_1.ApiOperation)({ summary: 'Get total question count in a category' }),

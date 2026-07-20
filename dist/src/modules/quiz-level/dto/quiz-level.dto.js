@@ -9,67 +9,40 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateQuizCategoryDto = exports.CreateQuizCategoryDto = void 0;
+exports.UpdateQuizLevelDto = exports.CreateQuizLevelDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
-class CreateQuizCategoryDto {
+class CreateQuizLevelDto {
     name;
-    imageUrl;
-    isActive;
     sortOrder;
 }
-exports.CreateQuizCategoryDto = CreateQuizCategoryDto;
+exports.CreateQuizLevelDto = CreateQuizLevelDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'General Knowledge' }),
+    (0, swagger_1.ApiProperty)({ example: 'Easy' }),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], CreateQuizCategoryDto.prototype, "name", void 0);
-__decorate([
-    (0, swagger_1.ApiProperty)({ example: 'https://example.com/category.jpg' }),
-    (0, class_validator_1.IsUrl)({ require_tld: false }),
-    __metadata("design:type", String)
-], CreateQuizCategoryDto.prototype, "imageUrl", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)({ default: true }),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsBoolean)(),
-    __metadata("design:type", Boolean)
-], CreateQuizCategoryDto.prototype, "isActive", void 0);
+], CreateQuizLevelDto.prototype, "name", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)({ default: 0 }),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
-], CreateQuizCategoryDto.prototype, "sortOrder", void 0);
-class UpdateQuizCategoryDto {
+], CreateQuizLevelDto.prototype, "sortOrder", void 0);
+class UpdateQuizLevelDto {
     name;
-    imageUrl;
-    isActive;
     sortOrder;
 }
-exports.UpdateQuizCategoryDto = UpdateQuizCategoryDto;
+exports.UpdateQuizLevelDto = UpdateQuizLevelDto;
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
-], UpdateQuizCategoryDto.prototype, "name", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsUrl)(),
-    __metadata("design:type", String)
-], UpdateQuizCategoryDto.prototype, "imageUrl", void 0);
-__decorate([
-    (0, swagger_1.ApiPropertyOptional)(),
-    (0, class_validator_1.IsOptional)(),
-    (0, class_validator_1.IsBoolean)(),
-    __metadata("design:type", Boolean)
-], UpdateQuizCategoryDto.prototype, "isActive", void 0);
+], UpdateQuizLevelDto.prototype, "name", void 0);
 __decorate([
     (0, swagger_1.ApiPropertyOptional)(),
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsInt)(),
     __metadata("design:type", Number)
-], UpdateQuizCategoryDto.prototype, "sortOrder", void 0);
-//# sourceMappingURL=quiz-category.dto.js.map
+], UpdateQuizLevelDto.prototype, "sortOrder", void 0);
+//# sourceMappingURL=quiz-level.dto.js.map

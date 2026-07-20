@@ -45,6 +45,7 @@ __decorate([
 class PurchaseDto {
     questionCount;
     paymentMethod;
+    levelId;
 }
 exports.PurchaseDto = PurchaseDto;
 __decorate([
@@ -59,6 +60,12 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], PurchaseDto.prototype, "paymentMethod", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ description: 'Optional level ID to filter questions' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], PurchaseDto.prototype, "levelId", void 0);
 class SubmitAnswerDto {
     questionId;
     selectedIndex;

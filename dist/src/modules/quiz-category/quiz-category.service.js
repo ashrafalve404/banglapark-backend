@@ -19,21 +19,30 @@ let QuizCategoryService = class QuizCategoryService {
     }
     async findAll() {
         return this.prisma.quizCategory.findMany({
-            orderBy: { createdAt: 'desc' },
-            include: { _count: { select: { questions: true } } },
+            orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
+            include: {
+                _count: { select: { questions: true } },
+                levels: { include: { _count: { select: { questions: true } } }, orderBy: { sortOrder: 'asc' } },
+            },
         });
     }
     async findActive() {
         return this.prisma.quizCategory.findMany({
             where: { isActive: true },
-            include: { _count: { select: { questions: true } } },
-            orderBy: { createdAt: 'desc' },
+            include: {
+                _count: { select: { questions: true } },
+                levels: { include: { _count: { select: { questions: true } } }, orderBy: { sortOrder: 'asc' } },
+            },
+            orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }],
         });
     }
     async findOne(id) {
         const cat = await this.prisma.quizCategory.findUnique({
             where: { id },
-            include: { _count: { select: { questions: true } } },
+            include: {
+                _count: { select: { questions: true } },
+                levels: { include: { _count: { select: { questions: true } } }, orderBy: { sortOrder: 'asc' } },
+            },
         });
         if (!cat)
             throw new common_1.NotFoundException('Quiz category not found');
