@@ -95,4 +95,12 @@ export class ProductsService {
         await this.findOne(id);
         return this.prisma.product.update({ where: { id }, data: { isActive: false } });
     }
+
+    async bulkRemove(ids: string[]) {
+        if (!ids || ids.length === 0) return { count: 0 };
+        return this.prisma.product.updateMany({
+            where: { id: { in: ids } },
+            data: { isActive: false },
+        });
+    }
 }

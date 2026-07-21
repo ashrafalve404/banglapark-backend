@@ -48,4 +48,13 @@ export class ProductsController {
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
     @ApiOperation({ summary: '[Admin] Soft-delete product' })
     remove(@Param('id') id: string) { return this.productsService.remove(id); }
+
+    @Post('bulk-delete')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiOperation({ summary: '[Admin] Bulk soft-delete products' })
+    bulkRemove(@Body('ids') ids: string[]) {
+        return this.productsService.bulkRemove(ids);
+    }
 }
