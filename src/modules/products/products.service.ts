@@ -32,7 +32,9 @@ export class ProductsService {
         const { search, categoryId, page = 1, limit = 20, sort = 'newest' } = query;
         const skip = (page - 1) * limit;
 
+        // Always filter active products; combine with optional search
         const where: Prisma.ProductWhereInput = {
+            isActive: true,
             ...(search
                 ? {
                     OR: [
@@ -41,7 +43,7 @@ export class ProductsService {
                         { description: { contains: search, mode: 'insensitive' } },
                     ],
                 }
-                : { isActive: true }),
+                : {}),
             ...(categoryId && { categoryId }),
         };
 
@@ -93,14 +95,15 @@ export class ProductsService {
 
     async remove(id: string) {
         await this.findOne(id);
-        return this.prisma.product.update({ where: { id }, data: { isActive: false } });
+        // Hard delete — permanently removes the product from the database
+        return this.prisma.product.delete({ where: { id } });
     }
 
     async bulkRemove(ids: string[]) {
         if (!ids || ids.length === 0) return { count: 0 };
-        return this.prisma.product.updateMany({
+        // Hard delete — permanently removes selected products from the database
+        return this.prisma.product.deleteMany({
             where: { id: { in: ids } },
-            data: { isActive: false },
         });
     }
 }
