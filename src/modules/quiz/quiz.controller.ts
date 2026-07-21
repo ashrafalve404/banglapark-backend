@@ -14,7 +14,7 @@ import { Role } from '@prisma/client';
 @ApiTags('Quiz')
 @Controller('quiz')
 export class QuizController {
-    constructor(private readonly quizService: QuizService) {}
+    constructor(private readonly quizService: QuizService) { }
 
     // ── Admin: Questions ─────────────────────────────────────────────────────
 
@@ -60,6 +60,24 @@ export class QuizController {
     @ApiOperation({ summary: '[Admin] Delete a question' })
     deleteQuestion(@Param('id') id: string) {
         return this.quizService.deleteQuestion(id);
+    }
+
+    @Post('admin/questions/bulk-delete')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiOperation({ summary: '[Admin] Bulk delete questions by IDs' })
+    bulkDeleteQuestions(@Body('ids') ids: string[]) {
+        return this.quizService.bulkDeleteQuestions(ids);
+    }
+
+    @Delete('admin/questions/category/:categoryId/all')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiOperation({ summary: '[Admin] Delete ALL questions in a category' })
+    deleteAllQuestions(@Param('categoryId') categoryId: string) {
+        return this.quizService.deleteAllQuestions(categoryId);
     }
 
     @Post('admin/import-csv/:categoryId')

@@ -171,6 +171,21 @@ export class QuizService {
         return { message: 'Question deleted' };
     }
 
+    async bulkDeleteQuestions(ids: string[]) {
+        if (!ids || ids.length === 0) return { count: 0 };
+        const result = await this.prisma.quizQuestion.deleteMany({
+            where: { id: { in: ids } },
+        });
+        return { count: result.count, message: `${result.count} questions deleted` };
+    }
+
+    async deleteAllQuestions(categoryId: string) {
+        const cat = await this.prisma.quizCategory.findUnique({ where: { id: categoryId } });
+        if (!cat) throw new NotFoundException('Quiz category not found');
+        const result = await this.prisma.quizQuestion.deleteMany({ where: { categoryId } });
+        return { count: result.count, message: `All ${result.count} questions deleted from category` };
+    }
+
     // ── User: Purchase ───────────────────────────────────────────────────────
 
     async purchase(userId: string, categoryId: string, dto: PurchaseDto) {
