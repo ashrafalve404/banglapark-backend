@@ -167,12 +167,18 @@ export class QuizService {
     async deleteQuestion(id: string) {
         const q = await this.prisma.quizQuestion.findUnique({ where: { id } });
         if (!q) throw new NotFoundException('Question not found');
+        await this.prisma.quizAnswer.deleteMany({
+            where: { questionId: id },
+        });
         await this.prisma.quizQuestion.delete({ where: { id } });
         return { message: 'Question deleted' };
     }
 
     async bulkDeleteQuestions(ids: string[]) {
         if (!ids || ids.length === 0) return { count: 0 };
+        await this.prisma.quizAnswer.deleteMany({
+            where: { questionId: { in: ids } },
+        });
         const result = await this.prisma.quizQuestion.deleteMany({
             where: { id: { in: ids } },
         });
@@ -182,6 +188,9 @@ export class QuizService {
     async deleteAllQuestions(categoryId: string) {
         const cat = await this.prisma.quizCategory.findUnique({ where: { id: categoryId } });
         if (!cat) throw new NotFoundException('Quiz category not found');
+        await this.prisma.quizAnswer.deleteMany({
+            where: { question: { categoryId } },
+        });
         const result = await this.prisma.quizQuestion.deleteMany({ where: { categoryId } });
         return { count: result.count, message: `All ${result.count} questions deleted from category` };
     }
