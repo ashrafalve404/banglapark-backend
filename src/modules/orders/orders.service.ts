@@ -278,9 +278,25 @@ export class OrdersService {
     }
 
     // Admin: get all orders
-    async findAll(page = 1, limit = 20, status?: OrderStatus) {
+    async findAll(page = 1, limit = 20, status?: OrderStatus, search?: string) {
         const skip = (page - 1) * limit;
-        const where = status ? { status } : {};
+        const where: any = status ? { status } : {};
+        if (search) {
+            const cleanSearch = search.trim();
+            where.OR = [
+                { id: { contains: cleanSearch, mode: 'insensitive' } },
+                { transactionId: { contains: cleanSearch, mode: 'insensitive' } },
+                {
+                    user: {
+                        OR: [
+                            { name: { contains: cleanSearch, mode: 'insensitive' } },
+                            { phone: { contains: cleanSearch, mode: 'insensitive' } },
+                            { email: { contains: cleanSearch, mode: 'insensitive' } },
+                        ]
+                    }
+                }
+            ];
+        }
         const [orders, total] = await Promise.all([
             this.prisma.order.findMany({
                 where,

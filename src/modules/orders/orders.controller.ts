@@ -48,12 +48,14 @@ export class OrdersController {
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
     @ApiOperation({ summary: '[Admin] List all orders' })
     @ApiQuery({ name: 'status', required: false, enum: OrderStatus })
+    @ApiQuery({ name: 'search', required: false, type: String })
     findAll(
         @Query('page') page = 1,
         @Query('limit') limit = 20,
         @Query('status') status?: OrderStatus,
+        @Query('search') search?: string,
     ) {
-        return this.ordersService.findAll(+page, +limit, status);
+        return this.ordersService.findAll(+page, +limit, status, search);
     }
 
     @Get('admin/:id')

@@ -33,13 +33,15 @@ export class ProductsService {
         const skip = (page - 1) * limit;
 
         const where: Prisma.ProductWhereInput = {
-            isActive: true,
-            ...(search && {
-                OR: [
-                    { name: { contains: search, mode: 'insensitive' } },
-                    { description: { contains: search, mode: 'insensitive' } },
-                ],
-            }),
+            ...(search
+                ? {
+                    OR: [
+                        { id: { contains: search, mode: 'insensitive' } },
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { description: { contains: search, mode: 'insensitive' } },
+                    ],
+                }
+                : { isActive: true }),
             ...(categoryId && { categoryId }),
         };
 
