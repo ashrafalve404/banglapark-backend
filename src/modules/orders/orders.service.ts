@@ -287,8 +287,8 @@ export class OrdersService {
                 skip,
                 take: limit,
                 include: {
-                    user: { select: { id: true, name: true, email: true } },
-                    items: true,
+                    user: { select: { id: true, name: true, email: true, phone: true } },
+                    items: { include: { product: { select: { id: true, name: true, images: true } } } },
                 },
                 orderBy: { createdAt: 'desc' },
             }),
