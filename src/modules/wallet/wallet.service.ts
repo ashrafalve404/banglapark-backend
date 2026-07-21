@@ -101,7 +101,7 @@ export class WalletService {
         const balance = Number(wallet.balance);
         const pending = Number(wallet.pendingWithdrawal);
 
-        const [dailyBenefitResult, generationIncomeResult, dailyRewardResult, tierBonusResult, quizEarningResult] = await Promise.all([
+        const [dailyBenefitResult, generationIncomeResult, dailyRewardResult, tierBonusResult, quizEarningResult, positionSalaryResult] = await Promise.all([
             this.prisma.walletTransaction.aggregate({
                 where: { walletId: wallet.id, type: 'DAILY_BENEFIT' },
                 _sum: { amount: true },
@@ -122,6 +122,10 @@ export class WalletService {
                 where: { walletId: wallet.id, type: 'QUIZ_EARNING' },
                 _sum: { amount: true },
             }),
+            this.prisma.walletTransaction.aggregate({
+                where: { walletId: wallet.id, type: 'POSITION_SALARY' },
+                _sum: { amount: true },
+            }),
         ]);
 
         return {
@@ -132,8 +136,8 @@ export class WalletService {
             tierBonus: Number(tierBonusResult._sum.amount ?? 0),
             generationIncome: Number(generationIncomeResult._sum.amount ?? 0),
             quizEarning: Number(quizEarningResult._sum.amount ?? 0),
+            salary: Number(positionSalaryResult._sum.amount ?? 0),
             reward: 0,
-            salary: 0,
             travelling: 0,
             share: 0,
         };

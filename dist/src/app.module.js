@@ -33,6 +33,7 @@ const uploads_module_1 = require("./modules/uploads/uploads.module");
 const quiz_module_1 = require("./modules/quiz/quiz.module");
 const quiz_category_module_1 = require("./modules/quiz-category/quiz-category.module");
 const quiz_level_module_1 = require("./modules/quiz-level/quiz-level.module");
+const position_module_1 = require("./modules/position/position.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -91,6 +92,7 @@ exports.AppModule = AppModule = __decorate([
             quiz_module_1.QuizModule,
             quiz_category_module_1.QuizCategoryModule,
             quiz_level_module_1.QuizLevelModule,
+            position_module_1.PositionModule,
         ],
     })
 ], AppModule);

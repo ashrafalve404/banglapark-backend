@@ -27,6 +27,7 @@ import { UploadsModule } from './modules/uploads/uploads.module';
 import { QuizModule } from './modules/quiz/quiz.module';
 import { QuizCategoryModule } from './modules/quiz-category/quiz-category.module';
 import { QuizLevelModule } from './modules/quiz-level/quiz-level.module';
+import { PositionModule } from './modules/position/position.module';
 
 
 @Module({
@@ -97,6 +98,7 @@ import { QuizLevelModule } from './modules/quiz-level/quiz-level.module';
     QuizModule,
     QuizCategoryModule,
     QuizLevelModule,
+    PositionModule,
 
   ],
 })

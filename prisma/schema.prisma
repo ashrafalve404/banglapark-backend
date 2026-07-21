@@ -32,6 +32,7 @@ enum TxType {
   ADMIN_ADJUSTMENT
   QUIZ_PURCHASE
   QUIZ_EARNING
+  POSITION_SALARY
 }
 
 enum OrderStatus {

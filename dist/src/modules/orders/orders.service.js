@@ -226,17 +226,33 @@ let OrdersService = OrdersService_1 = class OrdersService {
         });
         return this.findOne(orderId);
     }
-    async findAll(page = 1, limit = 20, status) {
+    async findAll(page = 1, limit = 20, status, search) {
         const skip = (page - 1) * limit;
         const where = status ? { status } : {};
+        if (search) {
+            const cleanSearch = search.trim();
+            where.OR = [
+                { id: { contains: cleanSearch, mode: 'insensitive' } },
+                { transactionId: { contains: cleanSearch, mode: 'insensitive' } },
+                {
+                    user: {
+                        OR: [
+                            { name: { contains: cleanSearch, mode: 'insensitive' } },
+                            { phone: { contains: cleanSearch, mode: 'insensitive' } },
+                            { email: { contains: cleanSearch, mode: 'insensitive' } },
+                        ]
+                    }
+                }
+            ];
+        }
         const [orders, total] = await Promise.all([
             this.prisma.order.findMany({
                 where,
                 skip,
                 take: limit,
                 include: {
-                    user: { select: { id: true, name: true, email: true } },
-                    items: true,
+                    user: { select: { id: true, name: true, email: true, phone: true } },
+                    items: { include: { product: { select: { id: true, name: true, images: true } } } },
                 },
                 orderBy: { createdAt: 'desc' },
             }),

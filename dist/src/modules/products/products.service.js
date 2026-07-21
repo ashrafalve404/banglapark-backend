@@ -40,13 +40,15 @@ let ProductsService = class ProductsService {
         const { search, categoryId, page = 1, limit = 20, sort = 'newest' } = query;
         const skip = (page - 1) * limit;
         const where = {
-            isActive: true,
-            ...(search && {
-                OR: [
-                    { name: { contains: search, mode: 'insensitive' } },
-                    { description: { contains: search, mode: 'insensitive' } },
-                ],
-            }),
+            ...(search
+                ? {
+                    OR: [
+                        { id: { contains: search, mode: 'insensitive' } },
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { description: { contains: search, mode: 'insensitive' } },
+                    ],
+                }
+                : { isActive: true }),
             ...(categoryId && { categoryId }),
         };
         let orderBy = [{ createdAt: 'desc' }];

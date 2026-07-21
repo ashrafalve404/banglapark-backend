@@ -19,7 +19,7 @@ const multer_1 = require("multer");
 const path_1 = require("path");
 const crypto_1 = require("crypto");
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
-const MAX_SIZE = 5 * 1024 * 1024;
+const MAX_SIZE = 20 * 1024 * 1024;
 function uploadDir() {
     return process.env.UPLOAD_DIR || (0, path_1.join)(process.cwd(), 'uploads');
 }

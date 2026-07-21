@@ -10,8 +10,8 @@ export declare class WalletController {
         tierBonus: number;
         generationIncome: number;
         quizEarning: number;
-        reward: number;
         salary: number;
+        reward: number;
         travelling: number;
         share: number;
         id: string;

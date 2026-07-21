@@ -223,21 +223,28 @@ export declare class OrdersService {
         commissionTriggered: boolean;
         commissionReversed: boolean;
     }>;
-    findAll(page?: number, limit?: number, status?: OrderStatus): Promise<{
+    findAll(page?: number, limit?: number, status?: OrderStatus, search?: string): Promise<{
         orders: ({
             user: {
                 id: string;
                 email: string;
+                phone: string;
                 name: string;
             };
-            items: {
+            items: ({
+                product: {
+                    id: string;
+                    name: string;
+                    images: string[];
+                };
+            } & {
                 id: string;
                 price: import("@prisma/client/runtime/library").Decimal;
                 orderId: string;
                 productId: string;
                 quantity: number;
                 size: string | null;
-            }[];
+            })[];
         } & {
             id: string;
             status: import("@prisma/client").$Enums.OrderStatus;

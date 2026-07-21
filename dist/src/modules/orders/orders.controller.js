@@ -37,8 +37,8 @@ let OrdersController = class OrdersController {
     getMyOrder(userId, id) {
         return this.ordersService.findOne(id, userId);
     }
-    findAll(page = 1, limit = 20, status) {
-        return this.ordersService.findAll(+page, +limit, status);
+    findAll(page = 1, limit = 20, status, search) {
+        return this.ordersService.findAll(+page, +limit, status, search);
     }
     getOrder(id) {
         return this.ordersService.findOne(id);
@@ -86,11 +86,13 @@ __decorate([
     (0, roles_decorator_1.Roles)(client_2.Role.ADMIN, client_2.Role.SUPER_ADMIN),
     (0, swagger_1.ApiOperation)({ summary: '[Admin] List all orders' }),
     (0, swagger_1.ApiQuery)({ name: 'status', required: false, enum: client_1.OrderStatus }),
+    (0, swagger_1.ApiQuery)({ name: 'search', required: false, type: String }),
     __param(0, (0, common_1.Query)('page')),
     __param(1, (0, common_1.Query)('limit')),
     __param(2, (0, common_1.Query)('status')),
+    __param(3, (0, common_1.Query)('search')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [Object, Object, String]),
+    __metadata("design:paramtypes", [Object, Object, String, String]),
     __metadata("design:returntype", void 0)
 ], OrdersController.prototype, "findAll", null);
 __decorate([
