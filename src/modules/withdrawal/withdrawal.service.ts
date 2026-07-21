@@ -7,7 +7,8 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateWithdrawalDto, ReviewWithdrawalDto } from './dto/withdrawal.dto';
-import { WithdrawStatus, TxType } from '@prisma/client';
+import { WithdrawStatus, TxType, NotificationType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class WithdrawalService {
@@ -15,6 +16,7 @@ export class WithdrawalService {
         private readonly prisma: PrismaService,
         private readonly walletService: WalletService,
         private readonly configService: ConfigService,
+        private readonly notificationsService: NotificationsService,
     ) { }
 
     async request(userId: string, dto: CreateWithdrawalDto) {
@@ -50,6 +52,34 @@ export class WithdrawalService {
                 },
             });
         });
+
+        // Trigger notifications asynchronously
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true, phone: true },
+            });
+            const userName = user?.name || "User";
+            const userPhone = user?.phone || "";
+
+            // Notify user
+            await this.notificationsService.create(
+                userId,
+                NotificationType.WITHDRAWAL_STATUS,
+                "Withdrawal Requested",
+                `Your request for BDT ${withdrawal.amount} via ${withdrawal.method} has been submitted.`,
+            );
+
+            // Notify admins instantly
+            await this.notificationsService.notifyAdmins(
+                NotificationType.WITHDRAWAL_STATUS,
+                "New Withdrawal Request 💸",
+                `New withdrawal request of BDT ${withdrawal.amount} via ${withdrawal.method} submitted by ${userName} (${userPhone}).`,
+            );
+        } catch (err) {
+            // Log or ignore notification failure to ensure request completes
+            console.error(`Failed to send withdrawal request notifications: ${err.message}`);
+        }
 
         return withdrawal;
     }
@@ -104,7 +134,34 @@ export class WithdrawalService {
             });
         }
 
-        return this.prisma.withdrawalRequest.findUnique({ where: { id: withdrawalId } });
+        const reviewed = await this.prisma.withdrawalRequest.findUnique({
+            where: { id: withdrawalId },
+        });
+
+        // Trigger notifications asynchronously
+        if (reviewed) {
+            try {
+                if (reviewed.status === WithdrawStatus.APPROVED) {
+                    await this.notificationsService.create(
+                        reviewed.userId,
+                        NotificationType.WITHDRAWAL_STATUS,
+                        "Withdrawal Approved",
+                        `Your withdrawal request of BDT ${reviewed.amount} via ${reviewed.method} has been approved.`,
+                    );
+                } else if (reviewed.status === WithdrawStatus.REJECTED) {
+                    await this.notificationsService.create(
+                        reviewed.userId,
+                        NotificationType.WITHDRAWAL_STATUS,
+                        "Withdrawal Rejected",
+                        `Your withdrawal request of BDT ${reviewed.amount} via ${reviewed.method} was rejected. Reason: ${reviewed.reason || "None"}.`,
+                    );
+                }
+            } catch (err) {
+                console.error(`Failed to send withdrawal review notifications: ${err.message}`);
+            }
+        }
+
+        return reviewed;
     }
 
     async getMyRequests(userId: string, page = 1, limit = 20) {

@@ -8,8 +8,10 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CommissionService } from '../commission/commission.service';
 import { WalletService } from '../wallet/wallet.service';
+import { OrdersController } from './orders.controller';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/order.dto';
-import { OrderStatus, TxType } from '@prisma/client';
+import { OrderStatus, TxType, NotificationType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
 export class OrdersService {
@@ -20,6 +22,7 @@ export class OrdersService {
         private readonly commissionService: CommissionService,
         private readonly walletService: WalletService,
         private readonly configService: ConfigService,
+        private readonly notificationsService: NotificationsService,
     ) { }
 
     async create(userId: string, dto: CreateOrderDto) {
@@ -95,6 +98,33 @@ export class OrdersService {
             });
         });
 
+        // Trigger notifications asynchronously
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true, phone: true },
+            });
+            const userName = user?.name || "User";
+            const userPhone = user?.phone || "";
+
+            // Notify customer
+            await this.notificationsService.create(
+                userId,
+                NotificationType.ORDER_STATUS,
+                "Order Placed Successfully",
+                `Your order for BDT ${order.total} has been placed. Order ID: ${order.id}.`,
+            );
+
+            // Notify admins instantly
+            await this.notificationsService.notifyAdmins(
+                NotificationType.ORDER_STATUS,
+                "New Order Received 🛒",
+                `A new order of BDT ${order.total} was placed by ${userName} (${userPhone}). Order ID: ${order.id}.`,
+            );
+        } catch (err) {
+            this.logger.error(`Failed to send order notifications: ${err.message}`);
+        }
+
         return order;
     }
 
@@ -161,6 +191,8 @@ export class OrdersService {
 
         const activationDays = this.configService.get<number>('app.activationPeriodDays') ?? 30;
 
+        let resultOrder: any;
+
         // ── Transitioning to DELIVERED ────────────────────────────────────────
         if (dto.status === OrderStatus.DELIVERED) {
             const deliveredAt = new Date();
@@ -215,11 +247,11 @@ export class OrdersService {
                 }
             });
 
-            return this.findOne(orderId);
+            resultOrder = await this.findOne(orderId);
         }
 
         // ── CANCELLED ─────────────────────────────────────────────────────────
-        if (dto.status === OrderStatus.CANCELLED) {
+        else if (dto.status === OrderStatus.CANCELLED) {
             await this.prisma.$transaction(async (tx) => {
                 for (const item of order.items) {
                     await tx.product.update({
@@ -232,15 +264,37 @@ export class OrdersService {
                     data: { status: OrderStatus.CANCELLED },
                 });
             });
-            return this.findOne(orderId);
+            resultOrder = await this.findOne(orderId);
         }
 
         // ── Non-terminal transitions (CONFIRMED, PROCESSING, SHIPPED) ───────
-        return this.prisma.order.update({
-            where: { id: orderId },
-            data: { status: dto.status },
-            include: { items: true },
-        });
+        else {
+            resultOrder = await this.prisma.order.update({
+                where: { id: orderId },
+                data: { status: dto.status },
+                include: { items: true },
+            });
+        }
+
+        // Trigger notifications asynchronously
+        try {
+            await this.notificationsService.create(
+                resultOrder.userId,
+                NotificationType.ORDER_STATUS,
+                `Order #${resultOrder.id.slice(0, 8)} Updated`,
+                `Your order status has been updated to: ${dto.status}.`,
+            );
+
+            await this.notificationsService.notifyAdmins(
+                NotificationType.ORDER_STATUS,
+                "Order Status Changed",
+                `Order #${resultOrder.id.slice(0, 8)} status was updated to ${dto.status} by Admin.`,
+            );
+        } catch (err) {
+            this.logger.error(`Failed to send order status update notifications: ${err.message}`);
+        }
+
+        return resultOrder;
     }
 
     async updateItemQuantity(orderId: string, itemId: string, newQty: number) {

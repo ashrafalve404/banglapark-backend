@@ -17,6 +17,28 @@ export class NotificationsService {
         });
     }
 
+    async notifyAdmins(
+        type: NotificationType,
+        title: string,
+        body: string,
+    ) {
+        const admins = await this.prisma.user.findMany({
+            where: { role: "ADMIN", isBanned: false },
+            select: { id: true },
+        });
+        if (admins.length === 0) return;
+
+        await this.prisma.notification.createMany({
+            data: admins.map((admin) => ({
+                userId: admin.id,
+                type,
+                title,
+                body,
+                isRead: false,
+            })),
+        });
+    }
+
     async getMyNotifications(userId: string, page = 1, limit = 20) {
         const skip = (page - 1) * limit;
         const [notifications, total, unreadCount] = await Promise.all([

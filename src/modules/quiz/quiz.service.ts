@@ -3,6 +3,8 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateQuestionDto, PurchaseDto, SubmitAnswerDto } from './dto/quiz.dto';
 import { parse } from 'csv-parse/sync';
+import { NotificationType } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 
 const PRICE_PER_QUESTION = 1;
 
@@ -11,6 +13,7 @@ export class QuizService {
     constructor(
         private readonly prisma: PrismaService,
         private readonly walletService: WalletService,
+        private readonly notificationsService: NotificationsService,
     ) { }
 
     // ── Admin: Question CRUD ─────────────────────────────────────────────────
@@ -194,6 +197,8 @@ export class QuizService {
         const price = count * PRICE_PER_QUESTION;
         const method = dto.paymentMethod || 'WALLET';
 
+        let purchase: any;
+
         if (method === 'WALLET') {
             const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
             if (!wallet) throw new NotFoundException('Wallet not found');
@@ -201,21 +206,50 @@ export class QuizService {
                 throw new BadRequestException('Insufficient wallet balance');
             }
 
-            return this.prisma.$transaction(async (tx: any) => {
+            purchase = await this.prisma.$transaction(async (tx: any) => {
                 await this.walletService.debit(tx, wallet.id, price, 'QUIZ_PURCHASE', `Quiz purchase: ${count} questions from ${cat.name}${levelName ? ` (${levelName})` : ''}`, categoryId);
 
-                const purchase = await tx.quizPurchase.create({
+                const created = await tx.quizPurchase.create({
                     data: { userId, categoryId, levelId: dto.levelId ?? null, questionCount: count, totalPrice: price, paymentMethod: 'WALLET' },
                 });
-                return purchase;
+                return created;
             });
         } else if (method === 'BKASH') {
-            return this.prisma.quizPurchase.create({
+            purchase = await this.prisma.quizPurchase.create({
                 data: { userId, categoryId, levelId: dto.levelId ?? null, questionCount: count, totalPrice: price, paymentMethod: 'BKASH' },
             });
         } else {
             throw new BadRequestException('Invalid payment method');
         }
+
+        // Trigger notifications asynchronously
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true, phone: true },
+            });
+            const userName = user?.name || "User";
+            const userPhone = user?.phone || "";
+
+            // Notify user
+            await this.notificationsService.create(
+                userId,
+                NotificationType.SYSTEM,
+                "Quiz Purchased Successfully",
+                `You purchased ${count} questions from category "${cat.name}" for BDT ${price} using ${method}.`,
+            );
+
+            // Notify admins instantly
+            await this.notificationsService.notifyAdmins(
+                NotificationType.SYSTEM,
+                "New Quiz Purchase 🧠",
+                `User ${userName} (${userPhone}) has purchased ${count} questions from "${cat.name}" for BDT ${price} using ${method}.`,
+            );
+        } catch (err) {
+            console.error(`Failed to send quiz purchase notifications: ${err.message}`);
+        }
+
+        return purchase;
     }
 
     async getPurchased(userId: string) {
