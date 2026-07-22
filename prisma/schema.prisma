@@ -390,3 +390,20 @@ model PlatformConfig {
   value Json
   updatedAt DateTime @updatedAt
 }
+
+// ─── Travel Eligibility ───────────────────────────────────────────────────────
+
+model TravelTier {
+  id           String   @id @default(uuid())
+  tierNumber   Int      // 1 = Tier1 (500), 2 = Tier2 (5000), 3 = Tier3 (20000)
+  minMembers   Int      // 500 | 5000 | 20000
+  destinations String[] // destination names set by admin
+  month        Int      // 1-12
+  year         Int
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tierNumber, month, year])
+  @@index([month, year])
+}

@@ -28,6 +28,7 @@ import { QuizModule } from './modules/quiz/quiz.module';
 import { QuizCategoryModule } from './modules/quiz-category/quiz-category.module';
 import { QuizLevelModule } from './modules/quiz-level/quiz-level.module';
 import { PositionModule } from './modules/position/position.module';
+import { TravelModule } from './modules/travel/travel.module';
 
 
 @Module({
@@ -99,6 +100,7 @@ import { PositionModule } from './modules/position/position.module';
     QuizCategoryModule,
     QuizLevelModule,
     PositionModule,
+    TravelModule,
 
   ],
 })
