@@ -17,17 +17,20 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const commission_service_1 = require("../commission/commission.service");
 const wallet_service_1 = require("../wallet/wallet.service");
 const client_1 = require("@prisma/client");
+const notifications_service_1 = require("../notifications/notifications.service");
 let OrdersService = OrdersService_1 = class OrdersService {
     prisma;
     commissionService;
     walletService;
     configService;
+    notificationsService;
     logger = new common_1.Logger(OrdersService_1.name);
-    constructor(prisma, commissionService, walletService, configService) {
+    constructor(prisma, commissionService, walletService, configService, notificationsService) {
         this.prisma = prisma;
         this.commissionService = commissionService;
         this.walletService = walletService;
         this.configService = configService;
+        this.notificationsService = notificationsService;
     }
     async create(userId, dto) {
         const productIds = dto.items.map((i) => i.productId);
@@ -89,6 +92,19 @@ let OrdersService = OrdersService_1 = class OrdersService {
                 include: { items: { include: { product: true } } },
             });
         });
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true, phone: true },
+            });
+            const userName = user?.name || "User";
+            const userPhone = user?.phone || "";
+            await this.notificationsService.create(userId, client_1.NotificationType.ORDER_STATUS, "Order Placed Successfully", `Your order for BDT ${order.total} has been placed. Order ID: ${order.id}.`);
+            await this.notificationsService.notifyAdmins(client_1.NotificationType.ORDER_STATUS, "New Order Received 🛒", `A new order of BDT ${order.total} was placed by ${userName} (${userPhone}). Order ID: ${order.id}.`);
+        }
+        catch (err) {
+            this.logger.error(`Failed to send order notifications: ${err.message}`);
+        }
         return order;
     }
     async findMyOrders(userId, page = 1, limit = 20) {
@@ -139,6 +155,7 @@ let OrdersService = OrdersService_1 = class OrdersService {
             throw new common_1.BadRequestException(`Invalid order status transition: ${order.status} → ${dto.status}`);
         }
         const activationDays = this.configService.get('app.activationPeriodDays') ?? 30;
+        let resultOrder;
         if (dto.status === client_1.OrderStatus.DELIVERED) {
             const deliveredAt = new Date();
             await this.prisma.$transaction(async (tx) => {
@@ -176,9 +193,9 @@ let OrdersService = OrdersService_1 = class OrdersService {
                     this.logger.log(`Generation commission triggered for user ${order.userId}`);
                 }
             });
-            return this.findOne(orderId);
+            resultOrder = await this.findOne(orderId);
         }
-        if (dto.status === client_1.OrderStatus.CANCELLED) {
+        else if (dto.status === client_1.OrderStatus.CANCELLED) {
             await this.prisma.$transaction(async (tx) => {
                 for (const item of order.items) {
                     await tx.product.update({
@@ -191,13 +208,23 @@ let OrdersService = OrdersService_1 = class OrdersService {
                     data: { status: client_1.OrderStatus.CANCELLED },
                 });
             });
-            return this.findOne(orderId);
+            resultOrder = await this.findOne(orderId);
         }
-        return this.prisma.order.update({
-            where: { id: orderId },
-            data: { status: dto.status },
-            include: { items: true },
-        });
+        else {
+            resultOrder = await this.prisma.order.update({
+                where: { id: orderId },
+                data: { status: dto.status },
+                include: { items: true },
+            });
+        }
+        try {
+            await this.notificationsService.create(resultOrder.userId, client_1.NotificationType.ORDER_STATUS, `Order #${resultOrder.id.slice(0, 8)} Updated`, `Your order status has been updated to: ${dto.status}.`);
+            await this.notificationsService.notifyAdmins(client_1.NotificationType.ORDER_STATUS, "Order Status Changed", `Order #${resultOrder.id.slice(0, 8)} status was updated to ${dto.status} by Admin.`);
+        }
+        catch (err) {
+            this.logger.error(`Failed to send order status update notifications: ${err.message}`);
+        }
+        return resultOrder;
     }
     async updateItemQuantity(orderId, itemId, newQty) {
         const order = await this.findOne(orderId);
@@ -267,6 +294,7 @@ exports.OrdersService = OrdersService = OrdersService_1 = __decorate([
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
         commission_service_1.CommissionService,
         wallet_service_1.WalletService,
-        config_1.ConfigService])
+        config_1.ConfigService,
+        notifications_service_1.NotificationsService])
 ], OrdersService);
 //# sourceMappingURL=orders.service.js.map

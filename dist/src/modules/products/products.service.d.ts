@@ -136,4 +136,7 @@ export declare class ProductsService {
         isActive: boolean;
         clicks: number;
     }>;
+    bulkRemove(ids: string[]): Promise<{
+        count: number;
+    }>;
 }

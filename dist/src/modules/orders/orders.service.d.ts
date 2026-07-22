@@ -4,13 +4,15 @@ import { CommissionService } from '../commission/commission.service';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateOrderDto, UpdateOrderStatusDto } from './dto/order.dto';
 import { OrderStatus } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class OrdersService {
     private readonly prisma;
     private readonly commissionService;
     private readonly walletService;
     private readonly configService;
+    private readonly notificationsService;
     private readonly logger;
-    constructor(prisma: PrismaService, commissionService: CommissionService, walletService: WalletService, configService: ConfigService);
+    constructor(prisma: PrismaService, commissionService: CommissionService, walletService: WalletService, configService: ConfigService, notificationsService: NotificationsService);
     create(userId: string, dto: CreateOrderDto): Promise<{
         items: ({
             product: {
@@ -145,34 +147,7 @@ export declare class OrdersService {
         commissionTriggered: boolean;
         commissionReversed: boolean;
     }>;
-    updateStatus(orderId: string, dto: UpdateOrderStatusDto): Promise<{
-        items: {
-            id: string;
-            price: import("@prisma/client/runtime/library").Decimal;
-            orderId: string;
-            productId: string;
-            quantity: number;
-            size: string | null;
-        }[];
-    } & {
-        id: string;
-        status: import("@prisma/client").$Enums.OrderStatus;
-        createdAt: Date;
-        updatedAt: Date;
-        userId: string;
-        total: import("@prisma/client/runtime/library").Decimal;
-        paymentMethod: import("@prisma/client").$Enums.PaymentMethod;
-        transactionId: string | null;
-        userBkashNumber: string | null;
-        deliveryArea: import("@prisma/client").$Enums.DeliveryArea | null;
-        deliveryCharge: import("@prisma/client/runtime/library").Decimal;
-        isQualifying: boolean;
-        shippingAddress: import("@prisma/client/runtime/library").JsonValue | null;
-        notes: string | null;
-        deliveredAt: Date | null;
-        commissionTriggered: boolean;
-        commissionReversed: boolean;
-    }>;
+    updateStatus(orderId: string, dto: UpdateOrderStatusDto): Promise<any>;
     updateItemQuantity(orderId: string, itemId: string, newQty: number): Promise<{
         user: {
             id: string;

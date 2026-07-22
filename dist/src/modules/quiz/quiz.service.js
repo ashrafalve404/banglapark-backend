@@ -14,13 +14,17 @@ const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const wallet_service_1 = require("../wallet/wallet.service");
 const sync_1 = require("csv-parse/sync");
+const client_1 = require("@prisma/client");
+const notifications_service_1 = require("../notifications/notifications.service");
 const PRICE_PER_QUESTION = 1;
 let QuizService = class QuizService {
     prisma;
     walletService;
-    constructor(prisma, walletService) {
+    notificationsService;
+    constructor(prisma, walletService, notificationsService) {
         this.prisma = prisma;
         this.walletService = walletService;
+        this.notificationsService = notificationsService;
     }
     async addQuestions(categoryId, dtos, levelId) {
         const cat = await this.prisma.quizCategory.findUnique({ where: { id: categoryId } });
@@ -155,8 +159,32 @@ let QuizService = class QuizService {
         const q = await this.prisma.quizQuestion.findUnique({ where: { id } });
         if (!q)
             throw new common_1.NotFoundException('Question not found');
+        await this.prisma.quizAnswer.deleteMany({
+            where: { questionId: id },
+        });
         await this.prisma.quizQuestion.delete({ where: { id } });
         return { message: 'Question deleted' };
+    }
+    async bulkDeleteQuestions(ids) {
+        if (!ids || ids.length === 0)
+            return { count: 0 };
+        await this.prisma.quizAnswer.deleteMany({
+            where: { questionId: { in: ids } },
+        });
+        const result = await this.prisma.quizQuestion.deleteMany({
+            where: { id: { in: ids } },
+        });
+        return { count: result.count, message: `${result.count} questions deleted` };
+    }
+    async deleteAllQuestions(categoryId) {
+        const cat = await this.prisma.quizCategory.findUnique({ where: { id: categoryId } });
+        if (!cat)
+            throw new common_1.NotFoundException('Quiz category not found');
+        await this.prisma.quizAnswer.deleteMany({
+            where: { question: { categoryId } },
+        });
+        const result = await this.prisma.quizQuestion.deleteMany({ where: { categoryId } });
+        return { count: result.count, message: `All ${result.count} questions deleted from category` };
     }
     async purchase(userId, categoryId, dto) {
         const cat = await this.prisma.quizCategory.findUnique({
@@ -181,6 +209,7 @@ let QuizService = class QuizService {
         const count = Math.min(dto.questionCount, totalQuestions);
         const price = count * PRICE_PER_QUESTION;
         const method = dto.paymentMethod || 'WALLET';
+        let purchase;
         if (method === 'WALLET') {
             const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
             if (!wallet)
@@ -188,22 +217,36 @@ let QuizService = class QuizService {
             if (Number(wallet.balance) < price) {
                 throw new common_1.BadRequestException('Insufficient wallet balance');
             }
-            return this.prisma.$transaction(async (tx) => {
+            purchase = await this.prisma.$transaction(async (tx) => {
                 await this.walletService.debit(tx, wallet.id, price, 'QUIZ_PURCHASE', `Quiz purchase: ${count} questions from ${cat.name}${levelName ? ` (${levelName})` : ''}`, categoryId);
-                const purchase = await tx.quizPurchase.create({
+                const created = await tx.quizPurchase.create({
                     data: { userId, categoryId, levelId: dto.levelId ?? null, questionCount: count, totalPrice: price, paymentMethod: 'WALLET' },
                 });
-                return purchase;
+                return created;
             });
         }
         else if (method === 'BKASH') {
-            return this.prisma.quizPurchase.create({
+            purchase = await this.prisma.quizPurchase.create({
                 data: { userId, categoryId, levelId: dto.levelId ?? null, questionCount: count, totalPrice: price, paymentMethod: 'BKASH' },
             });
         }
         else {
             throw new common_1.BadRequestException('Invalid payment method');
         }
+        try {
+            const user = await this.prisma.user.findUnique({
+                where: { id: userId },
+                select: { name: true, phone: true },
+            });
+            const userName = user?.name || "User";
+            const userPhone = user?.phone || "";
+            await this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, "Quiz Purchased Successfully", `You purchased ${count} questions from category "${cat.name}" for BDT ${price} using ${method}.`);
+            await this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, "New Quiz Purchase 🧠", `User ${userName} (${userPhone}) has purchased ${count} questions from "${cat.name}" for BDT ${price} using ${method}.`);
+        }
+        catch (err) {
+            console.error(`Failed to send quiz purchase notifications: ${err.message}`);
+        }
+        return purchase;
     }
     async getPurchased(userId) {
         return this.prisma.quizPurchase.findMany({
@@ -434,6 +477,7 @@ exports.QuizService = QuizService;
 exports.QuizService = QuizService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        wallet_service_1.WalletService])
+        wallet_service_1.WalletService,
+        notifications_service_1.NotificationsService])
 ], QuizService);
 //# sourceMappingURL=quiz.service.js.map

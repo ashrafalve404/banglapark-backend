@@ -68,4 +68,18 @@ export class NotificationsService {
             data: { isRead: true },
         });
     }
+
+    async clearAll(userId: string) {
+        await this.prisma.notification.deleteMany({
+            where: { userId },
+        });
+        return { message: 'All notifications cleared successfully' };
+    }
+
+    async deleteNotification(notificationId: string, userId: string) {
+        await this.prisma.notification.deleteMany({
+            where: { id: notificationId, userId },
+        });
+        return { message: 'Notification deleted successfully' };
+    }
 }

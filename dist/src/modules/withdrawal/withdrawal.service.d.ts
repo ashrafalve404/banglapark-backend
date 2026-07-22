@@ -3,11 +3,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateWithdrawalDto, ReviewWithdrawalDto } from './dto/withdrawal.dto';
 import { WithdrawStatus } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class WithdrawalService {
     private readonly prisma;
     private readonly walletService;
     private readonly configService;
-    constructor(prisma: PrismaService, walletService: WalletService, configService: ConfigService);
+    private readonly notificationsService;
+    constructor(prisma: PrismaService, walletService: WalletService, configService: ConfigService, notificationsService: NotificationsService);
     request(userId: string, dto: CreateWithdrawalDto): Promise<{
         id: string;
         status: import("@prisma/client").$Enums.WithdrawStatus;

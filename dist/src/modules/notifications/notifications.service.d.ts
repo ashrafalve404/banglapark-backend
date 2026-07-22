@@ -12,6 +12,7 @@ export declare class NotificationsService {
         body: string;
         isRead: boolean;
     }>;
+    notifyAdmins(type: NotificationType, title: string, body: string): Promise<void>;
     getMyNotifications(userId: string, page?: number, limit?: number): Promise<{
         notifications: {
             id: string;
@@ -38,5 +39,11 @@ export declare class NotificationsService {
         type: import("@prisma/client").$Enums.NotificationType;
         body: string;
         isRead: boolean;
+    }>;
+    clearAll(userId: string): Promise<{
+        message: string;
+    }>;
+    deleteNotification(notificationId: string, userId: string): Promise<{
+        message: string;
     }>;
 }

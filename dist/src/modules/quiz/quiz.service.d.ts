@@ -1,10 +1,12 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateQuestionDto, PurchaseDto, SubmitAnswerDto } from './dto/quiz.dto';
+import { NotificationsService } from '../notifications/notifications.service';
 export declare class QuizService {
     private readonly prisma;
     private readonly walletService;
-    constructor(prisma: PrismaService, walletService: WalletService);
+    private readonly notificationsService;
+    constructor(prisma: PrismaService, walletService: WalletService, notificationsService: NotificationsService);
     addQuestions(categoryId: string, dtos: CreateQuestionDto[], levelId?: string): Promise<{
         message: string;
     }>;
@@ -50,6 +52,17 @@ export declare class QuizService {
         levelId: string | null;
     }>;
     deleteQuestion(id: string): Promise<{
+        message: string;
+    }>;
+    bulkDeleteQuestions(ids: string[]): Promise<{
+        count: number;
+        message?: undefined;
+    } | {
+        count: number;
+        message: string;
+    }>;
+    deleteAllQuestions(categoryId: string): Promise<{
+        count: number;
         message: string;
     }>;
     purchase(userId: string, categoryId: string, dto: PurchaseDto): Promise<any>;

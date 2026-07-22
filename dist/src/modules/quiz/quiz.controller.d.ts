@@ -42,6 +42,17 @@ export declare class QuizController {
     deleteQuestion(id: string): Promise<{
         message: string;
     }>;
+    bulkDeleteQuestions(ids: string[]): Promise<{
+        count: number;
+        message?: undefined;
+    } | {
+        count: number;
+        message: string;
+    }>;
+    deleteAllQuestions(categoryId: string): Promise<{
+        count: number;
+        message: string;
+    }>;
     importCsv(categoryId: string, file: Express.Multer.File): Promise<{
         imported: number;
         errors: {

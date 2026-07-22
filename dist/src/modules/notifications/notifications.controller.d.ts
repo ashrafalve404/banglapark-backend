@@ -29,4 +29,10 @@ export declare class NotificationsController {
     markAllRead(userId: string): Promise<{
         message: string;
     }>;
+    clearAll(userId: string): Promise<{
+        message: string;
+    }>;
+    deleteOne(id: string, userId: string): Promise<{
+        message: string;
+    }>;
 }

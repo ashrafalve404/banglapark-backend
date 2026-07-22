@@ -40,6 +40,7 @@ let ProductsService = class ProductsService {
         const { search, categoryId, page = 1, limit = 20, sort = 'newest' } = query;
         const skip = (page - 1) * limit;
         const where = {
+            isActive: true,
             ...(search
                 ? {
                     OR: [
@@ -48,7 +49,7 @@ let ProductsService = class ProductsService {
                         { description: { contains: search, mode: 'insensitive' } },
                     ],
                 }
-                : { isActive: true }),
+                : {}),
             ...(categoryId && { categoryId }),
         };
         let orderBy = [{ createdAt: 'desc' }];
@@ -98,7 +99,14 @@ let ProductsService = class ProductsService {
     }
     async remove(id) {
         await this.findOne(id);
-        return this.prisma.product.update({ where: { id }, data: { isActive: false } });
+        return this.prisma.product.delete({ where: { id } });
+    }
+    async bulkRemove(ids) {
+        if (!ids || ids.length === 0)
+            return { count: 0 };
+        return this.prisma.product.deleteMany({
+            where: { id: { in: ids } },
+        });
     }
 };
 exports.ProductsService = ProductsService;

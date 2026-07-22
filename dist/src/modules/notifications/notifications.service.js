@@ -22,6 +22,23 @@ let NotificationsService = class NotificationsService {
             data: { userId, type, title, body },
         });
     }
+    async notifyAdmins(type, title, body) {
+        const admins = await this.prisma.user.findMany({
+            where: { role: "ADMIN", isBanned: false },
+            select: { id: true },
+        });
+        if (admins.length === 0)
+            return;
+        await this.prisma.notification.createMany({
+            data: admins.map((admin) => ({
+                userId: admin.id,
+                type,
+                title,
+                body,
+                isRead: false,
+            })),
+        });
+    }
     async getMyNotifications(userId, page = 1, limit = 20) {
         const skip = (page - 1) * limit;
         const [notifications, total, unreadCount] = await Promise.all([
@@ -48,6 +65,18 @@ let NotificationsService = class NotificationsService {
             where: { id: notificationId, userId },
             data: { isRead: true },
         });
+    }
+    async clearAll(userId) {
+        await this.prisma.notification.deleteMany({
+            where: { userId },
+        });
+        return { message: 'All notifications cleared successfully' };
+    }
+    async deleteNotification(notificationId, userId) {
+        await this.prisma.notification.deleteMany({
+            where: { id: notificationId, userId },
+        });
+        return { message: 'Notification deleted successfully' };
     }
 };
 exports.NotificationsService = NotificationsService;

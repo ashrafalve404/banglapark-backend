@@ -40,6 +40,12 @@ let QuizController = class QuizController {
     deleteQuestion(id) {
         return this.quizService.deleteQuestion(id);
     }
+    bulkDeleteQuestions(ids) {
+        return this.quizService.bulkDeleteQuestions(ids);
+    }
+    deleteAllQuestions(categoryId) {
+        return this.quizService.deleteAllQuestions(categoryId);
+    }
     importCsv(categoryId, file) {
         if (!file)
             throw new common_1.BadRequestException('CSV file is required');
@@ -119,6 +125,28 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], QuizController.prototype, "deleteQuestion", null);
+__decorate([
+    (0, common_1.Post)('admin/questions/bulk-delete'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Bulk delete questions by IDs' }),
+    __param(0, (0, common_1.Body)('ids')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Array]),
+    __metadata("design:returntype", void 0)
+], QuizController.prototype, "bulkDeleteQuestions", null);
+__decorate([
+    (0, common_1.Delete)('admin/questions/category/:categoryId/all'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Delete ALL questions in a category' }),
+    __param(0, (0, common_1.Param)('categoryId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], QuizController.prototype, "deleteAllQuestions", null);
 __decorate([
     (0, common_1.Post)('admin/import-csv/:categoryId'),
     (0, swagger_1.ApiBearerAuth)(),
