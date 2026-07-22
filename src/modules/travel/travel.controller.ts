@@ -22,6 +22,15 @@ export class TravelController {
     getUserEligibility(@CurrentUser('id') userId: string) {
         return this.travelService.getUserEligibility(userId);
     }
+    // ── Public/User: get monthly travel achievers ─────────────────────────
+    @Get('achievers')
+    @ApiOperation({ summary: 'Get list of monthly travel achievers' })
+    getAchievers(
+        @Query('month', ParseIntPipe) month: number,
+        @Query('year', ParseIntPipe) year: number,
+    ) {
+        return this.travelService.getAchieversList(month, year);
+    }
 
     // ── Admin: get tiers for a month/year ─────────────────────────────────
     @Get('admin/tiers')

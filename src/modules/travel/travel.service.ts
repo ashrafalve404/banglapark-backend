@@ -84,10 +84,21 @@ export class TravelService {
                 parentId: userId,
                 status: 'ACTIVE',
                 isFirstActivated: true,
-                activeFrom: {
-                    gte: monthStart,
-                    lt: monthEnd,
-                },
+                OR: [
+                    {
+                        activeFrom: {
+                            gte: monthStart,
+                            lt: monthEnd,
+                        },
+                    },
+                    {
+                        activeFrom: null,
+                        createdAt: {
+                            gte: monthStart,
+                            lt: monthEnd,
+                        },
+                    },
+                ],
             },
         });
 
@@ -128,4 +139,60 @@ export class TravelService {
             }),
         };
     }
+
+    // ── Get monthly travel achievers (eligible users) ───────────────────────
+    async getAchieversList(month: number, year: number) {
+        const monthStart = new Date(year, month - 1, 1);
+        const monthEnd = new Date(year, month, 1);
+
+        // Fetch all active users with parentId set
+        const activeMembers = await this.prisma.user.findMany({
+            where: {
+                status: 'ACTIVE',
+                isFirstActivated: true,
+                OR: [
+                    { activeFrom: { gte: monthStart, lt: monthEnd } },
+                    { activeFrom: null, createdAt: { gte: monthStart, lt: monthEnd } },
+                ],
+                parentId: { not: null },
+            },
+            select: { parentId: true },
+        });
+
+        // Aggregate counts by parentId
+        const parentCounts: Record<string, number> = {};
+        for (const m of activeMembers) {
+            if (m.parentId) {
+                parentCounts[m.parentId] = (parentCounts[m.parentId] ?? 0) + 1;
+            }
+        }
+
+        // Filter parents who reached at least Tier 1 (>= 500)
+        const eligibleParentIds = Object.keys(parentCounts).filter(
+            (parentId) => parentCounts[parentId] >= 500,
+        );
+
+        if (eligibleParentIds.length === 0) {
+            return [];
+        }
+
+        const users = await this.prisma.user.findMany({
+            where: { id: { in: eligibleParentIds } },
+            select: { id: true, name: true, phone: true, email: true, memberId: true },
+        });
+
+        return users.map((u) => {
+            const count = parentCounts[u.id] ?? 0;
+            let tierNumber = 1;
+            if (count >= 20000) tierNumber = 3;
+            else if (count >= 5000) tierNumber = 2;
+
+            return {
+                ...u,
+                monthlyNewActiveCount: count,
+                tierNumber,
+            };
+        });
+    }
 }
+
