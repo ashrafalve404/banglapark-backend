@@ -13,6 +13,7 @@ export class UsersService {
         name: true,
         email: true,
         phone: true,
+        profileImage: true,
         role: true,
         status: true,
         activeFrom: true,
@@ -65,6 +66,7 @@ export class UsersService {
         const data: Record<string, unknown> = {};
         if (dto.name) data.name = dto.name;
         if (dto.password) data.passwordHash = await bcrypt.hash(dto.password, 12);
+        if (dto.profileImage !== undefined) data.profileImage = dto.profileImage;
 
         const updated = await this.prisma.user.update({
             where: { id },

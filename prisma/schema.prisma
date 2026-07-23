@@ -96,6 +96,7 @@ model User {
   email            String     @unique
   phone            String     @unique
   passwordHash     String
+  profileImage     String?
   role             Role       @default(USER)
   referralCode     String     @unique
   referralLink     String?

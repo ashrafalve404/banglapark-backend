@@ -13,4 +13,9 @@ export class UpdateProfileDto {
     @IsString()
     @MinLength(8)
     password?: string;
+
+    @ApiPropertyOptional({ example: 'http://localhost:4000/uploads/avatar.jpg' })
+    @IsOptional()
+    @IsString()
+    profileImage?: string;
 }
