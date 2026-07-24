@@ -538,4 +538,102 @@ export class QuizService {
             })),
         };
     }
+
+    async getAdminStats() {
+        const totalQuizzesSold = await this.prisma.quizPurchase.count();
+        const aggregate = await this.prisma.quizPurchase.aggregate({
+            _sum: {
+                totalPrice: true,
+                questionCount: true,
+            },
+        });
+        const totalRevenue = Number(aggregate._sum.totalPrice ?? 0);
+        const totalQuestionsSold = Number(aggregate._sum.questionCount ?? 0);
+
+        const completedQuizzes = await this.prisma.quizPurchase.count({
+            where: { status: 'COMPLETED' },
+        });
+
+        const allCompleted = await this.prisma.quizPurchase.findMany({
+            where: { status: 'COMPLETED' },
+            include: { answers: true },
+        });
+
+        let totalUserRewardsPaid = 0;
+        for (const p of allCompleted) {
+            const correctCount = p.answers.filter((a) => a.isCorrect).length;
+            const wrongCount = p.answers.length - correctCount;
+            const netReward = Math.max(0, correctCount * 2 - wrongCount * 1);
+            totalUserRewardsPaid += netReward;
+        }
+
+        const netProfit = totalRevenue - totalUserRewardsPaid;
+
+        const categories = await this.prisma.quizCategory.findMany({
+            include: {
+                _count: { select: { questions: true, purchases: true } },
+                purchases: {
+                    select: { totalPrice: true, questionCount: true },
+                },
+            },
+        });
+
+        const categoryStats = categories.map((cat) => {
+            const catRevenue = cat.purchases.reduce((sum, p) => sum + Number(p.totalPrice), 0);
+            const catQuestionsSold = cat.purchases.reduce((sum, p) => sum + p.questionCount, 0);
+            return {
+                id: cat.id,
+                name: cat.name,
+                imageUrl: cat.imageUrl,
+                totalQuestions: cat._count.questions,
+                totalSold: cat._count.purchases,
+                totalQuestionsSold: catQuestionsSold,
+                totalRevenue: catRevenue,
+            };
+        });
+
+        const recentPurchases = await this.prisma.quizPurchase.findMany({
+            take: 50,
+            orderBy: { purchasedAt: 'desc' },
+            include: {
+                user: { select: { id: true, name: true, phone: true, email: true } },
+                category: { select: { id: true, name: true, imageUrl: true } },
+                answers: { select: { isCorrect: true } },
+            },
+        });
+
+        const userPurchaseLogs = recentPurchases.map((p) => {
+            const correctCount = p.answers.filter((a) => a.isCorrect === true).length;
+            const wrongCount = p.answers.filter((a) => a.isCorrect === false).length;
+            const userReward = p.status === 'COMPLETED' ? Math.max(0, correctCount * 2 - wrongCount * 1) : 0;
+            const pricePaid = Number(p.totalPrice);
+            const platformProfit = pricePaid - userReward;
+
+            return {
+                id: p.id,
+                user: p.user,
+                category: p.category,
+                questionCount: p.questionCount,
+                pricePaid,
+                correctCount,
+                wrongCount,
+                userReward,
+                platformProfit,
+                status: p.status,
+                purchasedAt: p.purchasedAt,
+                completedAt: p.completedAt,
+            };
+        });
+
+        return {
+            totalQuizzesSold,
+            completedQuizzes,
+            totalQuestionsSold,
+            totalRevenue,
+            totalUserRewardsPaid,
+            netProfit,
+            categoryStats,
+            userPurchaseLogs,
+        };
+    }
 }

@@ -16,7 +16,14 @@ import { Role } from '@prisma/client';
 export class QuizController {
     constructor(private readonly quizService: QuizService) { }
 
-    // ── Admin: Questions ─────────────────────────────────────────────────────
+    @Get('admin/stats')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiOperation({ summary: '[Admin] Get quiz analytics and profit/loss summary' })
+    getAdminStats() {
+        return this.quizService.getAdminStats();
+    }
 
     @Post('admin/questions/:categoryId')
     @ApiBearerAuth()
