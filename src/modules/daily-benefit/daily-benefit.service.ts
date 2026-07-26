@@ -21,7 +21,7 @@ export function calculateDailyBenefit(activeTeamCount: number): number {
     for (const tier of BENEFIT_TIERS) {
         if (activeTeamCount >= tier.minCount) return tier.amount;
     }
-    return 100; // base daily benefit for every active user
+    return 10; // base daily benefit for every active user
 }
 
 // Returns only the additional tier bonus (0 for <5 team members)
@@ -103,14 +103,14 @@ export class DailyBenefitService {
       SELECT COUNT(*) as count FROM team WHERE status = 'ACTIVE'
     `;
         const activeTeamCount = Number(result[0]?.count ?? 0);
-        const baseAmount = 100;
+        const baseAmount = 10;
         const tierAmount = calculateTierBonus(activeTeamCount);
         const totalAmount = baseAmount + tierAmount;
 
         await this.prisma.$transaction(async (tx) => {
             const walletId = await this.walletService.getWalletId(userId);
 
-            // Always credit base 100 daily reward
+            // Always credit base 10 daily reward
             await this.walletService.credit(
                 tx,
                 walletId,

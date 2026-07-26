@@ -19,8 +19,14 @@ export class UsersController {
     }
 
     @Patch('me')
-    @ApiOperation({ summary: 'Update my profile (name / password)' })
+    @ApiOperation({ summary: 'Update my profile (name / password / profileImage)' })
     updateProfile(@CurrentUser('id') id: string, @Body() dto: UpdateProfileDto) {
+        return this.usersService.updateProfile(id, dto);
+    }
+
+    @Patch('profile')
+    @ApiOperation({ summary: 'Update my profile (alias)' })
+    updateProfileAlias(@CurrentUser('id') id: string, @Body() dto: UpdateProfileDto) {
         return this.usersService.updateProfile(id, dto);
     }
 
