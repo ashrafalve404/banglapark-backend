@@ -361,13 +361,18 @@ export class QuizService {
         const existing = await this.prisma.quizAnswer.findFirst({
             where: { purchaseId, questionId: dto.questionId },
         });
-        if (existing) throw new BadRequestException('Already answered this question');
+        if (existing) {
+            // Already answered, check progress
+            const answers = await this.prisma.quizAnswer.findMany({ where: { purchaseId } });
+            const isLast = answers.length >= purchase.questionCount;
+            return { status: isLast ? 'COMPLETED' : 'IN_PROGRESS', currentIndex: answers.length, isLast };
+        }
 
         // Find the question and check answer
         const question = full!.category.questions.find((q) => q.id === dto.questionId);
         if (!question) throw new BadRequestException('Question not found in this category');
 
-        const isCorrect = question.correctIndex === dto.selectedIndex;
+        const isCorrect = dto.selectedIndex >= 0 && question.correctIndex === dto.selectedIndex;
 
         await this.prisma.quizAnswer.create({
             data: {
@@ -378,17 +383,18 @@ export class QuizService {
             },
         });
 
-        // Advance to next
-        const nextIndex = purchase.currentIndex + 1;
-        const isLast = nextIndex >= purchase.questionCount;
+        // Calculate total answered for this purchase
+        const answers = await this.prisma.quizAnswer.findMany({
+            where: { purchaseId },
+        });
+        const totalAnswered = answers.length;
+        const isLast = totalAnswered >= purchase.questionCount;
 
         if (isLast) {
             // Calculate score and reward
-            const answers = await this.prisma.quizAnswer.findMany({
-                where: { purchaseId },
-            });
             const correctCount = answers.filter((a) => a.isCorrect).length;
-            const wrongCount = answers.length - correctCount;
+            const wrongCount = answers.filter((a) => !a.isCorrect && a.selectedIndex !== null && a.selectedIndex >= 0).length;
+            const skippedCount = answers.filter((a) => a.selectedIndex === null || a.selectedIndex < 0).length;
             const netReward = correctCount * 2 - wrongCount * 1;
 
             // Award or deduct reward to wallet
@@ -423,17 +429,17 @@ export class QuizService {
 
             await this.prisma.quizPurchase.update({
                 where: { id: purchaseId },
-                data: { currentIndex: nextIndex, status: 'COMPLETED', completedAt: new Date() },
+                data: { currentIndex: totalAnswered, status: 'COMPLETED', completedAt: new Date() },
             });
 
-            return { status: 'COMPLETED', score: correctCount, totalQuestions: purchase.questionCount, isLast: true, netReward };
+            return { status: 'COMPLETED', score: correctCount, wrongCount, skippedCount, totalQuestions: purchase.questionCount, isLast: true, netReward };
         } else {
             await this.prisma.quizPurchase.update({
                 where: { id: purchaseId },
-                data: { currentIndex: nextIndex },
+                data: { currentIndex: totalAnswered },
             });
 
-            return { status: 'IN_PROGRESS', currentIndex: nextIndex, isLast: false };
+            return { status: 'IN_PROGRESS', currentIndex: totalAnswered, isLast: false };
         }
     }
 
@@ -444,6 +450,23 @@ export class QuizService {
         if (!purchase) throw new NotFoundException('Purchase not found');
         if (purchase.userId !== userId) throw new ForbiddenException('Not your purchase');
 
+        const answers = await this.prisma.quizAnswer.findMany({ where: { purchaseId } });
+        const answeredCount = answers.length;
+        const correctCount = answers.filter((a) => a.isCorrect).length;
+        const wrongCount = answers.filter((a) => !a.isCorrect && a.selectedIndex !== null && a.selectedIndex >= 0).length;
+        const skippedCount = answers.filter((a) => a.selectedIndex === null || a.selectedIndex < 0).length;
+
+        if (purchase.status !== 'PURCHASED' || answeredCount >= purchase.questionCount) {
+            if (purchase.status === 'PURCHASED') {
+                await this.prisma.quizPurchase.update({
+                    where: { id: purchaseId },
+                    data: { status: 'COMPLETED', completedAt: new Date() },
+                });
+            }
+            const netReward = correctCount * 2 - wrongCount * 1;
+            return { status: 'COMPLETED', score: correctCount, wrongCount, skippedCount, totalQuestions: purchase.questionCount, completed: true, netReward };
+        }
+
         const full = await this.prisma.quizPurchase.findUnique({
             where: { id: purchaseId },
             include: {
@@ -451,41 +474,37 @@ export class QuizService {
                     include: {
                         questions: {
                             where: purchase.levelId ? { levelId: purchase.levelId } : undefined,
-                            orderBy: { sortOrder: 'asc' },
                         },
                     },
                 },
             },
         });
-        if (purchase.status !== 'PURCHASED') {
-            // Return results with reward
-            const answers = await this.prisma.quizAnswer.findMany({ where: { purchaseId } });
-            const correctCount = answers.filter((a) => a.isCorrect).length;
-            const wrongCount = answers.length - correctCount;
-            const netReward = correctCount * 2 - wrongCount * 1;
-            return { status: purchase.status, score: correctCount, totalQuestions: purchase.questionCount, completed: true, netReward };
-        }
 
-        const answeredIds = new Set(
-            (await this.prisma.quizAnswer.findMany({
-                where: { purchaseId },
-                select: { questionId: true },
-            })).map((a) => a.questionId),
-        );
+        const answeredIds = new Set(answers.map((a) => a.questionId));
 
-        // Get all category questions shuffled, pick the ones not answered yet
-        const shuffled = [...(full?.category.questions ?? [])].sort(() => Math.random() - 0.5);
-        const selected = shuffled.slice(0, purchase.questionCount);
+        // Deterministic pseudo-random sorting per purchaseId so questions remain 100% fixed for this attempt
+        const getQuestionScore = (qId: string, pId: string) => {
+            let hash = 0;
+            const str = qId + pId;
+            for (let i = 0; i < str.length; i++) {
+                hash = (hash << 5) - hash + str.charCodeAt(i);
+                hash |= 0;
+            }
+            return hash;
+        };
+
+        const allQuestions = full?.category.questions ?? [];
+        const deterministicSorted = [...allQuestions].sort((a, b) => getQuestionScore(a.id, purchaseId) - getQuestionScore(b.id, purchaseId));
+        const selected = deterministicSorted.slice(0, purchase.questionCount);
         const unanswered = selected.filter((q) => !answeredIds.has(q.id));
 
         if (unanswered.length === 0) {
-            const answers = await this.prisma.quizAnswer.findMany({ where: { purchaseId } });
-            const score = answers.filter((a) => a.isCorrect).length;
             await this.prisma.quizPurchase.update({
                 where: { id: purchaseId },
                 data: { status: 'COMPLETED', completedAt: new Date() },
             });
-            return { status: 'COMPLETED', score, totalQuestions: purchase.questionCount, completed: true };
+            const netReward = correctCount * 2 - wrongCount * 1;
+            return { status: 'COMPLETED', score: correctCount, wrongCount, skippedCount, totalQuestions: purchase.questionCount, completed: true, netReward };
         }
 
         return {
@@ -495,9 +514,9 @@ export class QuizService {
                 question: unanswered[0].question,
                 options: unanswered[0].options as string[],
             },
-            currentIndex: purchase.currentIndex,
+            currentIndex: answeredCount,
+            answeredCount,
             totalQuestions: purchase.questionCount,
-            answeredCount: answeredIds.size,
             completed: false,
         };
     }
@@ -517,7 +536,8 @@ export class QuizService {
         if (purchase.userId !== userId) throw new ForbiddenException('Not your purchase');
 
         const correctCount = purchase.answers.filter((a) => a.isCorrect).length;
-        const wrongCount = purchase.answers.length - correctCount;
+        const wrongCount = purchase.answers.filter((a) => !a.isCorrect && a.selectedIndex !== null && a.selectedIndex >= 0).length;
+        const skippedCount = purchase.answers.filter((a) => a.selectedIndex === null || a.selectedIndex < 0).length;
         const netReward = correctCount * 2 - wrongCount * 1;
 
         return {
@@ -525,6 +545,8 @@ export class QuizService {
             category: purchase.category,
             questionCount: purchase.questionCount,
             score: correctCount,
+            wrongCount,
+            skippedCount,
             netReward,
             status: purchase.status,
             startedAt: purchase.startedAt,
