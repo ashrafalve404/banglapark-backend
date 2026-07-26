@@ -480,9 +480,6 @@ export class QuizService {
             },
         });
 
-        const answeredIds = new Set(answers.map((a) => a.questionId));
-
-        // Deterministic pseudo-random sorting per purchaseId so questions remain 100% fixed for this attempt
         const getQuestionScore = (qId: string, pId: string) => {
             let hash = 0;
             const str = qId + pId;
@@ -494,25 +491,17 @@ export class QuizService {
         };
 
         const allQuestions = full?.category.questions ?? [];
-        const deterministicSorted = [...allQuestions].sort((a, b) => getQuestionScore(a.id, purchaseId) - getQuestionScore(b.id, purchaseId));
-        const selected = deterministicSorted.slice(0, purchase.questionCount);
-        const unanswered = selected.filter((q) => !answeredIds.has(q.id));
+        if (allQuestions.length === 0) throw new BadRequestException('No questions available in this category');
 
-        if (unanswered.length === 0) {
-            await this.prisma.quizPurchase.update({
-                where: { id: purchaseId },
-                data: { status: 'COMPLETED', completedAt: new Date() },
-            });
-            const netReward = correctCount * 2 - wrongCount * 1;
-            return { status: 'COMPLETED', score: correctCount, wrongCount, skippedCount, totalQuestions: purchase.questionCount, completed: true, netReward };
-        }
+        const deterministicSorted = [...allQuestions].sort((a, b) => getQuestionScore(a.id, purchaseId) - getQuestionScore(b.id, purchaseId));
+        const currentQ = deterministicSorted[answeredCount % deterministicSorted.length];
 
         return {
             status: 'IN_PROGRESS',
             question: {
-                id: unanswered[0].id,
-                question: unanswered[0].question,
-                options: unanswered[0].options as string[],
+                id: currentQ.id,
+                question: currentQ.question,
+                options: currentQ.options as string[],
             },
             currentIndex: answeredCount,
             answeredCount,
