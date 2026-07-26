@@ -339,6 +339,59 @@ export class QuizService {
         };
     }
 
+    async abandonAttempt(userId: string, purchaseId: string) {
+        const purchase = await this.prisma.quizPurchase.findUnique({ where: { id: purchaseId } });
+        if (!purchase) return { status: 'NOT_FOUND' };
+        if (purchase.userId !== userId) return { status: 'FORBIDDEN' };
+        if (purchase.status !== 'PURCHASED') return { status: 'ALREADY_COMPLETED' };
+
+        const answers = await this.prisma.quizAnswer.findMany({ where: { purchaseId } });
+
+        const correctCount = answers.filter((a) => a.isCorrect).length;
+        const wrongCount = answers.filter((a) => !a.isCorrect && a.selectedIndex !== null && a.selectedIndex >= 0).length;
+        const skippedCount = answers.filter((a) => a.selectedIndex === null || a.selectedIndex < 0).length;
+        const netReward = correctCount * 2 - wrongCount * 1;
+
+        // Mark as completed immediately
+        await this.prisma.quizPurchase.update({
+            where: { id: purchaseId },
+            data: { status: 'COMPLETED', completedAt: new Date(), currentIndex: answers.length },
+        });
+
+        // Pay out whatever was earned from answered questions only
+        if (netReward !== 0) {
+            const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+            const catName = purchase.categoryId ?? 'Quiz';
+            if (wallet) {
+                if (netReward > 0) {
+                    await this.walletService.credit(
+                        this.prisma,
+                        wallet.id,
+                        netReward,
+                        'QUIZ_EARNING',
+                        `Quiz reward (abandoned): ${correctCount} correct × 2tk - ${wrongCount} wrong × 1tk = ${netReward}tk`,
+                        purchaseId,
+                    );
+                } else {
+                    try {
+                        await this.walletService.debit(
+                            this.prisma,
+                            wallet.id,
+                            Math.abs(netReward),
+                            'QUIZ_EARNING',
+                            `Quiz penalty (abandoned): ${wrongCount} wrong × 1tk = ${Math.abs(netReward)}tk`,
+                            purchaseId,
+                        );
+                    } catch {
+                        // Ignore insufficient balance
+                    }
+                }
+            }
+        }
+
+        return { status: 'ABANDONED', answeredCount: answers.length, score: correctCount, wrongCount, skippedCount, netReward };
+    }
+
     async submitAnswer(userId: string, purchaseId: string, dto: SubmitAnswerDto) {
         const purchase = await this.prisma.quizPurchase.findUnique({ where: { id: purchaseId } });
         if (!purchase) throw new NotFoundException('Purchase not found');

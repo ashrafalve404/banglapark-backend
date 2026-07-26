@@ -168,4 +168,12 @@ export class QuizController {
     getResult(@Req() req: any, @Param('purchaseId') purchaseId: string) {
         return this.quizService.getResult(req.user.id, purchaseId);
     }
+
+    @Post('attempt/:purchaseId/abandon')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard)
+    @ApiOperation({ summary: 'Abandon (force-complete) a quiz attempt — called when user navigates away' })
+    abandonAttempt(@Req() req: any, @Param('purchaseId') purchaseId: string) {
+        return this.quizService.abandonAttempt(req.user.id, purchaseId);
+    }
 }
