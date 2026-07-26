@@ -47,6 +47,6 @@ export class SubmitAnswerDto {
 
     @ApiProperty({ example: 2 })
     @IsInt()
-    @Min(0)
+    @Min(-1)
     selectedIndex: number;
 }
