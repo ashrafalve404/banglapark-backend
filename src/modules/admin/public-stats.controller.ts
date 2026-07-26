@@ -25,5 +25,32 @@ export class PublicStatsController {
         });
         return members;
     }
+
+    @Get('top-leaders')
+    @ApiOperation({ summary: 'Top 5 users by team member count (public)' })
+    async getTopLeaders() {
+        const topUsers = await this.prisma.user.findMany({
+            where: { role: 'USER' },
+            select: {
+                id: true,
+                name: true,
+                profileImage: true,
+                _count: {
+                    select: { children: true },
+                },
+            },
+            orderBy: {
+                children: { _count: 'desc' },
+            },
+            take: 5,
+        });
+
+        return topUsers.map((u) => ({
+            id: u.id,
+            name: u.name,
+            profileImage: u.profileImage,
+            teamCount: u._count.children,
+        }));
+    }
 }
 
