@@ -11,6 +11,7 @@ export declare class WalletController {
         generationIncome: number;
         quizEarning: number;
         salary: number;
+        productSalesIncome: number;
         reward: number;
         travelling: number;
         share: number;

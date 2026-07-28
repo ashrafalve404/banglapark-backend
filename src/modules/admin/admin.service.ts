@@ -25,6 +25,7 @@ export class AdminService {
             deliveredOrderIds,
             approvedWithdrawals,
             deliveryCharges,
+            sellerPayoutsAgg,
         ] = await Promise.all([
             this.prisma.user.count({ where: { role: 'USER' } }),
             this.prisma.user.count({ where: { status: 'ACTIVE' } }),
@@ -47,6 +48,10 @@ export class AdminService {
                 _sum: { amount: true },
             }),
             this.prisma.order.aggregate({ _sum: { deliveryCharge: true } }),
+            this.prisma.walletTransaction.aggregate({
+                where: { type: 'SELLER_PAYOUT' as any },
+                _sum: { amount: true },
+            }),
         ]);
 
         // Calculate sold product cost from delivered orders
@@ -67,6 +72,10 @@ export class AdminService {
         const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
         const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
         const totalDeliveryCharges = Number(deliveryCharges._sum.deliveryCharge ?? 0);
+        const totalSellerPayouts = Number(sellerPayoutsAgg._sum.amount ?? 0);
+        // 80% to seller, 20% company commission => Company Commission = sellerPayouts * 0.25
+        const userProductCommission = totalSellerPayouts * 0.25;
+
         const totalProducts = products.length;
         let productValue = 0;
         let costValue = 0;
@@ -75,7 +84,7 @@ export class AdminService {
             if (p.costPrice) costValue += Number(p.costPrice) * p.stock;
         }
 
-        const grossProfit = salesRevenue - soldCost - totalDeliveryCharges;
+        const grossProfit = salesRevenue - soldCost - totalDeliveryCharges + userProductCommission;
         const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
 
         return {
@@ -91,6 +100,8 @@ export class AdminService {
             totalSales: salesRevenue,
             totalSoldCost: soldCost,
             totalDeliveryCharges,
+            totalSellerPayouts,
+            userProductCommission,
             grossProfit,
             netProfit,
         };

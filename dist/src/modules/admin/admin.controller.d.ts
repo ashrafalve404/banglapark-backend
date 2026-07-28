@@ -41,6 +41,8 @@ export declare class AdminController {
         totalSales: number;
         totalSoldCost: number;
         totalDeliveryCharges: number;
+        totalSellerPayouts: number;
+        userProductCommission: number;
         grossProfit: number;
         netProfit: number;
     }>;

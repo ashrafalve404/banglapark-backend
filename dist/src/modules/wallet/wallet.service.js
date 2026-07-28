@@ -70,7 +70,7 @@ let WalletService = class WalletService {
             throw new common_1.NotFoundException('Wallet not found');
         const balance = Number(wallet.balance);
         const pending = Number(wallet.pendingWithdrawal);
-        const [dailyBenefitResult, generationIncomeResult, dailyRewardResult, tierBonusResult, quizEarningResult, positionSalaryResult] = await Promise.all([
+        const [dailyBenefitResult, generationIncomeResult, dailyRewardResult, tierBonusResult, quizEarningResult, positionSalaryResult, productSalesResult] = await Promise.all([
             this.prisma.walletTransaction.aggregate({
                 where: { walletId: wallet.id, type: 'DAILY_BENEFIT' },
                 _sum: { amount: true },
@@ -95,6 +95,10 @@ let WalletService = class WalletService {
                 where: { walletId: wallet.id, type: 'POSITION_SALARY' },
                 _sum: { amount: true },
             }),
+            this.prisma.walletTransaction.aggregate({
+                where: { walletId: wallet.id, type: 'SELLER_PAYOUT' },
+                _sum: { amount: true },
+            }),
         ]);
         return {
             ...wallet,
@@ -105,6 +109,7 @@ let WalletService = class WalletService {
             generationIncome: Number(generationIncomeResult._sum.amount ?? 0),
             quizEarning: Number(quizEarningResult._sum.amount ?? 0),
             salary: Number(positionSalaryResult._sum.amount ?? 0),
+            productSalesIncome: Number(productSalesResult._sum.amount ?? 0),
             reward: 0,
             travelling: 0,
             share: 0,

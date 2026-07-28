@@ -56,7 +56,7 @@ let AdminService = class AdminService {
         this.usersService = usersService;
     }
     async getPlatformStats() {
-        const [totalUsers, activeUsers, inactiveUsers, totalOrders, deliveredOrders, totalRevenue, totalCommissions, pendingWithdrawals, products, deliveredOrderIds, approvedWithdrawals, deliveryCharges,] = await Promise.all([
+        const [totalUsers, activeUsers, inactiveUsers, totalOrders, deliveredOrders, totalRevenue, totalCommissions, pendingWithdrawals, products, deliveredOrderIds, approvedWithdrawals, deliveryCharges, sellerPayoutsAgg,] = await Promise.all([
             this.prisma.user.count({ where: { role: 'USER' } }),
             this.prisma.user.count({ where: { status: 'ACTIVE' } }),
             this.prisma.user.count({ where: { status: 'INACTIVE' } }),
@@ -78,6 +78,10 @@ let AdminService = class AdminService {
                 _sum: { amount: true },
             }),
             this.prisma.order.aggregate({ _sum: { deliveryCharge: true } }),
+            this.prisma.walletTransaction.aggregate({
+                where: { type: 'SELLER_PAYOUT' },
+                _sum: { amount: true },
+            }),
         ]);
         const deliveredIdList = deliveredOrderIds.map((o) => o.id);
         let soldCost = 0;
@@ -95,6 +99,8 @@ let AdminService = class AdminService {
         const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
         const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
         const totalDeliveryCharges = Number(deliveryCharges._sum.deliveryCharge ?? 0);
+        const totalSellerPayouts = Number(sellerPayoutsAgg._sum.amount ?? 0);
+        const userProductCommission = totalSellerPayouts * 0.25;
         const totalProducts = products.length;
         let productValue = 0;
         let costValue = 0;
@@ -103,7 +109,7 @@ let AdminService = class AdminService {
             if (p.costPrice)
                 costValue += Number(p.costPrice) * p.stock;
         }
-        const grossProfit = salesRevenue - soldCost - totalDeliveryCharges;
+        const grossProfit = salesRevenue - soldCost - totalDeliveryCharges + userProductCommission;
         const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
         return {
             users: { total: totalUsers, active: activeUsers, inactive: inactiveUsers },
@@ -118,6 +124,8 @@ let AdminService = class AdminService {
             totalSales: salesRevenue,
             totalSoldCost: soldCost,
             totalDeliveryCharges,
+            totalSellerPayouts,
+            userProductCommission,
             grossProfit,
             netProfit,
         };
