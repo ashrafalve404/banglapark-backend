@@ -29,6 +29,7 @@ import { QuizCategoryModule } from './modules/quiz-category/quiz-category.module
 import { QuizLevelModule } from './modules/quiz-level/quiz-level.module';
 import { PositionModule } from './modules/position/position.module';
 import { TravelModule } from './modules/travel/travel.module';
+import { UserProductsModule } from './modules/user-products/user-products.module';
 
 
 @Module({
@@ -61,18 +62,22 @@ import { TravelModule } from './modules/travel/travel.module';
         ttl: parseInt(process.env.THROTTLE_TTL ?? '60000'),
         limit: parseInt(process.env.THROTTLE_LIMIT ?? '100'),
       },
+      {
+        name: 'auth',
+        ttl: 60000,
+        limit: parseInt(process.env.AUTH_THROTTLE_LIMIT ?? '5'),
+      },
     ]),
 
-    // ── Scheduling ────────────────────────────────────────────────────────
+    // ── Cron Scheduling ───────────────────────────────────────────────────
     ScheduleModule.forRoot(),
 
-    // ── BullMQ ────────────────────────────────────────────────────────────
+    // ── Async Queue (BullMQ) ───────────────────────────────────────────────
     BullModule.forRoot({
       connection: {
         host: process.env.REDIS_HOST ?? 'localhost',
         port: parseInt(process.env.REDIS_PORT ?? '6379'),
         password: process.env.REDIS_PASSWORD || undefined,
-        maxRetriesPerRequest: null,
         tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
       },
     }),
@@ -101,6 +106,7 @@ import { TravelModule } from './modules/travel/travel.module';
     QuizLevelModule,
     PositionModule,
     TravelModule,
+    UserProductsModule,
 
   ],
 })

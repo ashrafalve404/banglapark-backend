@@ -17,6 +17,9 @@ export declare class OrdersController {
                 costPrice: import("@prisma/client/runtime/library").Decimal | null;
                 stock: number;
                 categoryId: string | null;
+                sellerId: string | null;
+                approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+                rejectionReason: string | null;
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
@@ -106,6 +109,9 @@ export declare class OrdersController {
                 costPrice: import("@prisma/client/runtime/library").Decimal | null;
                 stock: number;
                 categoryId: string | null;
+                sellerId: string | null;
+                approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+                rejectionReason: string | null;
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
@@ -201,6 +207,9 @@ export declare class OrdersController {
                 costPrice: import("@prisma/client/runtime/library").Decimal | null;
                 stock: number;
                 categoryId: string | null;
+                sellerId: string | null;
+                approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+                rejectionReason: string | null;
                 images: string[];
                 sizes: string[];
                 isActive: boolean;
@@ -252,6 +261,9 @@ export declare class OrdersController {
                 costPrice: import("@prisma/client/runtime/library").Decimal | null;
                 stock: number;
                 categoryId: string | null;
+                sellerId: string | null;
+                approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+                rejectionReason: string | null;
                 images: string[];
                 sizes: string[];
                 isActive: boolean;

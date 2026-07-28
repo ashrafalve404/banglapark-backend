@@ -5,4 +5,16 @@ export declare class PublicStatsController {
     getStats(): Promise<{
         totalUsers: number;
     }>;
+    getNewMembers(): Promise<{
+        id: string;
+        name: string;
+        profileImage: string | null;
+        createdAt: Date;
+    }[]>;
+    getTopLeaders(): Promise<{
+        id: string;
+        name: string;
+        profileImage: string | null;
+        teamCount: number;
+    }[]>;
 }

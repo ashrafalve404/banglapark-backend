@@ -25,4 +25,10 @@ export declare class ProductQueryDto {
     page?: number;
     limit?: number;
     sort?: 'price_asc' | 'price_desc' | 'newest' | 'popular';
+    sellerType?: 'ALL' | 'ADMIN' | 'USER';
+    approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+}
+export declare class UpdateApprovalDto {
+    approvalStatus: 'APPROVED' | 'REJECTED';
+    rejectionReason?: string;
 }

@@ -34,6 +34,8 @@ const quiz_module_1 = require("./modules/quiz/quiz.module");
 const quiz_category_module_1 = require("./modules/quiz-category/quiz-category.module");
 const quiz_level_module_1 = require("./modules/quiz-level/quiz-level.module");
 const position_module_1 = require("./modules/position/position.module");
+const travel_module_1 = require("./modules/travel/travel.module");
+const user_products_module_1 = require("./modules/user-products/user-products.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -62,6 +64,11 @@ exports.AppModule = AppModule = __decorate([
                     ttl: parseInt(process.env.THROTTLE_TTL ?? '60000'),
                     limit: parseInt(process.env.THROTTLE_LIMIT ?? '100'),
                 },
+                {
+                    name: 'auth',
+                    ttl: 60000,
+                    limit: parseInt(process.env.AUTH_THROTTLE_LIMIT ?? '5'),
+                },
             ]),
             schedule_1.ScheduleModule.forRoot(),
             bullmq_1.BullModule.forRoot({
@@ -69,7 +76,6 @@ exports.AppModule = AppModule = __decorate([
                     host: process.env.REDIS_HOST ?? 'localhost',
                     port: parseInt(process.env.REDIS_PORT ?? '6379'),
                     password: process.env.REDIS_PASSWORD || undefined,
-                    maxRetriesPerRequest: null,
                     tls: process.env.REDIS_TLS === 'true' ? {} : undefined,
                 },
             }),
@@ -93,6 +99,8 @@ exports.AppModule = AppModule = __decorate([
             quiz_category_module_1.QuizCategoryModule,
             quiz_level_module_1.QuizLevelModule,
             position_module_1.PositionModule,
+            travel_module_1.TravelModule,
+            user_products_module_1.UserProductsModule,
         ],
     })
 ], AppModule);

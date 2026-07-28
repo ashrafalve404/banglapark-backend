@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger';
 import { ProductsService } from './products.service';
-import { CreateProductDto, UpdateProductDto, ProductQueryDto } from './dto/product.dto';
+import { CreateProductDto, UpdateProductDto, ProductQueryDto, UpdateApprovalDto } from './dto/product.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -15,7 +15,7 @@ export class ProductsController {
     constructor(private readonly productsService: ProductsService) { }
 
     @Get()
-    @ApiOperation({ summary: 'List all active products (public)' })
+    @ApiOperation({ summary: 'List all active products (public / admin filter)' })
     findAll(@Query() query: ProductQueryDto) { return this.productsService.findAll(query); }
 
     @Get(':id')
@@ -40,6 +40,15 @@ export class ProductsController {
     @ApiOperation({ summary: '[Admin] Update product' })
     update(@Param('id') id: string, @Body() dto: UpdateProductDto) {
         return this.productsService.update(id, dto);
+    }
+
+    @Patch(':id/approval')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiOperation({ summary: '[Admin] Approve or Reject pending user product' })
+    updateApproval(@Param('id') id: string, @Body() dto: UpdateApprovalDto) {
+        return this.productsService.updateApproval(id, dto);
     }
 
     @Delete(':id')

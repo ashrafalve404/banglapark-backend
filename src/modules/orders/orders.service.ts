@@ -245,6 +245,49 @@ export class OrdersService {
                     );
                     this.logger.log(`Generation commission triggered for user ${order.userId}`);
                 }
+
+                // 5. Credit 80% Seller Payout to user sellers for any user-listed products
+                for (const item of order.items) {
+                    const product = item.product;
+                    if (product && product.sellerId) {
+                        const sellerId = product.sellerId;
+                        const itemTotal = Number(item.price) * item.quantity;
+                        const sellerPayoutAmount = itemTotal * 0.80; // 80% seller payout, 20% platform commission
+
+                        const sellerWallet = await tx.wallet.findUnique({ where: { userId: sellerId } });
+                        if (sellerWallet) {
+                            const newBalance = Number(sellerWallet.balance) + sellerPayoutAmount;
+                            await tx.wallet.update({
+                                where: { id: sellerWallet.id },
+                                data: { balance: newBalance },
+                            });
+
+                            await tx.walletTransaction.create({
+                                data: {
+                                    walletId: sellerWallet.id,
+                                    type: 'SELLER_PAYOUT' as any,
+                                    amount: sellerPayoutAmount,
+                                    balanceAfter: newBalance,
+                                    referenceId: orderId,
+                                    description: `Seller Payout (80%) for product "${product.name}" in Order #${orderId.slice(0, 8)}`,
+                                },
+                            });
+
+                            try {
+                                await this.notificationsService.create(
+                                    sellerId,
+                                    NotificationType.COMMISSION_RECEIVED,
+                                    "Product Sale Payout 💰",
+                                    `You earned BDT ${sellerPayoutAmount.toFixed(2)} (80%) for product "${product.name}" from Order #${orderId.slice(0, 8)}.`,
+                                );
+                            } catch (e) {
+                                this.logger.error(`Failed to send seller payout notification: ${e.message}`);
+                            }
+
+                            this.logger.log(`Credited seller payout BDT ${sellerPayoutAmount} (80%) to user ${sellerId} for product ${product.id}`);
+                        }
+                    }
+                }
             });
 
             resultOrder = await this.findOne(orderId);

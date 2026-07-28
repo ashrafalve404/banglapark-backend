@@ -24,6 +24,9 @@ export declare class ProductsService {
         costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
+        sellerId: string | null;
+        approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+        rejectionReason: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
@@ -33,6 +36,12 @@ export declare class ProductsService {
         products: ({
             category: {
                 id: string;
+                name: string;
+            } | null;
+            seller: {
+                id: string;
+                email: string;
+                phone: string;
                 name: string;
             } | null;
         } & {
@@ -46,6 +55,9 @@ export declare class ProductsService {
             costPrice: Prisma.Decimal | null;
             stock: number;
             categoryId: string | null;
+            sellerId: string | null;
+            approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+            rejectionReason: string | null;
             images: string[];
             sizes: string[];
             isActive: boolean;
@@ -75,6 +87,9 @@ export declare class ProductsService {
         costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
+        sellerId: string | null;
+        approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+        rejectionReason: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
@@ -91,6 +106,9 @@ export declare class ProductsService {
         costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
+        sellerId: string | null;
+        approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+        rejectionReason: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
@@ -115,6 +133,59 @@ export declare class ProductsService {
         costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
+        sellerId: string | null;
+        approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+        rejectionReason: string | null;
+        images: string[];
+        sizes: string[];
+        isActive: boolean;
+        clicks: number;
+    }>;
+    updateApproval(id: string, dto: {
+        approvalStatus: 'APPROVED' | 'REJECTED';
+        rejectionReason?: string;
+    }): Promise<{
+        category: {
+            id: string;
+            name: string;
+            createdAt: Date;
+            updatedAt: Date;
+            slug: string;
+        } | null;
+        seller: {
+            id: string;
+            memberId: number | null;
+            email: string;
+            phone: string;
+            referralCode: string;
+            name: string;
+            passwordHash: string;
+            profileImage: string | null;
+            role: import("@prisma/client").$Enums.Role;
+            referralLink: string | null;
+            parentId: string | null;
+            status: import("@prisma/client").$Enums.UserStatus;
+            activeFrom: Date | null;
+            activeUntil: Date | null;
+            isFirstActivated: boolean;
+            isBanned: boolean;
+            createdAt: Date;
+            updatedAt: Date;
+        } | null;
+    } & {
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
+        description: string | null;
+        price: Prisma.Decimal;
+        costPrice: Prisma.Decimal | null;
+        stock: number;
+        categoryId: string | null;
+        sellerId: string | null;
+        approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+        rejectionReason: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;
@@ -131,6 +202,9 @@ export declare class ProductsService {
         costPrice: Prisma.Decimal | null;
         stock: number;
         categoryId: string | null;
+        sellerId: string | null;
+        approvalStatus: import("@prisma/client").$Enums.ProductApprovalStatus;
+        rejectionReason: string | null;
         images: string[];
         sizes: string[];
         isActive: boolean;

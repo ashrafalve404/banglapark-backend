@@ -22,6 +22,38 @@ let PublicStatsController = class PublicStatsController {
         const totalUsers = await this.prisma.user.count({ where: { role: 'USER' } });
         return { totalUsers };
     }
+    async getNewMembers() {
+        const members = await this.prisma.user.findMany({
+            where: { role: 'USER' },
+            orderBy: { createdAt: 'desc' },
+            take: 8,
+            select: { id: true, name: true, profileImage: true, createdAt: true },
+        });
+        return members;
+    }
+    async getTopLeaders() {
+        const topUsers = await this.prisma.user.findMany({
+            where: { role: 'USER' },
+            select: {
+                id: true,
+                name: true,
+                profileImage: true,
+                _count: {
+                    select: { children: true },
+                },
+            },
+            orderBy: {
+                children: { _count: 'desc' },
+            },
+            take: 5,
+        });
+        return topUsers.map((u) => ({
+            id: u.id,
+            name: u.name,
+            profileImage: u.profileImage,
+            teamCount: u._count.children,
+        }));
+    }
 };
 exports.PublicStatsController = PublicStatsController;
 __decorate([
@@ -31,6 +63,20 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], PublicStatsController.prototype, "getStats", null);
+__decorate([
+    (0, common_1.Get)('new-members'),
+    (0, swagger_1.ApiOperation)({ summary: 'Last 8 newly registered members (public)' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], PublicStatsController.prototype, "getNewMembers", null);
+__decorate([
+    (0, common_1.Get)('top-leaders'),
+    (0, swagger_1.ApiOperation)({ summary: 'Top 5 users by team member count (public)' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], PublicStatsController.prototype, "getTopLeaders", null);
 exports.PublicStatsController = PublicStatsController = __decorate([
     (0, swagger_1.ApiTags)('Public'),
     (0, common_1.Controller)('public'),

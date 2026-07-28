@@ -29,12 +29,15 @@ export class ProductsService {
     }
 
     async findAll(query: ProductQueryDto) {
-        const { search, categoryId, page = 1, limit = 20, sort = 'newest' } = query;
+        const { search, categoryId, page = 1, limit = 20, sort = 'newest', sellerType, approvalStatus } = query;
         const skip = (page - 1) * limit;
 
-        // Always filter active products; combine with optional search
         const where: Prisma.ProductWhereInput = {
-            isActive: true,
+            ...(approvalStatus
+                ? { approvalStatus }
+                : { isActive: true, approvalStatus: 'APPROVED' }),
+            ...(sellerType === 'ADMIN' ? { sellerId: null } : {}),
+            ...(sellerType === 'USER' ? { sellerId: { not: null } } : {}),
             ...(search
                 ? {
                     OR: [
@@ -58,7 +61,10 @@ export class ProductsService {
                 where,
                 skip,
                 take: limit,
-                include: { category: { select: { id: true, name: true } } },
+                include: {
+                    category: { select: { id: true, name: true } },
+                    seller: { select: { id: true, name: true, email: true, phone: true } },
+                },
                 orderBy,
             }),
             this.prisma.product.count({ where }),
@@ -91,6 +97,21 @@ export class ProductsService {
     async update(id: string, dto: UpdateProductDto) {
         await this.findOne(id);
         return this.prisma.product.update({ where: { id }, data: dto, include: { category: true } });
+    }
+
+    async updateApproval(id: string, dto: { approvalStatus: 'APPROVED' | 'REJECTED'; rejectionReason?: string }) {
+        await this.findOne(id);
+        const isActive = dto.approvalStatus === 'APPROVED';
+
+        return this.prisma.product.update({
+            where: { id },
+            data: {
+                approvalStatus: dto.approvalStatus,
+                rejectionReason: dto.rejectionReason || null,
+                isActive,
+            },
+            include: { category: true, seller: true },
+        });
     }
 
     async remove(id: string) {

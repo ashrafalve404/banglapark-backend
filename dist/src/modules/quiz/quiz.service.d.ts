@@ -109,36 +109,48 @@ export declare class QuizService {
         currentIndex: number;
         startedAt: Date;
     }>;
-    submitAnswer(userId: string, purchaseId: string, dto: SubmitAnswerDto): Promise<{
+    abandonAttempt(userId: string, purchaseId: string): Promise<{
         status: string;
-        score: number;
-        totalQuestions: number;
-        isLast: boolean;
-        netReward: number;
-        currentIndex?: undefined;
+        answeredCount?: undefined;
+        score?: undefined;
+        wrongCount?: undefined;
+        skippedCount?: undefined;
+        netReward?: undefined;
     } | {
+        status: string;
+        answeredCount: number;
+        score: number;
+        wrongCount: number;
+        skippedCount: number;
+        netReward: number;
+    }>;
+    submitAnswer(userId: string, purchaseId: string, dto: SubmitAnswerDto): Promise<{
         status: string;
         currentIndex: number;
         isLast: boolean;
         score?: undefined;
+        wrongCount?: undefined;
+        skippedCount?: undefined;
         totalQuestions?: undefined;
         netReward?: undefined;
-    }>;
-    getNextQuestion(userId: string, purchaseId: string): Promise<{
-        status: "COMPLETED";
-        score: number;
-        totalQuestions: number;
-        completed: boolean;
-        netReward: number;
-        question?: undefined;
-        currentIndex?: undefined;
-        answeredCount?: undefined;
     } | {
         status: string;
         score: number;
+        wrongCount: number;
+        skippedCount: number;
+        totalQuestions: number;
+        isLast: boolean;
+        netReward: number;
+        currentIndex?: undefined;
+    }>;
+    getNextQuestion(userId: string, purchaseId: string): Promise<{
+        status: string;
+        score: number;
+        wrongCount: number;
+        skippedCount: number;
         totalQuestions: number;
         completed: boolean;
-        netReward?: undefined;
+        netReward: number;
         question?: undefined;
         currentIndex?: undefined;
         answeredCount?: undefined;
@@ -150,10 +162,12 @@ export declare class QuizService {
             options: string[];
         };
         currentIndex: number;
-        totalQuestions: number;
         answeredCount: number;
+        totalQuestions: number;
         completed: boolean;
         score?: undefined;
+        wrongCount?: undefined;
+        skippedCount?: undefined;
         netReward?: undefined;
     }>;
     getResult(userId: string, purchaseId: string): Promise<{
@@ -165,6 +179,8 @@ export declare class QuizService {
         };
         questionCount: number;
         score: number;
+        wrongCount: number;
+        skippedCount: number;
         netReward: number;
         status: import("@prisma/client").$Enums.QuizPurchaseStatus;
         startedAt: Date | null;
@@ -175,6 +191,46 @@ export declare class QuizService {
             correctIndex: number;
             selectedIndex: number | null;
             isCorrect: boolean | null;
+        }[];
+    }>;
+    getAdminStats(): Promise<{
+        totalQuizzesSold: number;
+        completedQuizzes: number;
+        totalQuestionsSold: number;
+        totalRevenue: number;
+        totalUserRewardsPaid: number;
+        netProfit: number;
+        categoryStats: {
+            id: string;
+            name: string;
+            imageUrl: string;
+            totalQuestions: number;
+            totalSold: number;
+            totalQuestionsSold: number;
+            totalRevenue: number;
+        }[];
+        userPurchaseLogs: {
+            id: string;
+            user: {
+                id: string;
+                email: string;
+                phone: string;
+                name: string;
+            };
+            category: {
+                id: string;
+                name: string;
+                imageUrl: string;
+            };
+            questionCount: number;
+            pricePaid: number;
+            correctCount: number;
+            wrongCount: number;
+            userReward: number;
+            platformProfit: number;
+            status: import("@prisma/client").$Enums.QuizPurchaseStatus;
+            purchasedAt: Date;
+            completedAt: Date | null;
         }[];
     }>;
 }

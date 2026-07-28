@@ -28,6 +28,9 @@ let QuizController = class QuizController {
     constructor(quizService) {
         this.quizService = quizService;
     }
+    getAdminStats() {
+        return this.quizService.getAdminStats();
+    }
     addQuestions(categoryId, dtos, levelId) {
         return this.quizService.addQuestions(categoryId, dtos, levelId);
     }
@@ -74,8 +77,21 @@ let QuizController = class QuizController {
     getResult(req, purchaseId) {
         return this.quizService.getResult(req.user.id, purchaseId);
     }
+    abandonAttempt(req, purchaseId) {
+        return this.quizService.abandonAttempt(req.user.id, purchaseId);
+    }
 };
 exports.QuizController = QuizController;
+__decorate([
+    (0, common_1.Get)('admin/stats'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Get quiz analytics and profit/loss summary' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", void 0)
+], QuizController.prototype, "getAdminStats", null);
 __decorate([
     (0, common_1.Post)('admin/questions/:categoryId'),
     (0, swagger_1.ApiBearerAuth)(),
@@ -236,6 +252,17 @@ __decorate([
     __metadata("design:paramtypes", [Object, String]),
     __metadata("design:returntype", void 0)
 ], QuizController.prototype, "getResult", null);
+__decorate([
+    (0, common_1.Post)('attempt/:purchaseId/abandon'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiOperation)({ summary: 'Abandon (force-complete) a quiz attempt — called when user navigates away' }),
+    __param(0, (0, common_1.Req)()),
+    __param(1, (0, common_1.Param)('purchaseId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [Object, String]),
+    __metadata("design:returntype", void 0)
+], QuizController.prototype, "abandonAttempt", null);
 exports.QuizController = QuizController = __decorate([
     (0, swagger_1.ApiTags)('Quiz'),
     (0, common_1.Controller)('quiz'),

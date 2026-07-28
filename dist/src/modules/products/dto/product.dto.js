@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ProductQueryDto = exports.UpdateProductDto = exports.CreateProductDto = void 0;
+exports.UpdateApprovalDto = exports.ProductQueryDto = exports.UpdateProductDto = exports.CreateProductDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 const class_transformer_1 = require("class-transformer");
@@ -160,6 +160,8 @@ class ProductQueryDto {
     page;
     limit;
     sort;
+    sellerType;
+    approvalStatus;
 }
 exports.ProductQueryDto = ProductQueryDto;
 __decorate([
@@ -194,4 +196,32 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], ProductQueryDto.prototype, "sort", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ProductQueryDto.prototype, "sellerType", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], ProductQueryDto.prototype, "approvalStatus", void 0);
+class UpdateApprovalDto {
+    approvalStatus;
+    rejectionReason;
+}
+exports.UpdateApprovalDto = UpdateApprovalDto;
+__decorate([
+    (0, swagger_1.ApiProperty)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateApprovalDto.prototype, "approvalStatus", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)(),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateApprovalDto.prototype, "rejectionReason", void 0);
 //# sourceMappingURL=product.dto.js.map

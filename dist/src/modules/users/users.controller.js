@@ -30,6 +30,9 @@ let UsersController = class UsersController {
     updateProfile(id, dto) {
         return this.usersService.updateProfile(id, dto);
     }
+    updateProfileAlias(id, dto) {
+        return this.usersService.updateProfile(id, dto);
+    }
     getStatement(id) {
         return this.usersService.getStatement(id);
     }
@@ -51,13 +54,22 @@ __decorate([
 ], UsersController.prototype, "getMyProfile", null);
 __decorate([
     (0, common_1.Patch)('me'),
-    (0, swagger_1.ApiOperation)({ summary: 'Update my profile (name / password)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Update my profile (name / password / profileImage)' }),
     __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
     __param(1, (0, common_1.Body)()),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", [String, update_profile_dto_1.UpdateProfileDto]),
     __metadata("design:returntype", void 0)
 ], UsersController.prototype, "updateProfile", null);
+__decorate([
+    (0, common_1.Patch)('profile'),
+    (0, swagger_1.ApiOperation)({ summary: 'Update my profile (alias)' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, update_profile_dto_1.UpdateProfileDto]),
+    __metadata("design:returntype", void 0)
+], UsersController.prototype, "updateProfileAlias", null);
 __decorate([
     (0, common_1.Get)('me/statement'),
     (0, swagger_1.ApiOperation)({ summary: 'Get full account statement for PDF download' }),

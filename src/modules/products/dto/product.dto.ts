@@ -34,4 +34,11 @@ export class ProductQueryDto {
     @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsNumber() page?: number;
     @ApiPropertyOptional() @IsOptional() @Type(() => Number) @IsNumber() limit?: number;
     @ApiPropertyOptional() @IsOptional() @IsString() sort?: 'price_asc' | 'price_desc' | 'newest' | 'popular';
+    @ApiPropertyOptional() @IsOptional() @IsString() sellerType?: 'ALL' | 'ADMIN' | 'USER';
+    @ApiPropertyOptional() @IsOptional() @IsString() approvalStatus?: 'PENDING' | 'APPROVED' | 'REJECTED';
+}
+
+export class UpdateApprovalDto {
+    @ApiProperty() @IsString() approvalStatus: 'APPROVED' | 'REJECTED';
+    @ApiPropertyOptional() @IsOptional() @IsString() rejectionReason?: string;
 }

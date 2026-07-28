@@ -15,6 +15,7 @@ const swagger_1 = require("@nestjs/swagger");
 class UpdateProfileDto {
     name;
     password;
+    profileImage;
 }
 exports.UpdateProfileDto = UpdateProfileDto;
 __decorate([
@@ -31,4 +32,10 @@ __decorate([
     (0, class_validator_1.MinLength)(8),
     __metadata("design:type", String)
 ], UpdateProfileDto.prototype, "password", void 0);
+__decorate([
+    (0, swagger_1.ApiPropertyOptional)({ example: 'http://localhost:4000/uploads/avatar.jpg' }),
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], UpdateProfileDto.prototype, "profileImage", void 0);
 //# sourceMappingURL=update-profile.dto.js.map

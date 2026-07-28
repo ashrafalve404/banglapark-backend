@@ -16,6 +16,7 @@ export declare class UsersController {
         phone: string;
         referralCode: string;
         name: string;
+        profileImage: string | null;
         role: import("@prisma/client").$Enums.Role;
         referralLink: string | null;
         parentId: string | null;
@@ -34,6 +35,26 @@ export declare class UsersController {
         phone: string;
         referralCode: string;
         name: string;
+        profileImage: string | null;
+        role: import("@prisma/client").$Enums.Role;
+        referralLink: string | null;
+        parentId: string | null;
+        status: import("@prisma/client").$Enums.UserStatus;
+        activeFrom: Date | null;
+        activeUntil: Date | null;
+        isFirstActivated: boolean;
+        createdAt: Date;
+        updatedAt: Date;
+    }>;
+    updateProfileAlias(id: string, dto: UpdateProfileDto): Promise<{
+        usedReferralCode: string | null;
+        id: string;
+        memberId: number | null;
+        email: string;
+        phone: string;
+        referralCode: string;
+        name: string;
+        profileImage: string | null;
         role: import("@prisma/client").$Enums.Role;
         referralLink: string | null;
         parentId: string | null;
@@ -59,6 +80,7 @@ export declare class UsersController {
             phone: string;
             referralCode: string;
             name: string;
+            profileImage: string | null;
             role: import("@prisma/client").$Enums.Role;
             referralLink: string | null;
             status: import("@prisma/client").$Enums.UserStatus;
@@ -109,6 +131,7 @@ export declare class UsersController {
         phone: string;
         referralCode: string;
         name: string;
+        profileImage: string | null;
         role: import("@prisma/client").$Enums.Role;
         referralLink: string | null;
         parentId: string | null;

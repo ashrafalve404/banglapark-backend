@@ -79,7 +79,7 @@ __decorate([
 __decorate([
     (0, swagger_1.ApiProperty)({ example: 2 }),
     (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.Min)(0),
+    (0, class_validator_1.Min)(-1),
     __metadata("design:type", Number)
 ], SubmitAnswerDto.prototype, "selectedIndex", void 0);
 //# sourceMappingURL=quiz.dto.js.map

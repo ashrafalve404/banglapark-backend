@@ -52,6 +52,7 @@ export declare class AdminService {
             phone: string;
             referralCode: string;
             name: string;
+            profileImage: string | null;
             role: import("@prisma/client").$Enums.Role;
             referralLink: string | null;
             parentId: string | null;
@@ -131,6 +132,7 @@ export declare class AdminService {
             phone: string;
             referralCode: string;
             name: string;
+            profileImage: string | null;
             role: import("@prisma/client").$Enums.Role;
             referralLink: string | null;
             status: import("@prisma/client").$Enums.UserStatus;
