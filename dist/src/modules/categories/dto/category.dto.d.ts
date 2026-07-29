@@ -12,3 +12,6 @@ export declare class UpdateCategoryDto {
     sortOrder?: number;
     isHidden?: boolean;
 }
+export declare class BulkCreateCategoriesDto {
+    names: string[];
+}

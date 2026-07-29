@@ -31,6 +31,9 @@ let CategoriesController = class CategoriesController {
     }
     findOne(id) { return this.categoriesService.findOne(id); }
     create(dto) { return this.categoriesService.create(dto); }
+    createBulk(dto) {
+        return this.categoriesService.createBulk(dto.names);
+    }
     update(id, dto) {
         return this.categoriesService.update(id, dto);
     }
@@ -68,6 +71,17 @@ __decorate([
     __metadata("design:paramtypes", [category_dto_1.CreateCategoryDto]),
     __metadata("design:returntype", void 0)
 ], CategoriesController.prototype, "create", null);
+__decorate([
+    (0, common_1.Post)('bulk'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Bulk create categories' }),
+    __param(0, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [category_dto_1.BulkCreateCategoriesDto]),
+    __metadata("design:returntype", void 0)
+], CategoriesController.prototype, "createBulk", null);
 __decorate([
     (0, common_1.Patch)(':id'),
     (0, swagger_1.ApiBearerAuth)(),

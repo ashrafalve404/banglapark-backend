@@ -14,6 +14,11 @@ export declare class CategoriesService {
         image: string | null;
         isHidden: boolean;
     }>;
+    createBulk(names: string[]): Promise<{
+        createdCount: number;
+        skippedCount: number;
+        totalProcessed: number;
+    }>;
     findAll(includeHidden?: boolean): Promise<({
         _count: {
             products: number;

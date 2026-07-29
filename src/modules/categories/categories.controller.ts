@@ -3,7 +3,7 @@ import {
 } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiQuery } from '@nestjs/swagger';
 import { CategoriesService } from './categories.service';
-import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
+import { CreateCategoryDto, UpdateCategoryDto, BulkCreateCategoriesDto } from './dto/category.dto';
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
@@ -31,6 +31,15 @@ export class CategoriesController {
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
     @ApiOperation({ summary: '[Admin] Create category' })
     create(@Body() dto: CreateCategoryDto) { return this.categoriesService.create(dto); }
+
+    @Post('bulk')
+    @ApiBearerAuth()
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiOperation({ summary: '[Admin] Bulk create categories' })
+    createBulk(@Body() dto: BulkCreateCategoriesDto) {
+        return this.categoriesService.createBulk(dto.names);
+    }
 
     @Patch(':id')
     @ApiBearerAuth()

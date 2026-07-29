@@ -1,5 +1,5 @@
 import { CategoriesService } from './categories.service';
-import { CreateCategoryDto, UpdateCategoryDto } from './dto/category.dto';
+import { CreateCategoryDto, UpdateCategoryDto, BulkCreateCategoriesDto } from './dto/category.dto';
 export declare class CategoriesController {
     private readonly categoriesService;
     constructor(categoriesService: CategoriesService);
@@ -56,6 +56,11 @@ export declare class CategoriesController {
         sortOrder: number;
         image: string | null;
         isHidden: boolean;
+    }>;
+    createBulk(dto: BulkCreateCategoriesDto): Promise<{
+        createdCount: number;
+        skippedCount: number;
+        totalProcessed: number;
     }>;
     update(id: string, dto: UpdateCategoryDto): Promise<{
         id: string;

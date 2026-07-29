@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UpdateCategoryDto = exports.CreateCategoryDto = void 0;
+exports.BulkCreateCategoriesDto = exports.UpdateCategoryDto = exports.CreateCategoryDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class CreateCategoryDto {
@@ -88,4 +88,14 @@ __decorate([
     (0, class_validator_1.IsBoolean)(),
     __metadata("design:type", Boolean)
 ], UpdateCategoryDto.prototype, "isHidden", void 0);
+class BulkCreateCategoriesDto {
+    names;
+}
+exports.BulkCreateCategoriesDto = BulkCreateCategoriesDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: ['Electronics', 'Books', 'Automotive'] }),
+    (0, class_validator_1.IsArray)(),
+    (0, class_validator_1.IsString)({ each: true }),
+    __metadata("design:type", Array)
+], BulkCreateCategoriesDto.prototype, "names", void 0);
 //# sourceMappingURL=category.dto.js.map

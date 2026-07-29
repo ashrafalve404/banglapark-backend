@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MaxLength, IsBoolean, IsInt } from 'class-validator';
+import { IsString, IsOptional, MaxLength, IsBoolean, IsInt, IsArray } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCategoryDto {
@@ -53,4 +53,11 @@ export class UpdateCategoryDto {
     @IsOptional()
     @IsBoolean()
     isHidden?: boolean;
+}
+
+export class BulkCreateCategoriesDto {
+    @ApiProperty({ example: ['Electronics', 'Books', 'Automotive'] })
+    @IsArray()
+    @IsString({ each: true })
+    names: string[];
 }

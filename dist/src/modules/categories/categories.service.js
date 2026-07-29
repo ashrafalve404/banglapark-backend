@@ -34,6 +34,45 @@ let CategoriesService = class CategoriesService {
         };
         return this.prisma.category.create({ data });
     }
+    async createBulk(names) {
+        const cleanNames = names.map(n => n.trim()).filter(Boolean);
+        const existingCats = await this.prisma.category.findMany();
+        const existingSlugs = new Set(existingCats.map(c => c.slug));
+        const existingNames = new Set(existingCats.map(c => c.name.toLowerCase()));
+        const toCreate = [];
+        let skippedCount = 0;
+        let maxSortOrder = existingCats.reduce((max, c) => Math.max(max, c.sortOrder ?? 0), 0);
+        for (const rawName of cleanNames) {
+            if (existingNames.has(rawName.toLowerCase())) {
+                skippedCount++;
+                continue;
+            }
+            let baseSlug = this.toSlug(rawName) || 'cat';
+            let slug = baseSlug;
+            let counter = 1;
+            while (existingSlugs.has(slug)) {
+                slug = `${baseSlug}-${counter++}`;
+            }
+            existingNames.add(rawName.toLowerCase());
+            existingSlugs.add(slug);
+            maxSortOrder += 1;
+            toCreate.push({
+                name: rawName,
+                slug,
+                image: null,
+                sortOrder: maxSortOrder,
+                isHidden: false,
+            });
+        }
+        if (toCreate.length > 0) {
+            await this.prisma.category.createMany({ data: toCreate });
+        }
+        return {
+            createdCount: toCreate.length,
+            skippedCount,
+            totalProcessed: cleanNames.length,
+        };
+    }
     async findAll(includeHidden = false) {
         const orderBy = [{ sortOrder: 'asc' }, { name: 'asc' }];
         return this.prisma.category.findMany({
