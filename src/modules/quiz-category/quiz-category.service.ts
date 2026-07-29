@@ -52,7 +52,25 @@ export class QuizCategoryService {
     async remove(id: string) {
         const cat = await this.prisma.quizCategory.findUnique({ where: { id } });
         if (!cat) throw new NotFoundException('Quiz category not found');
-        await this.prisma.quizCategory.delete({ where: { id } });
-        return { message: 'Quiz category deleted' };
+
+        await this.prisma.$transaction([
+            this.prisma.quizAnswer.deleteMany({
+                where: { purchase: { categoryId: id } },
+            }),
+            this.prisma.quizPurchase.deleteMany({
+                where: { categoryId: id },
+            }),
+            this.prisma.quizQuestion.deleteMany({
+                where: { categoryId: id },
+            }),
+            this.prisma.quizLevel.deleteMany({
+                where: { categoryId: id },
+            }),
+            this.prisma.quizCategory.delete({
+                where: { id },
+            }),
+        ]);
+
+        return { message: 'Quiz category deleted successfully' };
     }
 }
