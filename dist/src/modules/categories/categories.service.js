@@ -25,12 +25,21 @@ let CategoriesService = class CategoriesService {
         const existing = await this.prisma.category.findUnique({ where: { slug } });
         if (existing)
             throw new common_1.ConflictException('Category with this slug already exists');
-        return this.prisma.category.create({ data: { name: dto.name, slug } });
+        const data = {
+            name: dto.name,
+            slug,
+            image: dto.image ?? null,
+            sortOrder: dto.sortOrder ?? 0,
+            isHidden: dto.isHidden ?? false,
+        };
+        return this.prisma.category.create({ data });
     }
-    async findAll() {
+    async findAll(includeHidden = false) {
+        const orderBy = [{ sortOrder: 'asc' }, { name: 'asc' }];
         return this.prisma.category.findMany({
+            where: includeHidden ? {} : { isHidden: false },
             include: { _count: { select: { products: true } } },
-            orderBy: { name: 'asc' },
+            orderBy,
         });
     }
     async findOne(id) {
@@ -44,9 +53,23 @@ let CategoriesService = class CategoriesService {
     }
     async update(id, dto) {
         await this.findOne(id);
+        const dataToUpdate = {
+            ...dto,
+            ...(dto.name && !dto.slug && { slug: this.toSlug(dto.name) }),
+        };
+        if (dto.image === '' || dto.image === null) {
+            dataToUpdate.image = null;
+        }
         return this.prisma.category.update({
             where: { id },
-            data: { ...dto, ...(dto.name && !dto.slug && { slug: this.toSlug(dto.name) }) },
+            data: dataToUpdate,
+        });
+    }
+    async toggleVisibility(id) {
+        const cat = await this.findOne(id);
+        return this.prisma.category.update({
+            where: { id },
+            data: { isHidden: !cat.isHidden },
         });
     }
     async remove(id) {

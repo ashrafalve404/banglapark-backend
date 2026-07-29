@@ -1,4 +1,4 @@
-import { IsString, IsOptional, MaxLength } from 'class-validator';
+import { IsString, IsOptional, MaxLength, IsBoolean, IsInt } from 'class-validator';
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 
 export class CreateCategoryDto {
@@ -11,6 +11,21 @@ export class CreateCategoryDto {
     @IsOptional()
     @IsString()
     slug?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    image?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsInt()
+    sortOrder?: number;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsBoolean()
+    isHidden?: boolean;
 }
 
 export class UpdateCategoryDto {
@@ -23,4 +38,19 @@ export class UpdateCategoryDto {
     @IsOptional()
     @IsString()
     slug?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsString()
+    image?: string;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsInt()
+    sortOrder?: number;
+
+    @ApiPropertyOptional()
+    @IsOptional()
+    @IsBoolean()
+    isHidden?: boolean;
 }

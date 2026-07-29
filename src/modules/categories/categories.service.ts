@@ -14,13 +14,22 @@ export class CategoriesService {
         const slug = dto.slug ?? this.toSlug(dto.name);
         const existing = await this.prisma.category.findUnique({ where: { slug } });
         if (existing) throw new ConflictException('Category with this slug already exists');
-        return this.prisma.category.create({ data: { name: dto.name, slug } });
+        const data: any = {
+            name: dto.name,
+            slug,
+            image: dto.image ?? null,
+            sortOrder: dto.sortOrder ?? 0,
+            isHidden: dto.isHidden ?? false,
+        };
+        return this.prisma.category.create({ data });
     }
 
-    async findAll() {
+    async findAll(includeHidden = false) {
+        const orderBy: any = [{ sortOrder: 'asc' }, { name: 'asc' }];
         return this.prisma.category.findMany({
+            where: includeHidden ? {} : { isHidden: false },
             include: { _count: { select: { products: true } } },
-            orderBy: { name: 'asc' },
+            orderBy,
         });
     }
 
@@ -35,9 +44,24 @@ export class CategoriesService {
 
     async update(id: string, dto: UpdateCategoryDto) {
         await this.findOne(id);
+        const dataToUpdate: any = {
+            ...dto,
+            ...(dto.name && !dto.slug && { slug: this.toSlug(dto.name) }),
+        };
+        if (dto.image === '' || dto.image === null) {
+            dataToUpdate.image = null;
+        }
         return this.prisma.category.update({
             where: { id },
-            data: { ...dto, ...(dto.name && !dto.slug && { slug: this.toSlug(dto.name) }) },
+            data: dataToUpdate,
+        });
+    }
+
+    async toggleVisibility(id: string) {
+        const cat = await this.findOne(id);
+        return this.prisma.category.update({
+            where: { id },
+            data: { isHidden: !cat.isHidden },
         });
     }
 

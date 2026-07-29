@@ -11,6 +11,9 @@ export declare class UserProductsService {
             createdAt: Date;
             updatedAt: Date;
             slug: string;
+            sortOrder: number;
+            image: string | null;
+            isHidden: boolean;
         } | null;
     } & {
         id: string;

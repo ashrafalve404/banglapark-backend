@@ -10,8 +10,11 @@ export declare class CategoriesService {
         createdAt: Date;
         updatedAt: Date;
         slug: string;
+        sortOrder: number;
+        image: string | null;
+        isHidden: boolean;
     }>;
-    findAll(): Promise<({
+    findAll(includeHidden?: boolean): Promise<({
         _count: {
             products: number;
         };
@@ -21,6 +24,9 @@ export declare class CategoriesService {
         createdAt: Date;
         updatedAt: Date;
         slug: string;
+        sortOrder: number;
+        image: string | null;
+        isHidden: boolean;
     })[]>;
     findOne(id: string): Promise<{
         products: {
@@ -48,6 +54,9 @@ export declare class CategoriesService {
         createdAt: Date;
         updatedAt: Date;
         slug: string;
+        sortOrder: number;
+        image: string | null;
+        isHidden: boolean;
     }>;
     update(id: string, dto: UpdateCategoryDto): Promise<{
         id: string;
@@ -55,6 +64,19 @@ export declare class CategoriesService {
         createdAt: Date;
         updatedAt: Date;
         slug: string;
+        sortOrder: number;
+        image: string | null;
+        isHidden: boolean;
+    }>;
+    toggleVisibility(id: string): Promise<{
+        id: string;
+        name: string;
+        createdAt: Date;
+        updatedAt: Date;
+        slug: string;
+        sortOrder: number;
+        image: string | null;
+        isHidden: boolean;
     }>;
     remove(id: string): Promise<{
         id: string;
@@ -62,5 +84,8 @@ export declare class CategoriesService {
         createdAt: Date;
         updatedAt: Date;
         slug: string;
+        sortOrder: number;
+        image: string | null;
+        isHidden: boolean;
     }>;
 }

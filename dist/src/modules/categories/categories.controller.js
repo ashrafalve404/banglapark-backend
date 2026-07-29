@@ -26,20 +26,27 @@ let CategoriesController = class CategoriesController {
     constructor(categoriesService) {
         this.categoriesService = categoriesService;
     }
-    findAll() { return this.categoriesService.findAll(); }
+    findAll(includeHidden) {
+        return this.categoriesService.findAll(includeHidden === 'true');
+    }
     findOne(id) { return this.categoriesService.findOne(id); }
     create(dto) { return this.categoriesService.create(dto); }
     update(id, dto) {
         return this.categoriesService.update(id, dto);
+    }
+    toggleVisibility(id) {
+        return this.categoriesService.toggleVisibility(id);
     }
     remove(id) { return this.categoriesService.remove(id); }
 };
 exports.CategoriesController = CategoriesController;
 __decorate([
     (0, common_1.Get)(),
-    (0, swagger_1.ApiOperation)({ summary: 'List all categories (public)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'List categories' }),
+    (0, swagger_1.ApiQuery)({ name: 'includeHidden', required: false, type: Boolean }),
+    __param(0, (0, common_1.Query)('includeHidden')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", []),
+    __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", void 0)
 ], CategoriesController.prototype, "findAll", null);
 __decorate([
@@ -73,6 +80,17 @@ __decorate([
     __metadata("design:paramtypes", [String, category_dto_1.UpdateCategoryDto]),
     __metadata("design:returntype", void 0)
 ], CategoriesController.prototype, "update", null);
+__decorate([
+    (0, common_1.Patch)(':id/toggle-visibility'),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Toggle category hidden state' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], CategoriesController.prototype, "toggleVisibility", null);
 __decorate([
     (0, common_1.Delete)(':id'),
     (0, swagger_1.ApiBearerAuth)(),
