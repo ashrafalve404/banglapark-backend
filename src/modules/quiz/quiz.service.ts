@@ -198,6 +198,26 @@ export class QuizService {
     // ── User: Purchase ───────────────────────────────────────────────────────
 
     async purchase(userId: string, categoryId: string, dto: PurchaseDto) {
+        if (dto.questionCount < 100) {
+            throw new BadRequestException('Minimum 100 questions must be purchased per purchase.');
+        }
+
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+
+        const purchasesToday = await this.prisma.quizPurchase.count({
+            where: {
+                userId,
+                purchasedAt: {
+                    gte: startOfToday,
+                },
+            },
+        });
+
+        if (purchasesToday >= 5) {
+            throw new BadRequestException('Daily purchase limit over!');
+        }
+
         const cat = await this.prisma.quizCategory.findUnique({
             where: { id: categoryId, isActive: true },
         });

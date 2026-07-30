@@ -187,6 +187,22 @@ let QuizService = class QuizService {
         return { count: result.count, message: `All ${result.count} questions deleted from category` };
     }
     async purchase(userId, categoryId, dto) {
+        if (dto.questionCount < 100) {
+            throw new common_1.BadRequestException('Minimum 100 questions must be purchased per purchase.');
+        }
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const purchasesToday = await this.prisma.quizPurchase.count({
+            where: {
+                userId,
+                purchasedAt: {
+                    gte: startOfToday,
+                },
+            },
+        });
+        if (purchasesToday >= 5) {
+            throw new common_1.BadRequestException('Daily purchase limit reached! You can only buy quiz questions 5 times per day.');
+        }
         const cat = await this.prisma.quizCategory.findUnique({
             where: { id: categoryId, isActive: true },
         });
@@ -316,7 +332,7 @@ let QuizService = class QuizService {
         const correctCount = answers.filter((a) => a.isCorrect).length;
         const wrongCount = answers.filter((a) => !a.isCorrect && a.selectedIndex !== null && a.selectedIndex >= 0).length;
         const skippedCount = answers.filter((a) => a.selectedIndex === null || a.selectedIndex < 0).length;
-        const netReward = correctCount * 2 - wrongCount * 1;
+        const netReward = correctCount * 2 - wrongCount * 2;
         await this.prisma.quizPurchase.update({
             where: { id: purchaseId },
             data: { status: 'COMPLETED', completedAt: new Date(), currentIndex: answers.length },
@@ -326,11 +342,11 @@ let QuizService = class QuizService {
             const catName = purchase.categoryId ?? 'Quiz';
             if (wallet) {
                 if (netReward > 0) {
-                    await this.walletService.credit(this.prisma, wallet.id, netReward, 'QUIZ_EARNING', `Quiz reward (abandoned): ${correctCount} correct × 2tk - ${wrongCount} wrong × 1tk = ${netReward}tk`, purchaseId);
+                    await this.walletService.credit(this.prisma, wallet.id, netReward, 'QUIZ_EARNING', `Quiz reward (abandoned): ${correctCount} correct × 2tk - ${wrongCount} wrong × 2tk = ${netReward}tk`, purchaseId);
                 }
                 else {
                     try {
-                        await this.walletService.debit(this.prisma, wallet.id, Math.abs(netReward), 'QUIZ_EARNING', `Quiz penalty (abandoned): ${wrongCount} wrong × 1tk = ${Math.abs(netReward)}tk`, purchaseId);
+                        await this.walletService.debit(this.prisma, wallet.id, Math.abs(netReward), 'QUIZ_EARNING', `Quiz penalty (abandoned): ${wrongCount} wrong × 2tk = ${Math.abs(netReward)}tk`, purchaseId);
                     }
                     catch {
                     }
@@ -388,17 +404,17 @@ let QuizService = class QuizService {
             const correctCount = answers.filter((a) => a.isCorrect).length;
             const wrongCount = answers.filter((a) => !a.isCorrect && a.selectedIndex !== null && a.selectedIndex >= 0).length;
             const skippedCount = answers.filter((a) => a.selectedIndex === null || a.selectedIndex < 0).length;
-            const netReward = correctCount * 2 - wrongCount * 1;
+            const netReward = correctCount * 2 - wrongCount * 2;
             const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
             if (wallet && netReward !== 0) {
                 const catName = full.category?.name || 'Quiz';
                 if (netReward > 0) {
-                    await this.walletService.credit(this.prisma, wallet.id, netReward, 'QUIZ_EARNING', `Quiz reward: ${correctCount} correct × 2tk - ${wrongCount} wrong × 1tk = ${netReward}tk (${catName})`, purchaseId);
+                    await this.walletService.credit(this.prisma, wallet.id, netReward, 'QUIZ_EARNING', `Quiz reward: ${correctCount} correct × 2tk - ${wrongCount} wrong × 2tk = ${netReward}tk (${catName})`, purchaseId);
                 }
                 else {
                     const debitAmount = Math.abs(netReward);
                     try {
-                        await this.walletService.debit(this.prisma, wallet.id, debitAmount, 'QUIZ_EARNING', `Quiz penalty: ${wrongCount} wrong × 1tk = ${debitAmount}tk (${catName})`, purchaseId);
+                        await this.walletService.debit(this.prisma, wallet.id, debitAmount, 'QUIZ_EARNING', `Quiz penalty: ${wrongCount} wrong × 2tk = ${debitAmount}tk (${catName})`, purchaseId);
                     }
                     catch {
                     }
@@ -438,7 +454,7 @@ let QuizService = class QuizService {
                     data: { status: 'COMPLETED', completedAt: new Date() },
                 });
             }
-            const netReward = correctCount * 2 - wrongCount * 1;
+            const netReward = correctCount * 2 - wrongCount * 2;
             return { status: 'COMPLETED', score: correctCount, wrongCount, skippedCount, totalQuestions: purchase.questionCount, completed: true, netReward };
         }
         const full = await this.prisma.quizPurchase.findUnique({
@@ -498,7 +514,7 @@ let QuizService = class QuizService {
         const correctCount = purchase.answers.filter((a) => a.isCorrect).length;
         const wrongCount = purchase.answers.filter((a) => !a.isCorrect && a.selectedIndex !== null && a.selectedIndex >= 0).length;
         const skippedCount = purchase.answers.filter((a) => a.selectedIndex === null || a.selectedIndex < 0).length;
-        const netReward = correctCount * 2 - wrongCount * 1;
+        const netReward = correctCount * 2 - wrongCount * 2;
         return {
             purchaseId: purchase.id,
             category: purchase.category,
@@ -540,7 +556,7 @@ let QuizService = class QuizService {
         for (const p of allCompleted) {
             const correctCount = p.answers.filter((a) => a.isCorrect).length;
             const wrongCount = p.answers.length - correctCount;
-            const netReward = Math.max(0, correctCount * 2 - wrongCount * 1);
+            const netReward = Math.max(0, correctCount * 2 - wrongCount * 2);
             totalUserRewardsPaid += netReward;
         }
         const netProfit = totalRevenue - totalUserRewardsPaid;
@@ -577,7 +593,7 @@ let QuizService = class QuizService {
         const userPurchaseLogs = recentPurchases.map((p) => {
             const correctCount = p.answers.filter((a) => a.isCorrect === true).length;
             const wrongCount = p.answers.filter((a) => a.isCorrect === false).length;
-            const userReward = p.status === 'COMPLETED' ? Math.max(0, correctCount * 2 - wrongCount * 1) : 0;
+            const userReward = p.status === 'COMPLETED' ? Math.max(0, correctCount * 2 - wrongCount * 2) : 0;
             const pricePaid = Number(p.totalPrice);
             const platformProfit = pricePaid - userReward;
             return {
