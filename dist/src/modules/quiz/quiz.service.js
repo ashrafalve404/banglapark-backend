@@ -201,7 +201,7 @@ let QuizService = class QuizService {
             },
         });
         if (purchasesToday >= 5) {
-            throw new common_1.BadRequestException('Daily purchase limit reached! You can only buy quiz questions 5 times per day.');
+            throw new common_1.BadRequestException('Daily purchase limit over!');
         }
         const cat = await this.prisma.quizCategory.findUnique({
             where: { id: categoryId, isActive: true },
@@ -548,17 +548,16 @@ let QuizService = class QuizService {
         const completedQuizzes = await this.prisma.quizPurchase.count({
             where: { status: 'COMPLETED' },
         });
-        const allCompleted = await this.prisma.quizPurchase.findMany({
-            where: { status: 'COMPLETED' },
-            include: { answers: true },
+        const quizEarnings = await this.prisma.walletTransaction.aggregate({
+            where: {
+                type: 'QUIZ_EARNING',
+                amount: { gt: 0 },
+            },
+            _sum: {
+                amount: true,
+            },
         });
-        let totalUserRewardsPaid = 0;
-        for (const p of allCompleted) {
-            const correctCount = p.answers.filter((a) => a.isCorrect).length;
-            const wrongCount = p.answers.length - correctCount;
-            const netReward = Math.max(0, correctCount * 2 - wrongCount * 2);
-            totalUserRewardsPaid += netReward;
-        }
+        const totalUserRewardsPaid = Number(quizEarnings._sum.amount ?? 0);
         const netProfit = totalRevenue - totalUserRewardsPaid;
         const categories = await this.prisma.quizCategory.findMany({
             include: {
@@ -590,10 +589,31 @@ let QuizService = class QuizService {
                 answers: { select: { isCorrect: true } },
             },
         });
+        const purchaseIds = recentPurchases.map((p) => p.id);
+        const quizTxList = await this.prisma.walletTransaction.findMany({
+            where: {
+                type: 'QUIZ_EARNING',
+                referenceId: { in: purchaseIds },
+            },
+        });
+        const txMap = new Map();
+        for (const tx of quizTxList) {
+            if (tx.referenceId && Number(tx.amount) > 0) {
+                txMap.set(tx.referenceId, Number(tx.amount));
+            }
+        }
         const userPurchaseLogs = recentPurchases.map((p) => {
             const correctCount = p.answers.filter((a) => a.isCorrect === true).length;
             const wrongCount = p.answers.filter((a) => a.isCorrect === false).length;
-            const userReward = p.status === 'COMPLETED' ? Math.max(0, correctCount * 2 - wrongCount * 2) : 0;
+            let userReward = 0;
+            if (p.status === 'COMPLETED') {
+                if (p.answers.length > 0) {
+                    userReward = Math.max(0, correctCount * 2 - wrongCount * 2);
+                }
+                else {
+                    userReward = txMap.get(p.id) ?? 0;
+                }
+            }
             const pricePaid = Number(p.totalPrice);
             const platformProfit = pricePaid - userReward;
             return {
