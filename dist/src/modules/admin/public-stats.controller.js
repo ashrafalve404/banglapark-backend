@@ -45,7 +45,7 @@ let PublicStatsController = class PublicStatsController {
             orderBy: {
                 children: { _count: 'desc' },
             },
-            take: 5,
+            take: 10,
         });
         return topUsers.map((u) => ({
             id: u.id,
@@ -72,7 +72,7 @@ __decorate([
 ], PublicStatsController.prototype, "getNewMembers", null);
 __decorate([
     (0, common_1.Get)('top-leaders'),
-    (0, swagger_1.ApiOperation)({ summary: 'Top 5 users by team member count (public)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Top 10 users by team member count (public)' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)

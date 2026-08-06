@@ -27,7 +27,7 @@ export class PublicStatsController {
     }
 
     @Get('top-leaders')
-    @ApiOperation({ summary: 'Top 5 users by team member count (public)' })
+    @ApiOperation({ summary: 'Top 10 users by team member count (public)' })
     async getTopLeaders() {
         const topUsers = await this.prisma.user.findMany({
             where: { role: 'USER' },
@@ -42,7 +42,7 @@ export class PublicStatsController {
             orderBy: {
                 children: { _count: 'desc' },
             },
-            take: 5,
+            take: 10,
         });
 
         return topUsers.map((u) => ({
