@@ -24,9 +24,9 @@ export class CreateQuestionDto {
 }
 
 export class PurchaseDto {
-    @ApiProperty({ example: 100, description: 'Number of questions to buy' })
+    @ApiProperty({ example: 20, description: 'Number of questions to buy' })
     @IsInt()
-    @Min(100, { message: 'Minimum 100 questions must be purchased per purchase.' })
+    @Min(20, { message: 'Minimum 20 questions must be purchased per purchase.' })
     questionCount: number;
 
     @ApiPropertyOptional({ default: 'WALLET' })

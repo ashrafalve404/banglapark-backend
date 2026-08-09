@@ -198,8 +198,8 @@ export class QuizService {
     // ── User: Purchase ───────────────────────────────────────────────────────
 
     async purchase(userId: string, categoryId: string, dto: PurchaseDto) {
-        if (dto.questionCount < 100) {
-            throw new BadRequestException('Minimum 100 questions must be purchased per purchase.');
+        if (dto.questionCount < 20) {
+            throw new BadRequestException('Minimum 20 questions must be purchased per purchase.');
         }
 
         const startOfToday = new Date();
@@ -214,7 +214,7 @@ export class QuizService {
             },
         });
 
-        if (purchasesToday >= 5) {
+        if (purchasesToday >= 20) {
             throw new BadRequestException('Daily purchase limit over!');
         }
 

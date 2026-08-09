@@ -49,9 +49,9 @@ class PurchaseDto {
 }
 exports.PurchaseDto = PurchaseDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 100, description: 'Number of questions to buy' }),
+    (0, swagger_1.ApiProperty)({ example: 20, description: 'Number of questions to buy' }),
     (0, class_validator_1.IsInt)(),
-    (0, class_validator_1.Min)(100, { message: 'Minimum 100 questions must be purchased per purchase.' }),
+    (0, class_validator_1.Min)(20, { message: 'Minimum 20 questions must be purchased per purchase.' }),
     __metadata("design:type", Number)
 ], PurchaseDto.prototype, "questionCount", void 0);
 __decorate([

@@ -187,8 +187,8 @@ let QuizService = class QuizService {
         return { count: result.count, message: `All ${result.count} questions deleted from category` };
     }
     async purchase(userId, categoryId, dto) {
-        if (dto.questionCount < 100) {
-            throw new common_1.BadRequestException('Minimum 100 questions must be purchased per purchase.');
+        if (dto.questionCount < 20) {
+            throw new common_1.BadRequestException('Minimum 20 questions must be purchased per purchase.');
         }
         const startOfToday = new Date();
         startOfToday.setHours(0, 0, 0, 0);
@@ -200,7 +200,7 @@ let QuizService = class QuizService {
                 },
             },
         });
-        if (purchasesToday >= 5) {
+        if (purchasesToday >= 20) {
             throw new common_1.BadRequestException('Daily purchase limit over!');
         }
         const cat = await this.prisma.quizCategory.findUnique({
