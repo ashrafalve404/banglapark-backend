@@ -34,6 +34,7 @@ enum TxType {
   QUIZ_EARNING
   POSITION_SALARY
   SELLER_PAYOUT
+  CPA_TASK_PURCHASE
 }
 
 enum ProductApprovalStatus {
@@ -124,6 +125,7 @@ model User {
   generationCommissionsSource   GenerationCommission[] @relation("CommissionFromUser")
   quizPurchases   QuizPurchase[]
   sellerProducts  Product[]      @relation("UserProducts")
+  cpaTaskPurchases CpaTaskPurchase[]
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -424,4 +426,33 @@ model TravelTier {
 
   @@unique([tierNumber, month, year])
   @@index([month, year])
+}
+
+// ─── CPA Marketing ────────────────────────────────────────────────────────────
+
+model CpaTask {
+  id           String            @id @default(uuid())
+  title        String
+  description  String
+  price        Decimal           @db.Decimal(10, 2)
+  redirectLink String
+  isActive     Boolean           @default(true)
+  purchases    CpaTaskPurchase[]
+  createdAt    DateTime          @default(now())
+  updatedAt    DateTime          @updatedAt
+}
+
+model CpaTaskPurchase {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cpaTaskId   String
+  cpaTask     CpaTask  @relation(fields: [cpaTaskId], references: [id], onDelete: Cascade)
+  pricePaid   Decimal  @db.Decimal(10, 2)
+  status      String   @default("PURCHASED")
+  purchasedAt DateTime @default(now())
+  completedAt DateTime?
+
+  @@index([userId])
+  @@index([cpaTaskId])
 }

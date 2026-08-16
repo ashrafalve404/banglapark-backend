@@ -30,7 +30,7 @@ import { QuizLevelModule } from './modules/quiz-level/quiz-level.module';
 import { PositionModule } from './modules/position/position.module';
 import { TravelModule } from './modules/travel/travel.module';
 import { UserProductsModule } from './modules/user-products/user-products.module';
-
+import { CpaMarketingModule } from './modules/cpa-marketing/cpa-marketing.module';
 
 @Module({
   imports: [
@@ -107,7 +107,7 @@ import { UserProductsModule } from './modules/user-products/user-products.module
     PositionModule,
     TravelModule,
     UserProductsModule,
-
+    CpaMarketingModule,
   ],
 })
 export class AppModule { }
