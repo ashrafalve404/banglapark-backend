@@ -15,6 +15,24 @@ export class CpaMarketingController {
 
     // ── Admin Endpoints ──────────────────────────────────────────────────────
 
+    @Get('admin/stats')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Admin: Get CPA marketing revenue, purchase, & task statistics' })
+    async adminGetStats() {
+        return this.cpaService.adminGetStats();
+    }
+
+    @Get('admin/purchases')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Admin: Get detailed user purchase history logs' })
+    async adminGetAllPurchases() {
+        return this.cpaService.adminGetAllPurchases();
+    }
+
     @Get('admin/tasks')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)

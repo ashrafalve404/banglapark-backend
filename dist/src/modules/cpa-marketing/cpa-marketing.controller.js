@@ -27,6 +27,12 @@ let CpaMarketingController = class CpaMarketingController {
     constructor(cpaService) {
         this.cpaService = cpaService;
     }
+    async adminGetStats() {
+        return this.cpaService.adminGetStats();
+    }
+    async adminGetAllPurchases() {
+        return this.cpaService.adminGetAllPurchases();
+    }
     async adminGetAllTasks() {
         return this.cpaService.adminGetAllTasks();
     }
@@ -50,6 +56,26 @@ let CpaMarketingController = class CpaMarketingController {
     }
 };
 exports.CpaMarketingController = CpaMarketingController;
+__decorate([
+    (0, common_1.Get)('admin/stats'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Admin: Get CPA marketing revenue, purchase, & task statistics' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CpaMarketingController.prototype, "adminGetStats", null);
+__decorate([
+    (0, common_1.Get)('admin/purchases'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Admin: Get detailed user purchase history logs' }),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", []),
+    __metadata("design:returntype", Promise)
+], CpaMarketingController.prototype, "adminGetAllPurchases", null);
 __decorate([
     (0, common_1.Get)('admin/tasks'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

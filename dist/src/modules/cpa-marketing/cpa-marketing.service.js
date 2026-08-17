@@ -36,12 +36,81 @@ let CpaMarketingService = class CpaMarketingService {
         });
     }
     async adminGetAllTasks() {
-        return this.db.cpaTask.findMany({
+        const tasks = await this.db.cpaTask.findMany({
             orderBy: { createdAt: 'desc' },
             include: {
+                purchases: {
+                    select: { pricePaid: true },
+                },
                 _count: { select: { purchases: true } },
             },
         });
+        return tasks.map((t) => {
+            const totalRevenue = (t.purchases || []).reduce((sum, p) => sum + Number(p.pricePaid), 0);
+            const { purchases, ...rest } = t;
+            return {
+                ...rest,
+                totalRevenue,
+            };
+        });
+    }
+    async adminGetStats() {
+        const totalRevenueAgg = await this.db.cpaTaskPurchase.aggregate({
+            _sum: { pricePaid: true },
+            _count: { id: true },
+        });
+        const totalTasks = await this.db.cpaTask.count();
+        const activeTasks = await this.db.cpaTask.count({ where: { isActive: true } });
+        const uniqueBuyersAgg = await this.db.cpaTaskPurchase.groupBy({
+            by: ['userId'],
+        });
+        return {
+            totalRevenue: Number(totalRevenueAgg._sum.pricePaid ?? 0),
+            totalPurchases: totalRevenueAgg._count.id ?? 0,
+            totalTasks,
+            activeTasks,
+            inactiveTasks: totalTasks - activeTasks,
+            uniqueBuyers: uniqueBuyersAgg.length,
+        };
+    }
+    async adminGetAllPurchases() {
+        const purchases = await this.db.cpaTaskPurchase.findMany({
+            orderBy: { purchasedAt: 'desc' },
+            include: {
+                user: {
+                    select: {
+                        id: true,
+                        fullName: true,
+                        phone: true,
+                        email: true,
+                    },
+                },
+                cpaTask: {
+                    select: {
+                        id: true,
+                        title: true,
+                        price: true,
+                    },
+                },
+            },
+        });
+        return purchases.map((p) => ({
+            id: p.id,
+            purchasedAt: p.purchasedAt,
+            pricePaid: Number(p.pricePaid),
+            status: p.status,
+            user: {
+                id: p.user?.id || '',
+                fullName: p.user?.fullName || 'User',
+                phone: p.user?.phone || 'N/A',
+                email: p.user?.email || 'N/A',
+            },
+            cpaTask: {
+                id: p.cpaTask?.id || '',
+                title: p.cpaTask?.title || 'CPA Task',
+                price: Number(p.cpaTask?.price ?? 0),
+            },
+        }));
     }
     async adminUpdateTask(id, dto) {
         const task = await this.db.cpaTask.findUnique({ where: { id } });

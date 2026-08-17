@@ -3,6 +3,15 @@ import { CreateCpaTaskDto, UpdateCpaTaskDto } from './dto/cpa-marketing.dto';
 export declare class CpaMarketingController {
     private readonly cpaService;
     constructor(cpaService: CpaMarketingService);
+    adminGetStats(): Promise<{
+        totalRevenue: number;
+        totalPurchases: any;
+        totalTasks: any;
+        activeTasks: any;
+        inactiveTasks: number;
+        uniqueBuyers: any;
+    }>;
+    adminGetAllPurchases(): Promise<any>;
     adminGetAllTasks(): Promise<any>;
     adminCreateTask(dto: CreateCpaTaskDto): Promise<any>;
     adminUpdateTask(id: string, dto: UpdateCpaTaskDto): Promise<any>;

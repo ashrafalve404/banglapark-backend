@@ -8,6 +8,15 @@ export declare class CpaMarketingService {
     private get db();
     adminCreateTask(dto: CreateCpaTaskDto): Promise<any>;
     adminGetAllTasks(): Promise<any>;
+    adminGetStats(): Promise<{
+        totalRevenue: number;
+        totalPurchases: any;
+        totalTasks: any;
+        activeTasks: any;
+        inactiveTasks: number;
+        uniqueBuyers: any;
+    }>;
+    adminGetAllPurchases(): Promise<any>;
     adminUpdateTask(id: string, dto: UpdateCpaTaskDto): Promise<any>;
     adminDeleteTask(id: string): Promise<{
         message: string;
