@@ -37,6 +37,7 @@ const position_module_1 = require("./modules/position/position.module");
 const travel_module_1 = require("./modules/travel/travel.module");
 const user_products_module_1 = require("./modules/user-products/user-products.module");
 const cpa_marketing_module_1 = require("./modules/cpa-marketing/cpa-marketing.module");
+const gift_cards_module_1 = require("./modules/gift-cards/gift-cards.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -103,6 +104,7 @@ exports.AppModule = AppModule = __decorate([
             travel_module_1.TravelModule,
             user_products_module_1.UserProductsModule,
             cpa_marketing_module_1.CpaMarketingModule,
+            gift_cards_module_1.GiftCardsModule,
         ],
     })
 ], AppModule);
