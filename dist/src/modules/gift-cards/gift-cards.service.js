@@ -245,15 +245,15 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
                 select: { name: true, phone: true },
             });
             const userName = user?.name || 'User';
-            await this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Gift Card Purchased 🎁', `You have purchased "${card.title}" for ৳${price}. You can use your voucher code or sell this Gift Card back to your wallet after 30 days!`);
-            await this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, 'New Gift Card Purchase 🎁', `User ${userName} purchased "${card.title}" for ৳${price} via ${paymentMethod}.`);
+            await this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Gift Card Purchased', `You have purchased "${card.title}" for ৳${price}. You can use your voucher code or sell this Gift Card back to your wallet after 30 days!`);
+            await this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, 'New Gift Card Purchase', `User ${userName} purchased "${card.title}" for ৳${price} via ${paymentMethod}.`);
         }
         catch (err) {
             this.logger.error(`Failed to send Gift Card purchase notifications: ${err.message}`);
         }
         return {
             message: isActivationQualifying
-                ? '🎉 Gift Card purchased successfully! Your account has been ACTIVATED for 30 days!'
+                ? 'Gift Card purchased successfully! Your account has been ACTIVATED for 30 days.'
                 : 'Gift Card purchased successfully! It will be eligible to sell back to your wallet after 30 days.',
             wasAccountActivated: purchaseResult.wasAccountActivated,
             purchase: {
@@ -310,14 +310,14 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
                 select: { name: true },
             });
             const userName = user?.name || 'User';
-            await this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Gift Card Sold Successfully 💰', `Your Gift Card "${cardTitle}" was resold and ৳${pricePaid} has been credited to your Wallet balance.`);
-            await this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, 'Gift Card Resold 💰', `User ${userName} resold Gift Card "${cardTitle}" for ৳${pricePaid} back into their wallet balance.`);
+            await this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Gift Card Sold Successfully', `Your Gift Card "${cardTitle}" was resold and ৳${pricePaid} has been credited to your Wallet balance.`);
+            await this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, 'Gift Card Resold', `User ${userName} resold Gift Card "${cardTitle}" for ৳${pricePaid} back into their wallet balance.`);
         }
         catch (err) {
             this.logger.error(`Failed to send Gift Card resale notifications: ${err.message}`);
         }
         return {
-            message: `🎉 Gift Card resold successfully! ৳${pricePaid} has been credited to your Wallet.`,
+            message: `Gift Card resold successfully! ৳${pricePaid} has been credited to your Wallet.`,
             purchase: {
                 id: updatedPurchase.id,
                 cardId: updatedPurchase.giftCardId,

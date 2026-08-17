@@ -285,14 +285,14 @@ export class GiftCardsService {
             await this.notificationsService.create(
                 userId,
                 NotificationType.SYSTEM,
-                'Gift Card Purchased 🎁',
+                'Gift Card Purchased',
                 `You have purchased "${card.title}" for ৳${price}. You can use your voucher code or sell this Gift Card back to your wallet after 30 days!`,
             );
 
             // Admin Notification
             await this.notificationsService.notifyAdmins(
                 NotificationType.SYSTEM,
-                'New Gift Card Purchase 🎁',
+                'New Gift Card Purchase',
                 `User ${userName} purchased "${card.title}" for ৳${price} via ${paymentMethod}.`,
             );
         } catch (err) {
@@ -301,7 +301,7 @@ export class GiftCardsService {
 
         return {
             message: isActivationQualifying
-                ? '🎉 Gift Card purchased successfully! Your account has been ACTIVATED for 30 days!'
+                ? 'Gift Card purchased successfully! Your account has been ACTIVATED for 30 days.'
                 : 'Gift Card purchased successfully! It will be eligible to sell back to your wallet after 30 days.',
             wasAccountActivated: purchaseResult.wasAccountActivated,
             purchase: {
@@ -382,14 +382,14 @@ export class GiftCardsService {
             await this.notificationsService.create(
                 userId,
                 NotificationType.SYSTEM,
-                'Gift Card Sold Successfully 💰',
+                'Gift Card Sold Successfully',
                 `Your Gift Card "${cardTitle}" was resold and ৳${pricePaid} has been credited to your Wallet balance.`,
             );
 
             // Admin Notification
             await this.notificationsService.notifyAdmins(
                 NotificationType.SYSTEM,
-                'Gift Card Resold 💰',
+                'Gift Card Resold',
                 `User ${userName} resold Gift Card "${cardTitle}" for ৳${pricePaid} back into their wallet balance.`,
             );
         } catch (err) {
@@ -397,7 +397,7 @@ export class GiftCardsService {
         }
 
         return {
-            message: `🎉 Gift Card resold successfully! ৳${pricePaid} has been credited to your Wallet.`,
+            message: `Gift Card resold successfully! ৳${pricePaid} has been credited to your Wallet.`,
             purchase: {
                 id: updatedPurchase.id,
                 cardId: updatedPurchase.giftCardId,
