@@ -36,4 +36,8 @@ export declare class CpaMarketingService {
         };
     }>;
     userGetMyPurchases(userId: string): Promise<any>;
+    userCompleteTask(userId: string, purchaseId: string): Promise<{
+        message: string;
+        redirectLink: any;
+    }>;
 }

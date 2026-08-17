@@ -97,4 +97,15 @@ export class CpaMarketingController {
     async userGetMyPurchases(@CurrentUser('id') userId: string) {
         return this.cpaService.userGetMyPurchases(userId);
     }
+
+    @Post('user/complete/:purchaseId')
+    @UseGuards(JwtAuthGuard)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'User: Complete a purchased CPA task and open redirect link' })
+    async userCompleteTask(
+        @CurrentUser('id') userId: string,
+        @Param('purchaseId') purchaseId: string,
+    ) {
+        return this.cpaService.userCompleteTask(userId, purchaseId);
+    }
 }

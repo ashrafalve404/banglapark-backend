@@ -199,7 +199,7 @@ let CpaMarketingService = class CpaMarketingService {
     }
     async userGetMyPurchases(userId) {
         const purchases = await this.db.cpaTaskPurchase.findMany({
-            where: { userId },
+            where: { userId, status: 'PURCHASED' },
             include: {
                 cpaTask: true,
             },
@@ -215,6 +215,27 @@ let CpaMarketingService = class CpaMarketingService {
             status: p.status,
             purchasedAt: p.purchasedAt,
         }));
+    }
+    async userCompleteTask(userId, purchaseId) {
+        const purchase = await this.db.cpaTaskPurchase.findFirst({
+            where: { id: purchaseId, userId },
+            include: { cpaTask: true },
+        });
+        if (!purchase)
+            throw new common_1.NotFoundException('Purchased task not found');
+        if (purchase.status !== 'COMPLETED') {
+            await this.db.cpaTaskPurchase.update({
+                where: { id: purchaseId },
+                data: {
+                    status: 'COMPLETED',
+                    completedAt: new Date(),
+                },
+            });
+        }
+        return {
+            message: 'Task completed',
+            redirectLink: purchase.cpaTask?.redirectLink || '#',
+        };
     }
 };
 exports.CpaMarketingService = CpaMarketingService;

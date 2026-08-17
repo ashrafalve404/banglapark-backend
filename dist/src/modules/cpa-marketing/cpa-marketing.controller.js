@@ -54,6 +54,9 @@ let CpaMarketingController = class CpaMarketingController {
     async userGetMyPurchases(userId) {
         return this.cpaService.userGetMyPurchases(userId);
     }
+    async userCompleteTask(userId, purchaseId) {
+        return this.cpaService.userCompleteTask(userId, purchaseId);
+    }
 };
 exports.CpaMarketingController = CpaMarketingController;
 __decorate([
@@ -151,6 +154,17 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], CpaMarketingController.prototype, "userGetMyPurchases", null);
+__decorate([
+    (0, common_1.Post)('user/complete/:purchaseId'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'User: Complete a purchased CPA task and open redirect link' }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Param)('purchaseId')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, String]),
+    __metadata("design:returntype", Promise)
+], CpaMarketingController.prototype, "userCompleteTask", null);
 exports.CpaMarketingController = CpaMarketingController = __decorate([
     (0, swagger_1.ApiTags)('CPA Marketing'),
     (0, common_1.Controller)('cpa-marketing'),
