@@ -46,13 +46,13 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
             orderBy: { createdAt: 'desc' },
             include: {
                 purchases: {
-                    select: { pricePaid: true },
+                    select: { pricePaid: true, status: true },
                 },
                 _count: { select: { purchases: true } },
             },
         });
         return cards.map((c) => {
-            const totalRevenue = (c.purchases || []).reduce((sum, p) => sum + Number(p.pricePaid), 0);
+            const totalRevenue = (c.purchases || []).reduce((sum, p) => p.status !== 'REJECTED' && p.status !== 'PENDING' ? sum + Number(p.pricePaid) : sum, 0);
             const { purchases, ...rest } = c;
             return {
                 ...rest,
@@ -62,8 +62,12 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
     }
     async adminGetStats() {
         const totalRevenueAgg = await this.db.giftCardPurchase.aggregate({
+            where: { status: { in: ['PURCHASED', 'APPROVED', 'SOLD'] } },
             _sum: { pricePaid: true },
             _count: { id: true },
+        });
+        const pendingApprovalsCount = await this.db.giftCardPurchase.count({
+            where: { status: 'PENDING' },
         });
         const totalResaleAgg = await this.db.giftCardPurchase.aggregate({
             where: { isSold: true },
@@ -81,6 +85,7 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
         return {
             totalRevenue: Number(totalRevenueAgg._sum.pricePaid ?? 0),
             totalPurchases: totalRevenueAgg._count.id ?? 0,
+            pendingApprovalsCount,
             totalResalePayout: Number(totalResaleAgg._sum.pricePaid ?? 0),
             totalCardsSold: totalResaleAgg._count.id ?? 0,
             totalCards,
@@ -136,6 +141,82 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
             },
         }));
     }
+    async adminApprovePurchase(purchaseId) {
+        const purchase = await this.db.giftCardPurchase.findUnique({
+            where: { id: purchaseId },
+            include: { giftCard: true, user: true },
+        });
+        if (!purchase)
+            throw new common_1.NotFoundException('Gift Card purchase record not found');
+        if (purchase.status !== 'PENDING') {
+            throw new common_1.BadRequestException(`Only PENDING purchases can be approved. Current status: ${purchase.status}`);
+        }
+        const price = Number(purchase.pricePaid);
+        const isActivationQualifying = price >= 2000;
+        const now = new Date();
+        const canSellAt = new Date(now.getTime() + 30 * 86_400_000);
+        const approvedPurchase = await this.prisma.$transaction(async (tx) => {
+            let wasAccountActivated = false;
+            if (isActivationQualifying) {
+                const activeUntil = new Date(now.getTime() + 30 * 86_400_000);
+                await tx.user.update({
+                    where: { id: purchase.userId },
+                    data: {
+                        status: client_1.UserStatus.ACTIVE,
+                        activeFrom: now,
+                        activeUntil: activeUntil,
+                        isFirstActivated: true,
+                    },
+                });
+                wasAccountActivated = true;
+            }
+            return tx.giftCardPurchase.update({
+                where: { id: purchaseId },
+                data: {
+                    status: 'APPROVED',
+                    wasAccountActivated,
+                    canSellAt,
+                },
+            });
+        });
+        try {
+            await this.notificationsService.create(purchase.userId, client_1.NotificationType.SYSTEM, 'Gift Card Payment Approved', `Your bKash payment for "${purchase.giftCard?.title || 'Gift Card'}" (TrxID: ${purchase.bkashTrxId || 'N/A'}) has been APPROVED by admin! Your voucher code is now active.`);
+        }
+        catch (err) {
+            this.logger.error(`Failed to send approval notification: ${err.message}`);
+        }
+        return {
+            message: 'Gift Card purchase approved successfully!',
+            purchase: approvedPurchase,
+        };
+    }
+    async adminRejectPurchase(purchaseId) {
+        const purchase = await this.db.giftCardPurchase.findUnique({
+            where: { id: purchaseId },
+            include: { giftCard: true },
+        });
+        if (!purchase)
+            throw new common_1.NotFoundException('Gift Card purchase record not found');
+        if (purchase.status !== 'PENDING') {
+            throw new common_1.BadRequestException(`Only PENDING purchases can be rejected. Current status: ${purchase.status}`);
+        }
+        const rejectedPurchase = await this.db.giftCardPurchase.update({
+            where: { id: purchaseId },
+            data: {
+                status: 'REJECTED',
+            },
+        });
+        try {
+            await this.notificationsService.create(purchase.userId, client_1.NotificationType.SYSTEM, 'Gift Card Payment Rejected', `Your bKash payment for "${purchase.giftCard?.title || 'Gift Card'}" (TrxID: ${purchase.bkashTrxId || 'N/A'}) was REJECTED by admin. Please verify your payment details or contact support.`);
+        }
+        catch (err) {
+            this.logger.error(`Failed to send rejection notification: ${err.message}`);
+        }
+        return {
+            message: 'Gift Card purchase rejected.',
+            purchase: rejectedPurchase,
+        };
+    }
     async adminUpdateCard(id, dto) {
         const card = await this.db.giftCard.findUnique({ where: { id } });
         if (!card)
@@ -187,22 +268,75 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
             throw new common_1.BadRequestException('Invalid payment method. Gift Cards can only be purchased using Wallet or bKash (no cash payment).');
         }
         const price = Number(card.price);
-        if (paymentMethod === 'WALLET') {
-            const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
-            if (!wallet)
-                throw new common_1.NotFoundException('Wallet not found');
-            if (Number(wallet.balance) < price) {
-                throw new common_1.BadRequestException('Insufficient wallet balance to purchase this Gift Card');
+        if (paymentMethod === 'BKASH') {
+            if (!dto?.userBkashNumber?.trim() || !dto?.bkashTrxId?.trim()) {
+                throw new common_1.BadRequestException('bKash phone number and Transaction ID (TrxID) are required for bKash payment.');
             }
+            const bkashPhone = dto.userBkashNumber.trim();
+            const trxId = dto.bkashTrxId.trim();
+            const purchaseResult = await this.prisma.giftCardPurchase.create({
+                data: {
+                    userId,
+                    giftCardId: cardId,
+                    pricePaid: price,
+                    paymentMethod: 'BKASH',
+                    userBkashNumber: bkashPhone,
+                    bkashTrxId: trxId,
+                    voucherCode: card.voucherCode || `GIFT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+                    wasAccountActivated: false,
+                    status: 'PENDING',
+                    canSellAt: null,
+                    isSold: false,
+                },
+                include: {
+                    giftCard: true,
+                },
+            });
+            try {
+                const user = await this.prisma.user.findUnique({
+                    where: { id: userId },
+                    select: { name: true },
+                });
+                const userName = user?.name || 'User';
+                await this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Gift Card Payment Submitted', `Your bKash payment for "${card.title}" (TrxID: ${trxId}) has been submitted and is pending Admin approval.`);
+                await this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, 'bKash Gift Card Pending Approval', `User ${userName} submitted bKash payment for "${card.title}" (৳${price}). Phone: ${bkashPhone}, TrxID: ${trxId}. Please review & approve.`);
+            }
+            catch (err) {
+                this.logger.error(`Failed to send bKash purchase notifications: ${err.message}`);
+            }
+            return {
+                message: 'Your bKash payment details have been submitted for Admin review. Your voucher code will be issued once approved.',
+                wasAccountActivated: false,
+                purchase: {
+                    id: purchaseResult.id,
+                    cardId: purchaseResult.giftCardId,
+                    title: purchaseResult.giftCard.title,
+                    description: purchaseResult.giftCard.description,
+                    image: purchaseResult.giftCard.image,
+                    pricePaid: Number(purchaseResult.pricePaid),
+                    paymentMethod: purchaseResult.paymentMethod,
+                    voucherCode: purchaseResult.voucherCode,
+                    status: purchaseResult.status,
+                    canSellAt: purchaseResult.canSellAt,
+                    isSold: purchaseResult.isSold,
+                    purchasedAt: purchaseResult.purchasedAt,
+                },
+            };
+        }
+        const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+        if (!wallet)
+            throw new common_1.NotFoundException('Wallet not found');
+        if (Number(wallet.balance) < price) {
+            throw new common_1.BadRequestException('Insufficient wallet balance to purchase this Gift Card');
         }
         const txType = client_1.TxType.GIFT_CARD_PURCHASE ?? client_1.TxType.PURCHASE;
         const isActivationQualifying = price >= 2000;
         const now = new Date();
         const canSellAt = new Date(now.getTime() + 30 * 86_400_000);
         const purchaseResult = await this.prisma.$transaction(async (tx) => {
-            if (paymentMethod === 'WALLET' && price > 0) {
-                const wallet = await tx.wallet.findUnique({ where: { userId } });
-                await this.walletService.debit(tx, wallet.id, price, txType, `Gift Card purchase: ${card.title}`, cardId);
+            if (price > 0) {
+                const w = await tx.wallet.findUnique({ where: { userId } });
+                await this.walletService.debit(tx, w.id, price, txType, `Gift Card purchase: ${card.title}`, cardId);
             }
             let wasAccountActivated = false;
             if (isActivationQualifying) {
@@ -224,12 +358,12 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
                     userId,
                     giftCardId: cardId,
                     pricePaid: price,
-                    paymentMethod,
-                    userBkashNumber: dto?.userBkashNumber || null,
-                    bkashTrxId: dto?.bkashTrxId || null,
+                    paymentMethod: 'WALLET',
+                    userBkashNumber: null,
+                    bkashTrxId: null,
                     voucherCode: card.voucherCode || `GIFT-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
                     wasAccountActivated,
-                    status: 'PURCHASED',
+                    status: 'APPROVED',
                     canSellAt,
                     isSold: false,
                 },
@@ -242,11 +376,11 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
         try {
             const user = await this.prisma.user.findUnique({
                 where: { id: userId },
-                select: { name: true, phone: true },
+                select: { name: true },
             });
             const userName = user?.name || 'User';
-            await this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Gift Card Purchased', `You have purchased "${card.title}" for ৳${price}. You can use your voucher code or sell this Gift Card back to your wallet after 30 days!`);
-            await this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, 'New Gift Card Purchase', `User ${userName} purchased "${card.title}" for ৳${price} via ${paymentMethod}.`);
+            await this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Gift Card Purchased', `You have purchased "${card.title}" for ৳${price} using your Wallet. You can use your voucher code or sell this Gift Card back to your wallet after 30 days!`);
+            await this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, 'New Gift Card Purchase', `User ${userName} purchased "${card.title}" for ৳${price} via Wallet.`);
         }
         catch (err) {
             this.logger.error(`Failed to send Gift Card purchase notifications: ${err.message}`);
@@ -282,6 +416,9 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
         }
         if (purchase.isSold || purchase.status === 'SOLD') {
             throw new common_1.BadRequestException('This Gift Card has already been sold and refunded');
+        }
+        if (purchase.status !== 'APPROVED' && purchase.status !== 'PURCHASED') {
+            throw new common_1.BadRequestException('Only approved and active Gift Cards can be sold.');
         }
         const now = new Date();
         if (purchase.canSellAt && now < new Date(purchase.canSellAt)) {
@@ -332,21 +469,20 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
     async userGetMyCards(userId) {
         const purchases = await this.db.giftCardPurchase.findMany({
             where: { userId },
+            orderBy: { purchasedAt: 'desc' },
             include: {
                 giftCard: true,
             },
-            orderBy: { purchasedAt: 'desc' },
         });
         return purchases.map((p) => ({
             id: p.id,
             cardId: p.giftCardId,
             title: p.giftCard?.title || 'Gift Card',
             description: p.giftCard?.description || '',
-            image: p.giftCard?.image || null,
+            image: p.giftCard?.image || '',
             pricePaid: Number(p.pricePaid),
             paymentMethod: p.paymentMethod,
-            voucherCode: p.voucherCode || 'N/A',
-            wasAccountActivated: p.wasAccountActivated,
+            voucherCode: p.status === 'APPROVED' || p.status === 'PURCHASED' || p.status === 'SOLD' ? p.voucherCode : 'Pending Approval',
             status: p.status,
             canSellAt: p.canSellAt,
             isSold: p.isSold,

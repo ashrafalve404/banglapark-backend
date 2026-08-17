@@ -14,6 +14,7 @@ export declare class GiftCardsService {
     adminGetStats(): Promise<{
         totalRevenue: number;
         totalPurchases: any;
+        pendingApprovalsCount: any;
         totalResalePayout: number;
         totalCardsSold: any;
         totalCards: any;
@@ -22,6 +23,14 @@ export declare class GiftCardsService {
         activatedAccountsCount: any;
     }>;
     adminGetPurchases(): Promise<any>;
+    adminApprovePurchase(purchaseId: string): Promise<{
+        message: string;
+        purchase: any;
+    }>;
+    adminRejectPurchase(purchaseId: string): Promise<{
+        message: string;
+        purchase: any;
+    }>;
     adminUpdateCard(id: string, dto: UpdateGiftCardDto): Promise<any>;
     adminDeleteCard(id: string): Promise<{
         message: string;

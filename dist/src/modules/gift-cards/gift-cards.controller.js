@@ -33,6 +33,12 @@ let GiftCardsController = class GiftCardsController {
     async adminGetPurchases() {
         return this.giftCardsService.adminGetPurchases();
     }
+    async adminApprovePurchase(id) {
+        return this.giftCardsService.adminApprovePurchase(id);
+    }
+    async adminRejectPurchase(id) {
+        return this.giftCardsService.adminRejectPurchase(id);
+    }
     async adminGetAllCards() {
         return this.giftCardsService.adminGetAllCards();
     }
@@ -79,6 +85,28 @@ __decorate([
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
 ], GiftCardsController.prototype, "adminGetPurchases", null);
+__decorate([
+    (0, common_1.Post)('admin/purchases/:id/approve'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Admin: Approve a pending bKash Gift Card purchase' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], GiftCardsController.prototype, "adminApprovePurchase", null);
+__decorate([
+    (0, common_1.Post)('admin/purchases/:id/reject'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Admin: Reject a pending bKash Gift Card purchase' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], GiftCardsController.prototype, "adminRejectPurchase", null);
 __decorate([
     (0, common_1.Get)('admin/cards'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

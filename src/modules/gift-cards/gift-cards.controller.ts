@@ -33,6 +33,24 @@ export class GiftCardsController {
         return this.giftCardsService.adminGetPurchases();
     }
 
+    @Post('admin/purchases/:id/approve')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Admin: Approve a pending bKash Gift Card purchase' })
+    async adminApprovePurchase(@Param('id') id: string) {
+        return this.giftCardsService.adminApprovePurchase(id);
+    }
+
+    @Post('admin/purchases/:id/reject')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Admin: Reject a pending bKash Gift Card purchase' })
+    async adminRejectPurchase(@Param('id') id: string) {
+        return this.giftCardsService.adminRejectPurchase(id);
+    }
+
     @Get('admin/cards')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
