@@ -33,7 +33,7 @@ let GiftCardsService = GiftCardsService_1 = class GiftCardsService {
         return this.db.giftCard.create({
             data: {
                 title: dto.title,
-                description: dto.description,
+                description: dto.description || '',
                 price: dto.price,
                 image: dto.image,
                 voucherCode: dto.voucherCode,

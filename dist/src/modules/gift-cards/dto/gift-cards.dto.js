@@ -28,9 +28,9 @@ __decorate([
     __metadata("design:type", String)
 ], CreateGiftCardDto.prototype, "title", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ example: 'Get 2000 TK worth of products + 30 Days Account Activation!' }),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Get 2000 TK worth of products + 30 Days Account Activation!' }),
+    (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsString)(),
-    (0, class_validator_1.IsNotEmpty)(),
     __metadata("design:type", String)
 ], CreateGiftCardDto.prototype, "description", void 0);
 __decorate([

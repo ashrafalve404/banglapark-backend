@@ -7,10 +7,10 @@ export class CreateGiftCardDto {
     @IsNotEmpty()
     title: string;
 
-    @ApiProperty({ example: 'Get 2000 TK worth of products + 30 Days Account Activation!' })
+    @ApiPropertyOptional({ example: 'Get 2000 TK worth of products + 30 Days Account Activation!' })
+    @IsOptional()
     @IsString()
-    @IsNotEmpty()
-    description: string;
+    description?: string;
 
     @ApiProperty({ example: 2000 })
     @IsNumber()

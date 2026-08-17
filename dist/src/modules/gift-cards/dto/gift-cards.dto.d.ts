@@ -1,6 +1,6 @@
 export declare class CreateGiftCardDto {
     title: string;
-    description: string;
+    description?: string;
     price: number;
     image?: string;
     voucherCode?: string;
