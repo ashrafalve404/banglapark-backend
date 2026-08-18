@@ -170,52 +170,29 @@ export class CpaMarketingService {
         const existing = await this.db.cpaTaskPurchase.findFirst({
             where: { userId, cpaTaskId: taskId },
         });
-        if (existing) throw new BadRequestException('You have already purchased this task');
+        if (existing) throw new BadRequestException('You have already started this task');
 
-        const price = Number(task.price);
-        const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
-        if (!wallet) throw new NotFoundException('Wallet not found');
-
-        if (Number(wallet.balance) < price) {
-            throw new BadRequestException('Insufficient wallet balance to purchase this CPA task');
-        }
-
-        const txType = (TxType as any).CPA_TASK_PURCHASE ?? TxType.PURCHASE;
-
-        const purchase = await this.prisma.$transaction(async (tx: any) => {
-            if (price > 0) {
-                await this.walletService.debit(
-                    tx,
-                    wallet.id,
-                    price,
-                    txType,
-                    `CPA Task purchase: ${task.title}`,
-                    taskId,
-                );
-            }
-
-            return tx.cpaTaskPurchase.create({
-                data: {
-                    userId,
-                    cpaTaskId: taskId,
-                    pricePaid: price,
-                    status: 'PURCHASED',
-                },
-                include: {
-                    cpaTask: true,
-                },
-            });
+        const purchase = await this.db.cpaTaskPurchase.create({
+            data: {
+                userId,
+                cpaTaskId: taskId,
+                pricePaid: 0,
+                status: 'PURCHASED',
+            },
+            include: {
+                cpaTask: true,
+            },
         });
 
         return {
-            message: 'CPA Task purchased successfully! It is now available in your Daily Work page.',
+            message: 'CPA Task started for free! It is now available in your Daily Work page.',
             purchase: {
                 id: purchase.id,
                 taskId: purchase.cpaTaskId,
                 title: purchase.cpaTask.title,
                 description: purchase.cpaTask.description,
                 redirectLink: purchase.cpaTask.redirectLink,
-                pricePaid: Number(purchase.pricePaid),
+                pricePaid: 0,
                 status: purchase.status,
                 purchasedAt: purchase.purchasedAt,
             },

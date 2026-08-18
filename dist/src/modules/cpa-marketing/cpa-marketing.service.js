@@ -13,7 +13,6 @@ exports.CpaMarketingService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const wallet_service_1 = require("../wallet/wallet.service");
-const client_1 = require("@prisma/client");
 let CpaMarketingService = class CpaMarketingService {
     prisma;
     walletService;
@@ -158,40 +157,27 @@ let CpaMarketingService = class CpaMarketingService {
             where: { userId, cpaTaskId: taskId },
         });
         if (existing)
-            throw new common_1.BadRequestException('You have already purchased this task');
-        const price = Number(task.price);
-        const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
-        if (!wallet)
-            throw new common_1.NotFoundException('Wallet not found');
-        if (Number(wallet.balance) < price) {
-            throw new common_1.BadRequestException('Insufficient wallet balance to purchase this CPA task');
-        }
-        const txType = client_1.TxType.CPA_TASK_PURCHASE ?? client_1.TxType.PURCHASE;
-        const purchase = await this.prisma.$transaction(async (tx) => {
-            if (price > 0) {
-                await this.walletService.debit(tx, wallet.id, price, txType, `CPA Task purchase: ${task.title}`, taskId);
-            }
-            return tx.cpaTaskPurchase.create({
-                data: {
-                    userId,
-                    cpaTaskId: taskId,
-                    pricePaid: price,
-                    status: 'PURCHASED',
-                },
-                include: {
-                    cpaTask: true,
-                },
-            });
+            throw new common_1.BadRequestException('You have already started this task');
+        const purchase = await this.db.cpaTaskPurchase.create({
+            data: {
+                userId,
+                cpaTaskId: taskId,
+                pricePaid: 0,
+                status: 'PURCHASED',
+            },
+            include: {
+                cpaTask: true,
+            },
         });
         return {
-            message: 'CPA Task purchased successfully! It is now available in your Daily Work page.',
+            message: 'CPA Task started for free! It is now available in your Daily Work page.',
             purchase: {
                 id: purchase.id,
                 taskId: purchase.cpaTaskId,
                 title: purchase.cpaTask.title,
                 description: purchase.cpaTask.description,
                 redirectLink: purchase.cpaTask.redirectLink,
-                pricePaid: Number(purchase.pricePaid),
+                pricePaid: 0,
                 status: purchase.status,
                 purchasedAt: purchase.purchasedAt,
             },
