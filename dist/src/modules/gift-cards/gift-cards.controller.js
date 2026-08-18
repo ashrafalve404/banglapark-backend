@@ -39,6 +39,9 @@ let GiftCardsController = class GiftCardsController {
     async adminRejectPurchase(id) {
         return this.giftCardsService.adminRejectPurchase(id);
     }
+    async adminDeletePurchase(id) {
+        return this.giftCardsService.adminDeletePurchase(id);
+    }
     async adminGetAllCards() {
         return this.giftCardsService.adminGetAllCards();
     }
@@ -107,6 +110,17 @@ __decorate([
     __metadata("design:paramtypes", [String]),
     __metadata("design:returntype", Promise)
 ], GiftCardsController.prototype, "adminRejectPurchase", null);
+__decorate([
+    (0, common_1.Delete)('admin/purchases/:id'),
+    (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),
+    (0, roles_decorator_1.Roles)(client_1.Role.ADMIN, client_1.Role.SUPER_ADMIN),
+    (0, swagger_1.ApiBearerAuth)(),
+    (0, swagger_1.ApiOperation)({ summary: 'Admin: Delete a user Gift Card purchase record' }),
+    __param(0, (0, common_1.Param)('id')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", Promise)
+], GiftCardsController.prototype, "adminDeletePurchase", null);
 __decorate([
     (0, common_1.Get)('admin/cards'),
     (0, common_1.UseGuards)(jwt_auth_guard_1.JwtAuthGuard, roles_guard_1.RolesGuard),

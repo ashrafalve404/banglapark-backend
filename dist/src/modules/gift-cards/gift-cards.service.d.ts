@@ -31,6 +31,9 @@ export declare class GiftCardsService {
         message: string;
         purchase: any;
     }>;
+    adminDeletePurchase(purchaseId: string): Promise<{
+        message: string;
+    }>;
     adminUpdateCard(id: string, dto: UpdateGiftCardDto): Promise<any>;
     adminDeleteCard(id: string): Promise<{
         message: string;

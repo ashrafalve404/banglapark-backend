@@ -244,6 +244,14 @@ export class GiftCardsService {
         };
     }
 
+    async adminDeletePurchase(purchaseId: string) {
+        const purchase = await this.db.giftCardPurchase.findUnique({ where: { id: purchaseId } });
+        if (!purchase) throw new NotFoundException('Gift Card purchase record not found');
+
+        await this.db.giftCardPurchase.delete({ where: { id: purchaseId } });
+        return { message: 'Gift Card purchase record deleted successfully' };
+    }
+
     async adminUpdateCard(id: string, dto: UpdateGiftCardDto) {
         const card = await this.db.giftCard.findUnique({ where: { id } });
         if (!card) throw new NotFoundException('Gift Card not found');

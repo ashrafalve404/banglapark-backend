@@ -23,6 +23,9 @@ export declare class GiftCardsController {
         message: string;
         purchase: any;
     }>;
+    adminDeletePurchase(id: string): Promise<{
+        message: string;
+    }>;
     adminGetAllCards(): Promise<any>;
     adminCreateCard(dto: CreateGiftCardDto): Promise<any>;
     adminUpdateCard(id: string, dto: UpdateGiftCardDto): Promise<any>;

@@ -51,6 +51,15 @@ export class GiftCardsController {
         return this.giftCardsService.adminRejectPurchase(id);
     }
 
+    @Delete('admin/purchases/:id')
+    @UseGuards(JwtAuthGuard, RolesGuard)
+    @Roles(Role.ADMIN, Role.SUPER_ADMIN)
+    @ApiBearerAuth()
+    @ApiOperation({ summary: 'Admin: Delete a user Gift Card purchase record' })
+    async adminDeletePurchase(@Param('id') id: string) {
+        return this.giftCardsService.adminDeletePurchase(id);
+    }
+
     @Get('admin/cards')
     @UseGuards(JwtAuthGuard, RolesGuard)
     @Roles(Role.ADMIN, Role.SUPER_ADMIN)
