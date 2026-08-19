@@ -95,10 +95,15 @@ export class ReportsService {
         const query = dto.userQuery?.trim();
         if (!query) throw new NotFoundException('User search query is required');
 
-        // 1. Find User
+        // 1. Find User (excludes only newly registered accounts with active pending OTP)
         const user = await this.prisma.user.findFirst({
             where: {
-                isEmailVerified: true,
+                NOT: {
+                    AND: [
+                        { isEmailVerified: false },
+                        { emailVerificationOtp: { not: null } },
+                    ],
+                },
                 OR: [
                     { id: query },
                     { phone: { contains: query, mode: 'insensitive' } },
