@@ -215,9 +215,16 @@ let AuthService = class AuthService {
         if (user.isBanned) {
             throw new common_1.UnauthorizedException('Account is banned');
         }
+        if (user.isEmailVerified === false && !user.emailVerificationOtp) {
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: { isEmailVerified: true },
+            });
+            user.isEmailVerified = true;
+        }
         if (user.isEmailVerified === false && user.emailVerificationOtp) {
-            throw new common_1.UnauthorizedException({
-                statusCode: 401,
+            throw new common_1.ForbiddenException({
+                statusCode: 403,
                 message: 'Email not verified. Please verify your email to access your account.',
                 requiresEmailVerification: true,
                 email: user.email,

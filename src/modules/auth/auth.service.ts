@@ -214,10 +214,19 @@ export class AuthService {
             throw new UnauthorizedException('Account is banned');
         }
 
-        // Only block users who registered via OTP flow and haven't verified OTP yet
+        // Auto-verify existing accounts created before OTP verification
+        if (user.isEmailVerified === false && !user.emailVerificationOtp) {
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: { isEmailVerified: true },
+            });
+            user.isEmailVerified = true;
+        }
+
+        // Block newly registered accounts that have a pending OTP verification
         if (user.isEmailVerified === false && user.emailVerificationOtp) {
-            throw new UnauthorizedException({
-                statusCode: 401,
+            throw new ForbiddenException({
+                statusCode: 403,
                 message: 'Email not verified. Please verify your email to access your account.',
                 requiresEmailVerification: true,
                 email: user.email,
