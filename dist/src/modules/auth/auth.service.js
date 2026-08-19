@@ -215,8 +215,9 @@ let AuthService = class AuthService {
         if (user.isBanned) {
             throw new common_1.UnauthorizedException('Account is banned');
         }
-        if (!user.isEmailVerified) {
+        if (user.isEmailVerified === false && user.emailVerificationOtp) {
             throw new common_1.UnauthorizedException({
+                statusCode: 401,
                 message: 'Email not verified. Please verify your email to access your account.',
                 requiresEmailVerification: true,
                 email: user.email,
@@ -234,7 +235,7 @@ let AuthService = class AuthService {
             referralCode: user.referralCode,
             referralLink: user.referralLink,
             parentId: user.parentId,
-            isEmailVerified: user.isEmailVerified,
+            isEmailVerified: user.isEmailVerified ?? true,
         });
         return { user: userObj, ...tokens };
     }

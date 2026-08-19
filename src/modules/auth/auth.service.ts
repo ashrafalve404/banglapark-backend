@@ -214,8 +214,10 @@ export class AuthService {
             throw new UnauthorizedException('Account is banned');
         }
 
-        if (!user.isEmailVerified) {
+        // Only block users who registered via OTP flow and haven't verified OTP yet
+        if (user.isEmailVerified === false && user.emailVerificationOtp) {
             throw new UnauthorizedException({
+                statusCode: 401,
                 message: 'Email not verified. Please verify your email to access your account.',
                 requiresEmailVerification: true,
                 email: user.email,
@@ -234,7 +236,7 @@ export class AuthService {
             referralCode: user.referralCode,
             referralLink: user.referralLink,
             parentId: user.parentId,
-            isEmailVerified: user.isEmailVerified,
+            isEmailVerified: user.isEmailVerified ?? true,
         });
         return { user: userObj, ...tokens };
     }
