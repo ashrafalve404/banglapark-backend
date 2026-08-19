@@ -62,6 +62,17 @@ let AuthService = class AuthService {
         this.emailService = emailService;
     }
     async register(dto) {
+        const DISPOSABLE_DOMAINS = new Set([
+            'toooby.com', 'tabeebee.com', 'tempmail.com', 'temp-mail.org', 'mailinator.com',
+            '10minutemail.com', 'guerrillamail.com', 'trashmail.com', 'yopmail.com', 'sharklasers.com',
+            'dispostable.com', 'getairmail.com', 'throwawaymail.com', 'fakeinbox.com', 'maildrop.cc',
+            'crazymailing.com', 'tmailor.com', 'burnermail.io', 'generator.email', 'dropmail.me',
+            'mohmal.com', 'inboxkitten.com', 'tempail.com', 'tempmail.net', 'fakemailgenerator.com'
+        ]);
+        const domain = dto.email.split('@')[1]?.toLowerCase().trim();
+        if (domain && (DISPOSABLE_DOMAINS.has(domain) || domain.includes('temp') || domain.includes('fake') || domain.includes('trash') || domain.includes('disposable') || domain.includes('text0') || domain.includes('test0'))) {
+            throw new common_1.BadRequestException('Disposable or temporary email domains are not allowed. Please use a valid email address.');
+        }
         const existing = await this.prisma.user.findFirst({
             where: { OR: [{ email: dto.email }, { phone: dto.phone }] },
         });
