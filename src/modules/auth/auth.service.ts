@@ -27,7 +27,33 @@ export class AuthService {
         const existing = await this.prisma.user.findFirst({
             where: { OR: [{ email: dto.email }, { phone: dto.phone }] },
         });
+
         if (existing) {
+            // If the account is unverified, refresh the OTP and allow completion
+            if (existing.isEmailVerified === false && existing.emailVerificationOtp) {
+                const otp = Math.floor(100000 + Math.random() * 900000).toString();
+                const emailVerificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+                const passwordHash = await bcrypt.hash(dto.password, 12);
+
+                await this.prisma.user.update({
+                    where: { id: existing.id },
+                    data: {
+                        name: dto.name,
+                        passwordHash,
+                        emailVerificationOtp: otp,
+                        emailVerificationExpires,
+                    },
+                });
+
+                await this.emailService.sendVerificationEmail(existing.email, dto.name, otp);
+
+                return {
+                    requiresEmailVerification: true,
+                    email: existing.email,
+                    message: 'A fresh 6-digit verification code has been sent to your email.',
+                };
+            }
+
             throw new ConflictException('Email or phone already in use');
         }
 
