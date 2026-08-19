@@ -392,8 +392,8 @@ export class AuthService {
         const payload = { sub: userId, email, role };
         const secret = this.configService.get<string>('app.jwtAccessSecret') || process.env.JWT_ACCESS_SECRET || 'access_secret';
         const refreshSecret = this.configService.get<string>('app.jwtRefreshSecret') || process.env.JWT_REFRESH_SECRET || 'refresh_secret';
-        const expiresIn = (this.configService.get<string>('app.jwtAccessExpiry') || '15m') as any;
-        const refreshExpiresIn = (this.configService.get<string>('app.jwtRefreshExpiry') || '7d') as any;
+        const expiresIn = (this.configService.get<string>('app.jwtAccessExpiry') || '7d') as any;
+        const refreshExpiresIn = (this.configService.get<string>('app.jwtRefreshExpiry') || '30d') as any;
 
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
