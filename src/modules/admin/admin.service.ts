@@ -12,6 +12,15 @@ export class AdminService {
     ) { }
 
     async getPlatformStats() {
+        const notPendingVerification = {
+            NOT: {
+                AND: [
+                    { isEmailVerified: false },
+                    { emailVerificationOtp: { not: null } },
+                ],
+            },
+        };
+
         const [
             totalUsers,
             activeUsers,
@@ -27,9 +36,9 @@ export class AdminService {
             deliveryCharges,
             sellerPayoutsAgg,
         ] = await Promise.all([
-            this.prisma.user.count({ where: { role: 'USER', isEmailVerified: true } }),
-            this.prisma.user.count({ where: { status: 'ACTIVE', isEmailVerified: true } }),
-            this.prisma.user.count({ where: { status: 'INACTIVE', isEmailVerified: true } }),
+            this.prisma.user.count({ where: { role: 'USER', ...notPendingVerification } }),
+            this.prisma.user.count({ where: { status: 'ACTIVE', ...notPendingVerification } }),
+            this.prisma.user.count({ where: { status: 'INACTIVE', ...notPendingVerification } }),
             this.prisma.order.count(),
             this.prisma.order.count({ where: { status: 'DELIVERED' } }),
             this.prisma.order.aggregate({ _sum: { total: true } }),

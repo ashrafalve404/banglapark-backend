@@ -235,7 +235,14 @@ let UsersService = class UsersService {
     }
     async findAll(page = 1, limit = 20, search) {
         const skip = (page - 1) * limit;
-        const where = { isEmailVerified: true };
+        const where = {
+            NOT: {
+                AND: [
+                    { isEmailVerified: false },
+                    { emailVerificationOtp: { not: null } },
+                ],
+            },
+        };
         if (search) {
             where.AND = [
                 {

@@ -209,7 +209,15 @@ export class UsersService {
     // ── Admin-only ────────────────────────────────────────────────────────────
     async findAll(page = 1, limit = 20, search?: string) {
         const skip = (page - 1) * limit;
-        const where: any = { isEmailVerified: true };
+        // Exclude only newly registered accounts with a pending unverified OTP code
+        const where: any = {
+            NOT: {
+                AND: [
+                    { isEmailVerified: false },
+                    { emailVerificationOtp: { not: null } },
+                ],
+            },
+        };
 
         if (search) {
             where.AND = [
