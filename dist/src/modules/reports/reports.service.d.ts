@@ -1,4 +1,5 @@
 import { PrismaService } from '../../prisma/prisma.service';
+import { GetUserStatementDto, ReportPeriod } from './dto/user-statement.dto';
 export declare class ReportsService {
     private readonly prisma;
     constructor(prisma: PrismaService);
@@ -82,5 +83,47 @@ export declare class ReportsService {
         total: number;
         page: number;
         limit: number;
+    }>;
+    getUserStatementReport(dto: GetUserStatementDto): Promise<{
+        user: {
+            id: string;
+            name: string;
+            phone: string;
+            email: string;
+            status: import("@prisma/client").$Enums.UserStatus;
+            activeUntil: Date | null;
+            createdAt: Date;
+            sponsor: {
+                name: string;
+                phone: string;
+            } | null;
+            teamCount: number;
+        };
+        periodInfo: {
+            period: ReportPeriod;
+            fromDate: Date;
+            toDate: Date;
+        };
+        summary: {
+            totalSpent: number;
+            totalEarned: number;
+            currentWalletBalance: number;
+            totalWithdrawn: number;
+        };
+        expenditureBreakdown: {
+            orders: {
+                count: number;
+                totalAmount: number;
+            };
+            giftCards: {
+                count: number;
+                totalAmount: number;
+            };
+            quizzes: {
+                count: number;
+                totalAmount: number;
+            };
+        };
+        itemizedLogs: any[];
     }>;
 }

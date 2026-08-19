@@ -20,6 +20,7 @@ const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const roles_guard_1 = require("../../common/guards/roles.guard");
 const roles_decorator_1 = require("../../common/decorators/roles.decorator");
 const client_1 = require("@prisma/client");
+const user_statement_dto_1 = require("./dto/user-statement.dto");
 let ReportsController = class ReportsController {
     reportsService;
     constructor(reportsService) {
@@ -33,6 +34,9 @@ let ReportsController = class ReportsController {
     }
     getActiveUsers(page = 1, limit = 50) {
         return this.reportsService.getActiveUserReport(+page, +limit);
+    }
+    getUserStatement(dto) {
+        return this.reportsService.getUserStatementReport(dto);
     }
 };
 exports.ReportsController = ReportsController;
@@ -69,6 +73,14 @@ __decorate([
     __metadata("design:paramtypes", [Object, Object]),
     __metadata("design:returntype", void 0)
 ], ReportsController.prototype, "getActiveUsers", null);
+__decorate([
+    (0, common_1.Get)('admin/user-statement'),
+    (0, swagger_1.ApiOperation)({ summary: '[Admin] Get detailed user expenditure and activity statement report' }),
+    __param(0, (0, common_1.Query)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [user_statement_dto_1.GetUserStatementDto]),
+    __metadata("design:returntype", void 0)
+], ReportsController.prototype, "getUserStatement", null);
 exports.ReportsController = ReportsController = __decorate([
     (0, swagger_1.ApiTags)('Reports'),
     (0, swagger_1.ApiBearerAuth)(),

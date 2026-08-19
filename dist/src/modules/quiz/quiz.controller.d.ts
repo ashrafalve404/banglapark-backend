@@ -58,10 +58,10 @@ export declare class QuizController {
             updatedAt: Date;
             categoryId: string;
             sortOrder: number;
+            levelId: string | null;
             question: string;
             options: import("@prisma/client/runtime/library").JsonValue;
             correctIndex: number;
-            levelId: string | null;
         })[];
         total: number;
         page: number;
@@ -74,10 +74,10 @@ export declare class QuizController {
         updatedAt: Date;
         categoryId: string;
         sortOrder: number;
+        levelId: string | null;
         question: string;
         options: import("@prisma/client/runtime/library").JsonValue;
         correctIndex: number;
-        levelId: string | null;
     }>;
     deleteQuestion(id: string): Promise<{
         message: string;
@@ -124,11 +124,11 @@ export declare class QuizController {
         userId: string;
         categoryId: string;
         paymentMethod: string;
-        questionCount: number;
+        purchasedAt: Date;
         levelId: string | null;
+        questionCount: number;
         totalPrice: import("@prisma/client/runtime/library").Decimal;
         currentIndex: number;
-        purchasedAt: Date;
         startedAt: Date | null;
         completedAt: Date | null;
     })[]>;

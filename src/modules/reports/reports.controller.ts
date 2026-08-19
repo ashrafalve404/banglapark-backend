@@ -7,6 +7,7 @@ import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard';
 import { RolesGuard } from '../../common/guards/roles.guard';
 import { Roles } from '../../common/decorators/roles.decorator';
 import { Role } from '@prisma/client';
+import { GetUserStatementDto } from './dto/user-statement.dto';
 
 @ApiTags('Reports')
 @ApiBearerAuth()
@@ -54,5 +55,11 @@ export class ReportsController {
     @ApiOperation({ summary: '[Admin] Active user report' })
     getActiveUsers(@Query('page') page = 1, @Query('limit') limit = 50) {
         return this.reportsService.getActiveUserReport(+page, +limit);
+    }
+
+    @Get('admin/user-statement')
+    @ApiOperation({ summary: '[Admin] Get detailed user expenditure and activity statement report' })
+    getUserStatement(@Query() dto: GetUserStatementDto) {
+        return this.reportsService.getUserStatementReport(dto);
     }
 }
