@@ -44,6 +44,24 @@ export class LoginDto {
     password: string;
 }
 
+export class VerifyEmailDto {
+    @ApiProperty({ example: 'rahim@example.com' })
+    @IsEmail()
+    email: string;
+
+    @ApiProperty({ example: '482910' })
+    @IsString()
+    @MinLength(6)
+    @MaxLength(6)
+    otp: string;
+}
+
+export class ResendVerificationDto {
+    @ApiProperty({ example: 'rahim@example.com' })
+    @IsEmail()
+    email: string;
+}
+
 export class RefreshTokenDto {
     @ApiProperty()
     @IsString()
@@ -61,7 +79,7 @@ export class ResetPasswordDto {
     @IsString()
     token: string;
 
-    @ApiProperty({ minLength: 8 })
+    @ApiProperty({ example: 'NewPass@123', minLength: 8 })
     @IsString()
     @MinLength(8)
     newPassword: string;

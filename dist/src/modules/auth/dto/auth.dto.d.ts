@@ -9,6 +9,13 @@ export declare class LoginDto {
     email: string;
     password: string;
 }
+export declare class VerifyEmailDto {
+    email: string;
+    otp: string;
+}
+export declare class ResendVerificationDto {
+    email: string;
+}
 export declare class RefreshTokenDto {
     refreshToken: string;
 }

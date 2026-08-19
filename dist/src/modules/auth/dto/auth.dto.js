@@ -9,7 +9,7 @@ var __metadata = (this && this.__metadata) || function (k, v) {
     if (typeof Reflect === "object" && typeof Reflect.metadata === "function") return Reflect.metadata(k, v);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ResetPasswordDto = exports.ForgotPasswordDto = exports.RefreshTokenDto = exports.LoginDto = exports.RegisterDto = void 0;
+exports.ResetPasswordDto = exports.ForgotPasswordDto = exports.RefreshTokenDto = exports.ResendVerificationDto = exports.VerifyEmailDto = exports.LoginDto = exports.RegisterDto = void 0;
 const class_validator_1 = require("class-validator");
 const swagger_1 = require("@nestjs/swagger");
 class RegisterDto {
@@ -64,6 +64,32 @@ __decorate([
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], LoginDto.prototype, "password", void 0);
+class VerifyEmailDto {
+    email;
+    otp;
+}
+exports.VerifyEmailDto = VerifyEmailDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'rahim@example.com' }),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], VerifyEmailDto.prototype, "email", void 0);
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: '482910' }),
+    (0, class_validator_1.IsString)(),
+    (0, class_validator_1.MinLength)(6),
+    (0, class_validator_1.MaxLength)(6),
+    __metadata("design:type", String)
+], VerifyEmailDto.prototype, "otp", void 0);
+class ResendVerificationDto {
+    email;
+}
+exports.ResendVerificationDto = ResendVerificationDto;
+__decorate([
+    (0, swagger_1.ApiProperty)({ example: 'rahim@example.com' }),
+    (0, class_validator_1.IsEmail)(),
+    __metadata("design:type", String)
+], ResendVerificationDto.prototype, "email", void 0);
 class RefreshTokenDto {
     refreshToken;
 }
@@ -93,7 +119,7 @@ __decorate([
     __metadata("design:type", String)
 ], ResetPasswordDto.prototype, "token", void 0);
 __decorate([
-    (0, swagger_1.ApiProperty)({ minLength: 8 }),
+    (0, swagger_1.ApiProperty)({ example: 'NewPass@123', minLength: 8 }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MinLength)(8),
     __metadata("design:type", String)

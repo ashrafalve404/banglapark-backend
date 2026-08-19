@@ -19,6 +19,8 @@ import { AuthService } from './auth.service';
 import {
     RegisterDto,
     LoginDto,
+    VerifyEmailDto,
+    ResendVerificationDto,
     RefreshTokenDto,
     ForgotPasswordDto,
     ResetPasswordDto,
@@ -44,6 +46,22 @@ export class AuthController {
         return this.authService.register(dto);
     }
 
+    @Post('verify-email')
+    @HttpCode(HttpStatus.OK)
+    @Throttle({ default: { ttl: 60000, limit: 5 } })
+    @ApiOperation({ summary: 'Verify user email with 6-digit OTP code' })
+    verifyEmail(@Body() dto: VerifyEmailDto) {
+        return this.authService.verifyEmail(dto);
+    }
+
+    @Post('resend-verification')
+    @HttpCode(HttpStatus.OK)
+    @Throttle({ default: { ttl: 60000, limit: 3 } })
+    @ApiOperation({ summary: 'Resend 6-digit verification code to email' })
+    resendVerification(@Body() dto: ResendVerificationDto) {
+        return this.authService.resendVerification(dto);
+    }
+
     @Post('login')
     @HttpCode(HttpStatus.OK)
     @Throttle({ default: { ttl: 60000, limit: 5 } })
@@ -58,39 +76,5 @@ export class AuthController {
     @ApiOperation({ summary: 'Login or register with Google' })
     googleLogin(@Body() dto: GoogleLoginDto) {
         return this.authService.googleLogin(dto.idToken);
-    }
-
-    @Post('refresh')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Refresh access token using refresh token' })
-    refresh(@Body() dto: RefreshTokenDto) {
-        return this.authService.refreshTokens(dto.refreshToken);
-    }
-
-    @Post('logout')
-    @HttpCode(HttpStatus.OK)
-    @UseGuards(JwtAuthGuard)
-    @ApiBearerAuth()
-    @ApiOperation({ summary: 'Logout (client-side token disposal)' })
-    logout(@CurrentUser('id') userId: string) {
-        // Stateless JWT — client discards tokens
-        return { message: 'Logged out successfully', userId };
-    }
-
-    @Post('forgot-password')
-    @HttpCode(HttpStatus.OK)
-    @Throttle({ default: { ttl: 60000, limit: 3 } })
-    @ApiOperation({ summary: 'Request password reset link' })
-    forgotPassword(@Body() dto: ForgotPasswordDto) {
-        // TODO: integrate email service and store reset token
-        return { message: 'If that email exists, a reset link has been sent' };
-    }
-
-    @Post('reset-password')
-    @HttpCode(HttpStatus.OK)
-    @ApiOperation({ summary: 'Reset password using token' })
-    resetPassword(@Body() _dto: ResetPasswordDto) {
-        // TODO: validate token, hash new password
-        return { message: 'Password reset successfully' };
     }
 }

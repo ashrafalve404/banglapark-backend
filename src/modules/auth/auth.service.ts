@@ -3,13 +3,15 @@ import {
     BadRequestException,
     UnauthorizedException,
     ConflictException,
+    ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcryptjs';
 import { OAuth2Client } from 'google-auth-library';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, VerifyEmailDto, ResendVerificationDto } from './dto/auth.dto';
+import { EmailService } from '../email/email.service';
 
 @Injectable()
 export class AuthService {
@@ -17,6 +19,7 @@ export class AuthService {
         private readonly prisma: PrismaService,
         private readonly jwtService: JwtService,
         private readonly configService: ConfigService,
+        private readonly emailService: EmailService,
     ) { }
 
     // ── Register ──────────────────────────────────────────────────────────────
@@ -46,6 +49,10 @@ export class AuthService {
         const maxMemberId = await this.prisma.user.aggregate({ _max: { memberId: true } });
         const nextMemberId = (maxMemberId._max.memberId ?? 100) + 1;
 
+        // Generate 6-digit OTP code & 15-minute expiration
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const emailVerificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+
         const user = await this.prisma.$transaction(async (tx) => {
             const newUser = await tx.user.create({
                 data: {
@@ -57,6 +64,9 @@ export class AuthService {
                     referralLink,
                     parentId,
                     memberId: nextMemberId,
+                    isEmailVerified: false,
+                    emailVerificationOtp: otp,
+                    emailVerificationExpires,
                 },
                 select: {
                     id: true,
@@ -68,6 +78,7 @@ export class AuthService {
                     memberId: true,
                     referralCode: true,
                     referralLink: true,
+                    isEmailVerified: true,
                     createdAt: true,
                 },
             });
@@ -78,8 +89,103 @@ export class AuthService {
             return newUser;
         });
 
-        const tokens = await this.generateTokens(user.id, user.email, user.role);
-        return { user: { ...user, usedReferralCode: dto.referralCode || null }, ...tokens };
+        // Send OTP verification email via Resend
+        await this.emailService.sendVerificationEmail(user.email, user.name, otp);
+
+        return {
+            requiresEmailVerification: true,
+            email: user.email,
+            message: 'Registration successful! A 6-digit verification code has been sent to your email.',
+        };
+    }
+
+    // ── Verify Email ─────────────────────────────────────────────────────────
+    async verifyEmail(dto: VerifyEmailDto) {
+        const user = await this.prisma.user.findUnique({
+            where: { email: dto.email },
+        });
+
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        if (user.isEmailVerified) {
+            const tokens = await this.generateTokens(user.id, user.email, user.role);
+            return { message: 'Email is already verified.', user, ...tokens };
+        }
+
+        if (!user.emailVerificationOtp || user.emailVerificationOtp !== dto.otp.trim()) {
+            throw new BadRequestException('Invalid verification code. Please check and try again.');
+        }
+
+        if (!user.emailVerificationExpires || user.emailVerificationExpires < new Date()) {
+            throw new BadRequestException('Verification code has expired. Please request a new code.');
+        }
+
+        // Update user to verified
+        const updatedUser = await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                isEmailVerified: true,
+                emailVerificationOtp: null,
+                emailVerificationExpires: null,
+            },
+            select: {
+                id: true,
+                memberId: true,
+                name: true,
+                email: true,
+                phone: true,
+                role: true,
+                status: true,
+                referralCode: true,
+                referralLink: true,
+                parentId: true,
+                isEmailVerified: true,
+            },
+        });
+
+        const tokens = await this.generateTokens(updatedUser.id, updatedUser.email, updatedUser.role);
+        const userObj = await this.addParentReferralCode(updatedUser);
+
+        return {
+            message: 'Email verified successfully! Welcome to Bangla Park Limited.',
+            user: userObj,
+            ...tokens,
+        };
+    }
+
+    // ── Resend Verification Code ─────────────────────────────────────────────
+    async resendVerification(dto: ResendVerificationDto) {
+        const user = await this.prisma.user.findUnique({
+            where: { email: dto.email },
+        });
+
+        if (!user) {
+            throw new BadRequestException('User not found');
+        }
+
+        if (user.isEmailVerified) {
+            throw new BadRequestException('Email is already verified. You can log in.');
+        }
+
+        // Generate fresh 6-digit OTP code & 15-minute expiration
+        const otp = Math.floor(100000 + Math.random() * 900000).toString();
+        const emailVerificationExpires = new Date(Date.now() + 15 * 60 * 1000);
+
+        await this.prisma.user.update({
+            where: { id: user.id },
+            data: {
+                emailVerificationOtp: otp,
+                emailVerificationExpires,
+            },
+        });
+
+        await this.emailService.sendVerificationEmail(user.email, user.name, otp);
+
+        return {
+            message: 'Verification code resent successfully. Please check your email.',
+        };
     }
 
     private async addParentReferralCode(userObj: any) {
@@ -108,6 +214,14 @@ export class AuthService {
             throw new UnauthorizedException('Account is banned');
         }
 
+        if (!user.isEmailVerified) {
+            throw new UnauthorizedException({
+                message: 'Email not verified. Please verify your email to access your account.',
+                requiresEmailVerification: true,
+                email: user.email,
+            });
+        }
+
         const tokens = await this.generateTokens(user.id, user.email, user.role);
         const userObj = await this.addParentReferralCode({
             id: user.id,
@@ -120,6 +234,7 @@ export class AuthService {
             referralCode: user.referralCode,
             referralLink: user.referralLink,
             parentId: user.parentId,
+            isEmailVerified: user.isEmailVerified,
         });
         return { user: userObj, ...tokens };
     }
@@ -141,37 +256,46 @@ export class AuthService {
             throw new UnauthorizedException('Invalid Google token');
         }
 
-        if (!payload?.email) {
-            throw new BadRequestException('Google account has no email');
+        if (!payload || !payload.email) {
+            throw new BadRequestException('Google token payload missing email');
         }
 
-        const googleId = payload.sub;
-        const email = payload.email;
-        const name = payload.name || email.split('@')[0];
-
-        // Find existing user by Google ID or email
-        let user = await this.prisma.user.findFirst({
-            where: { OR: [{ email }, { id: googleId }] },
+        let user = await this.prisma.user.findUnique({
+            where: { email: payload.email },
         });
 
         if (!user) {
-            // Create new user from Google profile
             const referralCode = await this.generateUniqueReferralCode();
             const baseUrl = this.configService.get<string>('app.referralBaseUrl');
+            const referralLink = `${baseUrl}?ref=${referralCode}`;
+
+            const maxMemberId = await this.prisma.user.aggregate({ _max: { memberId: true } });
+            const nextMemberId = (maxMemberId._max.memberId ?? 100) + 1;
+
+            const randomPassword = Math.random().toString(36).slice(-12);
+            const passwordHash = await bcrypt.hash(randomPassword, 12);
+            const fallbackPhone = `+880${Math.floor(100000000 + Math.random() * 900000000)}`;
+
             user = await this.prisma.$transaction(async (tx) => {
                 const newUser = await tx.user.create({
                     data: {
-                        id: googleId,
-                        name,
-                        email,
-                        phone: '',
-                        passwordHash: '',
+                        name: payload.name || payload.email.split('@')[0],
+                        email: payload.email,
+                        phone: fallbackPhone,
+                        passwordHash,
                         referralCode,
-                        referralLink: `${baseUrl}?ref=${referralCode}`,
+                        referralLink,
+                        memberId: nextMemberId,
+                        isEmailVerified: true, // Google accounts auto-verified
                     },
                 });
                 await tx.wallet.create({ data: { userId: newUser.id } });
                 return newUser;
+            });
+        } else if (!user.isEmailVerified) {
+            await this.prisma.user.update({
+                where: { id: user.id },
+                data: { isEmailVerified: true },
             });
         }
 
@@ -191,57 +315,45 @@ export class AuthService {
             referralCode: user.referralCode,
             referralLink: user.referralLink,
             parentId: user.parentId,
+            isEmailVerified: true,
         });
+
         return { user: userObj, ...tokens };
     }
 
-    // ── Refresh tokens ─────────────────────────────────────────────────────────
-    async refreshTokens(refreshToken: string) {
-        try {
-            const payload = this.jwtService.verify(refreshToken, {
-                secret: this.configService.get<string>('app.jwtRefreshSecret'),
+    // ── Helper: Unique Referral Code Generator ──────────────────────────────
+    private async generateUniqueReferralCode(): Promise<string> {
+        let code = '';
+        let isUnique = false;
+
+        while (!isUnique) {
+            code = 'REF-' + Math.random().toString(36).substring(2, 8).toUpperCase();
+            const existing = await this.prisma.user.findUnique({
+                where: { referralCode: code },
             });
-            const user = await this.prisma.user.findUnique({
-                where: { id: payload.sub },
-                select: { id: true, email: true, role: true, isBanned: true },
-            });
-            if (!user || user.isBanned) throw new Error();
-            return this.generateTokens(user.id, user.email, user.role);
-        } catch {
-            throw new UnauthorizedException('Invalid or expired refresh token');
+            if (!existing) isUnique = true;
         }
+
+        return code;
     }
 
-    // ── Token generation ──────────────────────────────────────────────────────
+    // ── Helper: Token Generator ────────────────────────────────────────────────
     private async generateTokens(userId: string, email: string, role: string) {
         const payload = { sub: userId, email, role };
+        const secret = this.configService.get<string>('jwt.secret') || 'default-secret';
+        const refreshSecret = this.configService.get<string>('jwt.refreshSecret') || 'default-refresh-secret';
 
         const [accessToken, refreshToken] = await Promise.all([
             this.jwtService.signAsync(payload, {
-                secret: this.configService.get<string>('app.jwtAccessSecret'),
-                expiresIn: this.configService.get<any>('app.jwtAccessExpiry'),
+                secret,
+                expiresIn: (this.configService.get<string>('jwt.expiresIn') || '1d') as any,
             }),
             this.jwtService.signAsync(payload, {
-                secret: this.configService.get<string>('app.jwtRefreshSecret'),
-                expiresIn: this.configService.get<any>('app.jwtRefreshExpiry'),
+                secret: refreshSecret,
+                expiresIn: (this.configService.get<string>('jwt.refreshExpiresIn') || '7d') as any,
             }),
         ]);
 
         return { accessToken, refreshToken };
-    }
-
-    // ── Unique referral code generator ────────────────────────────────────────
-    private async generateUniqueReferralCode(): Promise<string> {
-        const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
-        let code: string;
-        let attempts = 0;
-        do {
-            code = 'REF-' + Array.from({ length: 8 }, () =>
-                chars[Math.floor(Math.random() * chars.length)],
-            ).join('');
-            const existing = await this.prisma.user.findUnique({ where: { referralCode: code } });
-            if (!existing) break;
-        } while (++attempts < 10);
-        return code!;
     }
 }

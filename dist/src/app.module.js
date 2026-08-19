@@ -38,12 +38,14 @@ const travel_module_1 = require("./modules/travel/travel.module");
 const user_products_module_1 = require("./modules/user-products/user-products.module");
 const cpa_marketing_module_1 = require("./modules/cpa-marketing/cpa-marketing.module");
 const gift_cards_module_1 = require("./modules/gift-cards/gift-cards.module");
+const email_module_1 = require("./modules/email/email.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
 exports.AppModule = AppModule = __decorate([
     (0, common_1.Module)({
         imports: [
+            email_module_1.EmailModule,
             config_1.ConfigModule.forRoot({
                 isGlobal: true,
                 load: [app_config_1.appConfig],

@@ -176,6 +176,9 @@ export declare class ProductsController {
             activeUntil: Date | null;
             isFirstActivated: boolean;
             isBanned: boolean;
+            isEmailVerified: boolean;
+            emailVerificationOtp: string | null;
+            emailVerificationExpires: Date | null;
             createdAt: Date;
             updatedAt: Date;
         } | null;

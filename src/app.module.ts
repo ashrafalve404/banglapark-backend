@@ -32,9 +32,11 @@ import { TravelModule } from './modules/travel/travel.module';
 import { UserProductsModule } from './modules/user-products/user-products.module';
 import { CpaMarketingModule } from './modules/cpa-marketing/cpa-marketing.module';
 import { GiftCardsModule } from './modules/gift-cards/gift-cards.module';
+import { EmailModule } from './modules/email/email.module';
 
 @Module({
   imports: [
+    EmailModule,
     // ── Config ────────────────────────────────────────────────────────────
     ConfigModule.forRoot({
       isGlobal: true,

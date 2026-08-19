@@ -1,28 +1,27 @@
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
-import { RegisterDto, LoginDto } from './dto/auth.dto';
+import { RegisterDto, LoginDto, VerifyEmailDto, ResendVerificationDto } from './dto/auth.dto';
+import { EmailService } from '../email/email.service';
 export declare class AuthService {
     private readonly prisma;
     private readonly jwtService;
     private readonly configService;
-    constructor(prisma: PrismaService, jwtService: JwtService, configService: ConfigService);
+    private readonly emailService;
+    constructor(prisma: PrismaService, jwtService: JwtService, configService: ConfigService, emailService: EmailService);
     register(dto: RegisterDto): Promise<{
+        requiresEmailVerification: boolean;
+        email: string;
+        message: string;
+    }>;
+    verifyEmail(dto: VerifyEmailDto): Promise<{
         accessToken: string;
         refreshToken: string;
-        user: {
-            usedReferralCode: string | null;
-            id: string;
-            memberId: number | null;
-            email: string;
-            phone: string;
-            referralCode: string;
-            name: string;
-            role: import("@prisma/client").$Enums.Role;
-            referralLink: string | null;
-            status: import("@prisma/client").$Enums.UserStatus;
-            createdAt: Date;
-        };
+        message: string;
+        user: any;
+    }>;
+    resendVerification(dto: ResendVerificationDto): Promise<{
+        message: string;
     }>;
     private addParentReferralCode;
     login(dto: LoginDto): Promise<{
@@ -35,10 +34,6 @@ export declare class AuthService {
         refreshToken: string;
         user: any;
     }>;
-    refreshTokens(refreshToken: string): Promise<{
-        accessToken: string;
-        refreshToken: string;
-    }>;
-    private generateTokens;
     private generateUniqueReferralCode;
+    private generateTokens;
 }
