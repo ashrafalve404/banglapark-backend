@@ -98,6 +98,7 @@ export class ReportsService {
         // 1. Find User
         const user = await this.prisma.user.findFirst({
             where: {
+                isEmailVerified: true,
                 OR: [
                     { id: query },
                     { phone: { contains: query, mode: 'insensitive' } },

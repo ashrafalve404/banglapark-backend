@@ -102,6 +102,7 @@ let ReportsService = class ReportsService {
             throw new common_1.NotFoundException('User search query is required');
         const user = await this.prisma.user.findFirst({
             where: {
+                isEmailVerified: true,
                 OR: [
                     { id: query },
                     { phone: { contains: query, mode: 'insensitive' } },

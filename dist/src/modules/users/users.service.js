@@ -235,15 +235,18 @@ let UsersService = class UsersService {
     }
     async findAll(page = 1, limit = 20, search) {
         const skip = (page - 1) * limit;
-        const where = search
-            ? {
-                OR: [
-                    { name: { contains: search, mode: 'insensitive' } },
-                    { email: { contains: search, mode: 'insensitive' } },
-                    { phone: { contains: search } },
-                ],
-            }
-            : {};
+        const where = { isEmailVerified: true };
+        if (search) {
+            where.AND = [
+                {
+                    OR: [
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { email: { contains: search, mode: 'insensitive' } },
+                        { phone: { contains: search } },
+                    ],
+                },
+            ];
+        }
         const [users, total] = await Promise.all([
             this.prisma.user.findMany({
                 where,

@@ -209,15 +209,19 @@ export class UsersService {
     // ── Admin-only ────────────────────────────────────────────────────────────
     async findAll(page = 1, limit = 20, search?: string) {
         const skip = (page - 1) * limit;
-        const where = search
-            ? {
-                OR: [
-                    { name: { contains: search, mode: 'insensitive' as const } },
-                    { email: { contains: search, mode: 'insensitive' as const } },
-                    { phone: { contains: search } },
-                ],
-            }
-            : {};
+        const where: any = { isEmailVerified: true };
+
+        if (search) {
+            where.AND = [
+                {
+                    OR: [
+                        { name: { contains: search, mode: 'insensitive' as const } },
+                        { email: { contains: search, mode: 'insensitive' as const } },
+                        { phone: { contains: search } },
+                    ],
+                },
+            ];
+        }
 
         const [users, total] = await Promise.all([
             this.prisma.user.findMany({

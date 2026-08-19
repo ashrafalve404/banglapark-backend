@@ -27,9 +27,9 @@ export class AdminService {
             deliveryCharges,
             sellerPayoutsAgg,
         ] = await Promise.all([
-            this.prisma.user.count({ where: { role: 'USER' } }),
-            this.prisma.user.count({ where: { status: 'ACTIVE' } }),
-            this.prisma.user.count({ where: { status: 'INACTIVE' } }),
+            this.prisma.user.count({ where: { role: 'USER', isEmailVerified: true } }),
+            this.prisma.user.count({ where: { status: 'ACTIVE', isEmailVerified: true } }),
+            this.prisma.user.count({ where: { status: 'INACTIVE', isEmailVerified: true } }),
             this.prisma.order.count(),
             this.prisma.order.count({ where: { status: 'DELIVERED' } }),
             this.prisma.order.aggregate({ _sum: { total: true } }),
