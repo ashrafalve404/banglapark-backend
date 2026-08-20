@@ -13,18 +13,34 @@ exports.PublicStatsController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const notPendingVerification = {
+    NOT: {
+        AND: [
+            { isEmailVerified: false },
+            { emailVerificationOtp: { not: null } },
+        ],
+    },
+};
 let PublicStatsController = class PublicStatsController {
     prisma;
     constructor(prisma) {
         this.prisma = prisma;
     }
     async getStats() {
-        const totalUsers = await this.prisma.user.count({ where: { role: 'USER' } });
+        const totalUsers = await this.prisma.user.count({
+            where: {
+                role: 'USER',
+                ...notPendingVerification,
+            },
+        });
         return { totalUsers };
     }
     async getNewMembers() {
         const members = await this.prisma.user.findMany({
-            where: { role: 'USER' },
+            where: {
+                role: 'USER',
+                ...notPendingVerification,
+            },
             orderBy: { createdAt: 'desc' },
             take: 8,
             select: { id: true, name: true, profileImage: true, createdAt: true },
@@ -33,7 +49,10 @@ let PublicStatsController = class PublicStatsController {
     }
     async getTopLeaders() {
         const topUsers = await this.prisma.user.findMany({
-            where: { role: 'USER' },
+            where: {
+                role: 'USER',
+                ...notPendingVerification,
+            },
             select: {
                 id: true,
                 name: true,
@@ -65,7 +84,7 @@ __decorate([
 ], PublicStatsController.prototype, "getStats", null);
 __decorate([
     (0, common_1.Get)('new-members'),
-    (0, swagger_1.ApiOperation)({ summary: 'Last 8 newly registered members (public)' }),
+    (0, swagger_1.ApiOperation)({ summary: 'Last 8 newly registered verified members (public)' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
