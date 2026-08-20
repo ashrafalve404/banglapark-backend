@@ -64,7 +64,7 @@ let AdminService = class AdminService {
                 ],
             },
         };
-        const [totalUsers, activeUsers, inactiveUsers, totalOrders, deliveredOrders, totalRevenue, totalCommissions, pendingWithdrawals, products, deliveredOrderIds, approvedWithdrawals, deliveryCharges, sellerPayoutsAgg,] = await Promise.all([
+        const [totalUsers, activeUsers, inactiveUsers, totalOrders, deliveredOrders, totalRevenue, totalCommissions, pendingWithdrawals, products, deliveredOrderIds, approvedWithdrawals, deliveryCharges, sellerPayoutsAgg, approvedGiftCardsAgg,] = await Promise.all([
             this.prisma.user.count({ where: { role: 'USER', ...notPendingVerification } }),
             this.prisma.user.count({ where: { status: 'ACTIVE', ...notPendingVerification } }),
             this.prisma.user.count({ where: { status: 'INACTIVE', ...notPendingVerification } }),
@@ -90,6 +90,10 @@ let AdminService = class AdminService {
                 where: { type: 'SELLER_PAYOUT' },
                 _sum: { amount: true },
             }),
+            this.prisma.giftCardPurchase.aggregate({
+                where: { status: { in: ['PURCHASED', 'APPROVED', 'SOLD'] } },
+                _sum: { pricePaid: true },
+            }),
         ]);
         const deliveredIdList = deliveredOrderIds.map((o) => o.id);
         let soldCost = 0;
@@ -104,6 +108,7 @@ let AdminService = class AdminService {
             }
         }
         const salesRevenue = Number(totalRevenue._sum.total ?? 0);
+        const giftCardRevenue = Number(approvedGiftCardsAgg?._sum?.pricePaid ?? 0);
         const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
         const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
         const totalDeliveryCharges = Number(deliveryCharges._sum.deliveryCharge ?? 0);
@@ -117,12 +122,14 @@ let AdminService = class AdminService {
             if (p.costPrice)
                 costValue += Number(p.costPrice) * p.stock;
         }
-        const grossProfit = salesRevenue - soldCost - totalDeliveryCharges + userProductCommission;
+        const grossProfit = salesRevenue + giftCardRevenue - soldCost - totalDeliveryCharges + userProductCommission;
         const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
         return {
             users: { total: totalUsers, active: activeUsers, inactive: inactiveUsers },
             orders: { total: totalOrders, delivered: deliveredOrders },
-            totalRevenue: salesRevenue,
+            totalRevenue: salesRevenue + giftCardRevenue,
+            salesRevenue,
+            giftCardRevenue,
             totalCommissionsPaid: commissionsPaid,
             pendingWithdrawals,
             totalProducts,

@@ -35,6 +35,7 @@ export class AdminService {
             approvedWithdrawals,
             deliveryCharges,
             sellerPayoutsAgg,
+            approvedGiftCardsAgg,
         ] = await Promise.all([
             this.prisma.user.count({ where: { role: 'USER', ...notPendingVerification } }),
             this.prisma.user.count({ where: { status: 'ACTIVE', ...notPendingVerification } }),
@@ -61,6 +62,10 @@ export class AdminService {
                 where: { type: 'SELLER_PAYOUT' as any },
                 _sum: { amount: true },
             }),
+            (this.prisma as any).giftCardPurchase.aggregate({
+                where: { status: { in: ['PURCHASED', 'APPROVED', 'SOLD'] } },
+                _sum: { pricePaid: true },
+            }),
         ]);
 
         // Calculate sold product cost from delivered orders
@@ -78,6 +83,7 @@ export class AdminService {
         }
 
         const salesRevenue = Number(totalRevenue._sum.total ?? 0);
+        const giftCardRevenue = Number(approvedGiftCardsAgg?._sum?.pricePaid ?? 0);
         const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
         const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
         const totalDeliveryCharges = Number(deliveryCharges._sum.deliveryCharge ?? 0);
@@ -93,13 +99,15 @@ export class AdminService {
             if (p.costPrice) costValue += Number(p.costPrice) * p.stock;
         }
 
-        const grossProfit = salesRevenue - soldCost - totalDeliveryCharges + userProductCommission;
+        const grossProfit = salesRevenue + giftCardRevenue - soldCost - totalDeliveryCharges + userProductCommission;
         const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
 
         return {
             users: { total: totalUsers, active: activeUsers, inactive: inactiveUsers },
             orders: { total: totalOrders, delivered: deliveredOrders },
-            totalRevenue: salesRevenue,
+            totalRevenue: salesRevenue + giftCardRevenue,
+            salesRevenue,
+            giftCardRevenue,
             totalCommissionsPaid: commissionsPaid,
             pendingWithdrawals,
             totalProducts,

@@ -15,6 +15,8 @@ export declare class AdminService {
             delivered: number;
         };
         totalRevenue: number;
+        salesRevenue: number;
+        giftCardRevenue: number;
         totalCommissionsPaid: number;
         pendingWithdrawals: number;
         totalProducts: number;
