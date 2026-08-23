@@ -37,6 +37,10 @@ export class AuthService {
             throw new BadRequestException('Disposable or temporary email domains are not allowed. Please use a valid email address.');
         }
 
+        if (/\d/.test(dto.name)) {
+            throw new BadRequestException('নামে কোনো সংখ্যা (0-9) ব্যবহার করা যাবে না। (Name cannot contain numbers)');
+        }
+
         const existing = await this.prisma.user.findFirst({
             where: { OR: [{ email: dto.email }, { phone: dto.phone }] },
         });

@@ -24,6 +24,7 @@ __decorate([
     (0, swagger_1.ApiProperty)({ example: 'Rahim Uddin' }),
     (0, class_validator_1.IsString)(),
     (0, class_validator_1.MaxLength)(100),
+    (0, class_validator_1.Matches)(/^[^\d]+$/, { message: 'Name cannot contain numbers' }),
     __metadata("design:type", String)
 ], RegisterDto.prototype, "name", void 0);
 __decorate([

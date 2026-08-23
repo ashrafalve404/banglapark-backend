@@ -12,6 +12,7 @@ export class RegisterDto {
     @ApiProperty({ example: 'Rahim Uddin' })
     @IsString()
     @MaxLength(100)
+    @Matches(/^[^\d]+$/, { message: 'Name cannot contain numbers' })
     name: string;
 
     @ApiProperty({ example: 'rahim@example.com' })
