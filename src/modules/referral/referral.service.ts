@@ -85,24 +85,64 @@ export class ReferralService {
         return result.map((r) => r.id);
     }
 
-    async getDirectReferrals(userId: string, page = 1, limit = 20) {
+    async getDirectReferrals(userId: string, page = 1, limit = 20, status?: string, scope?: string) {
         const skip = (page - 1) * limit;
+
+        if (scope === 'all_levels') {
+            const members = await this.prisma.$queryRaw<any[]>`
+                WITH RECURSIVE team AS (
+                    SELECT id, "memberId", name, phone, email, status, "createdAt", "activeUntil"
+                    FROM "User" WHERE "parentId" = ${userId}
+                    UNION ALL
+                    SELECT u.id, u."memberId", u.name, u.phone, u.email, u.status, u."createdAt", u."activeUntil"
+                    FROM "User" u
+                    INNER JOIN team t ON u."parentId" = t.id
+                )
+                SELECT * FROM team
+                ${status === 'ACTIVE' ? this.prisma.$queryRaw`WHERE status = 'ACTIVE'` : status === 'INACTIVE' ? this.prisma.$queryRaw`WHERE status = 'INACTIVE'` : this.prisma.$queryRaw``}
+                ORDER BY "createdAt" DESC
+                LIMIT ${limit} OFFSET ${skip}
+            `;
+
+            const countResult = await this.prisma.$queryRaw<[{ count: bigint }]>`
+                WITH RECURSIVE team AS (
+                    SELECT id, status FROM "User" WHERE "parentId" = ${userId}
+                    UNION ALL
+                    SELECT u.id, u.status FROM "User" u
+                    INNER JOIN team t ON u."parentId" = t.id
+                )
+                SELECT COUNT(*) as count FROM team
+                ${status === 'ACTIVE' ? this.prisma.$queryRaw`WHERE status = 'ACTIVE'` : status === 'INACTIVE' ? this.prisma.$queryRaw`WHERE status = 'INACTIVE'` : this.prisma.$queryRaw``}
+            `;
+
+            const total = Number(countResult[0]?.count ?? 0);
+            return { data: members, children: members, total, page, limit };
+        }
+
+        const where: any = { parentId: userId };
+        if (status && (status === 'ACTIVE' || status === 'INACTIVE')) {
+            where.status = status;
+        }
+
         const [children, total] = await Promise.all([
             this.prisma.user.findMany({
-                where: { parentId: userId },
+                where,
                 skip,
                 take: limit,
                 select: {
                     id: true,
+                    memberId: true,
                     name: true,
+                    phone: true,
+                    email: true,
                     status: true,
                     createdAt: true,
                     activeUntil: true,
                 },
                 orderBy: { createdAt: 'desc' },
             }),
-            this.prisma.user.count({ where: { parentId: userId } }),
+            this.prisma.user.count({ where }),
         ]);
-        return { children, total, page, limit };
+        return { data: children, children, total, page, limit };
     }
 }

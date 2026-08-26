@@ -17,14 +17,9 @@ export declare class ReferralService {
     countTotalTeam(userId: string): Promise<number>;
     countActiveTeam(userId: string): Promise<number>;
     getUplineChain(userId: string, levels: number): Promise<string[]>;
-    getDirectReferrals(userId: string, page?: number, limit?: number): Promise<{
-        children: {
-            id: string;
-            name: string;
-            status: import("@prisma/client").$Enums.UserStatus;
-            activeUntil: Date | null;
-            createdAt: Date;
-        }[];
+    getDirectReferrals(userId: string, page?: number, limit?: number, status?: string, scope?: string): Promise<{
+        data: any[];
+        children: any[];
         total: number;
         page: number;
         limit: number;

@@ -607,11 +607,12 @@ let QuizService = class QuizService {
             const wrongCount = p.answers.filter((a) => a.isCorrect === false).length;
             let userReward = 0;
             if (p.status === 'COMPLETED') {
-                if (p.answers.length > 0) {
-                    userReward = Math.max(0, correctCount * 2 - wrongCount * 2);
+                const actualTx = txMap.get(p.id);
+                if (actualTx !== undefined) {
+                    userReward = actualTx;
                 }
-                else {
-                    userReward = txMap.get(p.id) ?? 0;
+                else if (p.answers.length > 0) {
+                    userReward = Math.max(0, correctCount * 2 - wrongCount * 2);
                 }
             }
             const pricePaid = Number(p.totalPrice);

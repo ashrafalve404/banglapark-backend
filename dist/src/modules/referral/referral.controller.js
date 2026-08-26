@@ -29,8 +29,8 @@ let ReferralController = class ReferralController {
     getTeamStats(userId) {
         return this.referralService.getTeamStats(userId);
     }
-    getDirectReferrals(userId, page = 1, limit = 20) {
-        return this.referralService.getDirectReferrals(userId, +page, +limit);
+    getDirectReferrals(userId, page = 1, limit = 20, status, scope) {
+        return this.referralService.getDirectReferrals(userId, +page, +limit, status, scope);
     }
 };
 exports.ReferralController = ReferralController;
@@ -55,11 +55,15 @@ __decorate([
     (0, swagger_1.ApiOperation)({ summary: 'List direct referrals (paginated)' }),
     (0, swagger_1.ApiQuery)({ name: 'page', required: false, type: Number }),
     (0, swagger_1.ApiQuery)({ name: 'limit', required: false, type: Number }),
+    (0, swagger_1.ApiQuery)({ name: 'status', required: false, type: String }),
+    (0, swagger_1.ApiQuery)({ name: 'scope', required: false, type: String }),
     __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
     __param(1, (0, common_1.Query)('page')),
     __param(2, (0, common_1.Query)('limit')),
+    __param(3, (0, common_1.Query)('status')),
+    __param(4, (0, common_1.Query)('scope')),
     __metadata("design:type", Function),
-    __metadata("design:paramtypes", [String, Object, Object]),
+    __metadata("design:paramtypes", [String, Object, Object, String, String]),
     __metadata("design:returntype", void 0)
 ], ReferralController.prototype, "getDirectReferrals", null);
 exports.ReferralController = ReferralController = __decorate([

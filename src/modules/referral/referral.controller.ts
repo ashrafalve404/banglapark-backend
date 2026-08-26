@@ -27,11 +27,15 @@ export class ReferralController {
     @ApiOperation({ summary: 'List direct referrals (paginated)' })
     @ApiQuery({ name: 'page', required: false, type: Number })
     @ApiQuery({ name: 'limit', required: false, type: Number })
+    @ApiQuery({ name: 'status', required: false, type: String })
+    @ApiQuery({ name: 'scope', required: false, type: String })
     getDirectReferrals(
         @CurrentUser('id') userId: string,
         @Query('page') page = 1,
         @Query('limit') limit = 20,
+        @Query('status') status?: string,
+        @Query('scope') scope?: string,
     ) {
-        return this.referralService.getDirectReferrals(userId, +page, +limit);
+        return this.referralService.getDirectReferrals(userId, +page, +limit, status, scope);
     }
 }
