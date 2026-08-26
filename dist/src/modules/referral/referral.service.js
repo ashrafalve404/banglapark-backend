@@ -82,60 +82,87 @@ let ReferralService = class ReferralService {
     `;
         return result.map((r) => r.id);
     }
-    async getDirectReferrals(userId, page = 1, limit = 20, status, scope) {
+    async getDirectReferrals(userId, page = 1, limit = 50, status, scope = 'direct') {
         const skip = (page - 1) * limit;
-        if (scope === 'all_levels') {
-            const members = await this.prisma.$queryRaw `
-                WITH RECURSIVE team AS (
-                    SELECT id, "memberId", name, phone, email, status, "createdAt", "activeUntil"
-                    FROM "User" WHERE "parentId" = ${userId}
-                    UNION ALL
-                    SELECT u.id, u."memberId", u.name, u.phone, u.email, u.status, u."createdAt", u."activeUntil"
-                    FROM "User" u
-                    INNER JOIN team t ON u."parentId" = t.id
-                )
-                SELECT * FROM team
-                ${status === 'ACTIVE' ? this.prisma.$queryRaw `WHERE status = 'ACTIVE'` : status === 'INACTIVE' ? this.prisma.$queryRaw `WHERE status = 'INACTIVE'` : this.prisma.$queryRaw ``}
-                ORDER BY "createdAt" DESC
-                LIMIT ${limit} OFFSET ${skip}
-            `;
-            const countResult = await this.prisma.$queryRaw `
+        if (scope === 'direct') {
+            const where = { parentId: userId };
+            if (status === 'ACTIVE' || status === 'INACTIVE') {
+                where.status = status;
+            }
+            const [children, total] = await Promise.all([
+                this.prisma.user.findMany({
+                    where,
+                    skip,
+                    take: limit,
+                    select: {
+                        id: true,
+                        name: true,
+                        phone: true,
+                        email: true,
+                        status: true,
+                    },
+                    orderBy: { createdAt: 'desc' },
+                }),
+                this.prisma.user.count({ where }),
+            ]);
+            return { data: children, children, total, page, limit };
+        }
+        let teamUserIds = [];
+        if (status === 'ACTIVE') {
+            const raw = await this.prisma.$queryRaw `
                 WITH RECURSIVE team AS (
                     SELECT id, status FROM "User" WHERE "parentId" = ${userId}
                     UNION ALL
                     SELECT u.id, u.status FROM "User" u
                     INNER JOIN team t ON u."parentId" = t.id
                 )
-                SELECT COUNT(*) as count FROM team
-                ${status === 'ACTIVE' ? this.prisma.$queryRaw `WHERE status = 'ACTIVE'` : status === 'INACTIVE' ? this.prisma.$queryRaw `WHERE status = 'INACTIVE'` : this.prisma.$queryRaw ``}
+                SELECT id FROM team WHERE status = 'ACTIVE'
             `;
-            const total = Number(countResult[0]?.count ?? 0);
-            return { data: members, children: members, total, page, limit };
+            teamUserIds = raw.map((r) => r.id);
         }
-        const where = { parentId: userId };
-        if (status && (status === 'ACTIVE' || status === 'INACTIVE')) {
-            where.status = status;
+        else if (status === 'INACTIVE') {
+            const raw = await this.prisma.$queryRaw `
+                WITH RECURSIVE team AS (
+                    SELECT id, status FROM "User" WHERE "parentId" = ${userId}
+                    UNION ALL
+                    SELECT u.id, u.status FROM "User" u
+                    INNER JOIN team t ON u."parentId" = t.id
+                )
+                SELECT id FROM team WHERE status = 'INACTIVE'
+            `;
+            teamUserIds = raw.map((r) => r.id);
         }
-        const [children, total] = await Promise.all([
-            this.prisma.user.findMany({
-                where,
-                skip,
-                take: limit,
-                select: {
-                    id: true,
-                    memberId: true,
-                    name: true,
-                    phone: true,
-                    email: true,
-                    status: true,
-                    createdAt: true,
-                    activeUntil: true,
-                },
-                orderBy: { createdAt: 'desc' },
-            }),
-            this.prisma.user.count({ where }),
-        ]);
-        return { data: children, children, total, page, limit };
+        else {
+            const raw = await this.prisma.$queryRaw `
+                WITH RECURSIVE team AS (
+                    SELECT id FROM "User" WHERE "parentId" = ${userId}
+                    UNION ALL
+                    SELECT u.id FROM "User" u
+                    INNER JOIN team t ON u."parentId" = t.id
+                )
+                SELECT id FROM team
+            `;
+            teamUserIds = raw.map((r) => r.id);
+        }
+        if (teamUserIds.length === 0) {
+            return { data: [], children: [], total: 0, page, limit };
+        }
+        const total = teamUserIds.length;
+        const members = await this.prisma.user.findMany({
+            where: { id: { in: teamUserIds } },
+            skip,
+            take: limit,
+            select: {
+                id: true,
+                name: true,
+                phone: true,
+                email: true,
+                status: true,
+                createdAt: true,
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+        return { data: members, children: members, total, page, limit };
     }
 };
 exports.ReferralService = ReferralService;

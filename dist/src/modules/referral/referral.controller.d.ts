@@ -15,8 +15,20 @@ export declare class ReferralController {
         inactiveTeam: number;
     }>;
     getDirectReferrals(userId: string, page?: number, limit?: number, status?: string, scope?: string): Promise<{
-        data: any[];
-        children: any[];
+        data: {
+            id: string;
+            email: string;
+            phone: string;
+            name: string;
+            status: import("@prisma/client").$Enums.UserStatus;
+        }[];
+        children: {
+            id: string;
+            email: string;
+            phone: string;
+            name: string;
+            status: import("@prisma/client").$Enums.UserStatus;
+        }[];
         total: number;
         page: number;
         limit: number;
