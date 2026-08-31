@@ -21,6 +21,37 @@ let DepositService = class DepositService {
         this.prisma = prisma;
         this.walletService = walletService;
     }
+    async onModuleInit() {
+        await this.ensureTablesAndEnums();
+    }
+    async ensureTablesAndEnums() {
+        try {
+            await this.prisma.$executeRawUnsafe(`
+                DO $$ BEGIN
+                    CREATE TYPE "DepositStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+                EXCEPTION
+                    WHEN duplicate_object THEN null;
+                END $$;
+            `);
+            await this.prisma.$executeRawUnsafe(`
+                CREATE TABLE IF NOT EXISTS "DepositRequest" (
+                    "id" TEXT NOT NULL,
+                    "userId" TEXT NOT NULL,
+                    "amount" DECIMAL(12,2) NOT NULL,
+                    "transactionId" TEXT NOT NULL,
+                    "senderPhone" TEXT NOT NULL,
+                    "status" "DepositStatus" NOT NULL DEFAULT 'PENDING',
+                    "adminNote" TEXT,
+                    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    "updatedAt" TIMESTAMP(3) NOT NULL,
+                    CONSTRAINT "DepositRequest_pkey" PRIMARY KEY ("id")
+                );
+            `);
+            await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DEPOSIT';`);
+        }
+        catch (e) {
+        }
+    }
     async submitRequest(userId, dto) {
         if (dto.amount < 10) {
             throw new common_1.BadRequestException('Minimum deposit amount is ৳10');

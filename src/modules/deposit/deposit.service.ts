@@ -2,6 +2,7 @@ import {
     Injectable,
     BadRequestException,
     NotFoundException,
+    OnModuleInit,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
@@ -11,11 +12,44 @@ import { DepositStatus } from '@prisma/client';
 export const ADMIN_BKASH_NUMBER = '01823674796';
 
 @Injectable()
-export class DepositService {
+export class DepositService implements OnModuleInit {
     constructor(
         private readonly prisma: PrismaService,
         private readonly walletService: WalletService,
     ) { }
+
+    async onModuleInit() {
+        await this.ensureTablesAndEnums();
+    }
+
+    private async ensureTablesAndEnums() {
+        try {
+            await this.prisma.$executeRawUnsafe(`
+                DO $$ BEGIN
+                    CREATE TYPE "DepositStatus" AS ENUM ('PENDING', 'APPROVED', 'REJECTED');
+                EXCEPTION
+                    WHEN duplicate_object THEN null;
+                END $$;
+            `);
+            await this.prisma.$executeRawUnsafe(`
+                CREATE TABLE IF NOT EXISTS "DepositRequest" (
+                    "id" TEXT NOT NULL,
+                    "userId" TEXT NOT NULL,
+                    "amount" DECIMAL(12,2) NOT NULL,
+                    "transactionId" TEXT NOT NULL,
+                    "senderPhone" TEXT NOT NULL,
+                    "status" "DepositStatus" NOT NULL DEFAULT 'PENDING',
+                    "adminNote" TEXT,
+                    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    "updatedAt" TIMESTAMP(3) NOT NULL,
+                    CONSTRAINT "DepositRequest_pkey" PRIMARY KEY ("id")
+                );
+            `);
+            await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DEPOSIT';`);
+        } catch (e) {
+            // Ignore if DB already initialized
+        }
+    }
 
     // ── User: submit a deposit request ───────────────────────────────────────
     async submitRequest(userId: string, dto: { amount: number; transactionId: string; senderPhone: string }) {

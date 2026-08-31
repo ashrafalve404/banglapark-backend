@@ -2,6 +2,8 @@ import {
     Injectable,
     BadRequestException,
     NotFoundException,
+    OnModuleInit,
+    InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
@@ -17,8 +19,22 @@ type AnyPrismaTx = {
 };
 
 @Injectable()
-export class WalletService {
+export class WalletService implements OnModuleInit {
     constructor(private readonly prisma: PrismaService) { }
+
+    async onModuleInit() {
+        await this.ensureEnumsExist();
+    }
+
+    private async ensureEnumsExist() {
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'TRANSFER_OUT';`);
+            await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'TRANSFER_IN';`);
+            await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DEPOSIT';`);
+        } catch (e) {
+            // Ignore if enum or DB doesn't support IF NOT EXISTS or already updated
+        }
+    }
 
     // ── Central credit/debit ─────────────────────────────────────────────────
 
@@ -92,11 +108,16 @@ export class WalletService {
     // ── Public read endpoints ─────────────────────────────────────────────────
 
     async getBalance(userId: string) {
-        const wallet = await this.prisma.wallet.findUnique({
+        let wallet = await this.prisma.wallet.findUnique({
             where: { userId },
             select: { id: true, balance: true, pendingWithdrawal: true },
         });
-        if (!wallet) throw new NotFoundException('Wallet not found');
+        if (!wallet) {
+            wallet = await this.prisma.wallet.create({
+                data: { userId, balance: 0 },
+                select: { id: true, balance: true, pendingWithdrawal: true },
+            });
+        }
 
         const balance = Number(wallet.balance);
         const pending = Number(wallet.pendingWithdrawal);
@@ -156,8 +177,10 @@ export class WalletService {
         from?: Date,
         to?: Date,
     ) {
-        const wallet = await this.prisma.wallet.findUnique({ where: { userId } });
-        if (!wallet) throw new NotFoundException('Wallet not found');
+        let wallet = await this.prisma.wallet.findUnique({ where: { userId } });
+        if (!wallet) {
+            wallet = await this.prisma.wallet.create({ data: { userId, balance: 0 } });
+        }
 
         const where: Record<string, unknown> = {
             walletId: wallet.id,
@@ -185,11 +208,16 @@ export class WalletService {
 
     // ── Helper: get wallet ID by user ID ─────────────────────────────────────
     async getWalletId(userId: string): Promise<string> {
-        const wallet = await this.prisma.wallet.findUnique({
+        let wallet = await this.prisma.wallet.findUnique({
             where: { userId },
             select: { id: true },
         });
-        if (!wallet) throw new NotFoundException('Wallet not found');
+        if (!wallet) {
+            wallet = await this.prisma.wallet.create({
+                data: { userId, balance: 0 },
+                select: { id: true },
+            });
+        }
         return wallet.id;
     }
 
@@ -204,17 +232,20 @@ export class WalletService {
     }
 
     // ── Transfer balance between users ───────────────────────────────────────
-    async transfer(senderId: string, recipientPhone: string, amount: number) {
-        if (amount < 10) {
+    async transfer(senderId: string, recipientPhone: string, rawAmount: number) {
+        const amount = Number(rawAmount);
+        if (isNaN(amount) || amount < 10) {
             throw new BadRequestException('Minimum transfer amount is ৳10');
         }
+
+        await this.ensureEnumsExist();
 
         // Find sender info
         const sender = await this.prisma.user.findUnique({
             where: { id: senderId },
             select: { id: true, name: true, phone: true },
         });
-        if (!sender) throw new NotFoundException('Sender not found');
+        if (!sender) throw new NotFoundException('Sender user not found');
 
         // Find recipient by phone
         const recipient = await this.prisma.user.findUnique({
@@ -228,14 +259,16 @@ export class WalletService {
             throw new BadRequestException('You cannot transfer balance to yourself');
         }
 
-        // Fetch both wallets
-        const [senderWallet, recipientWallet] = await Promise.all([
-            this.prisma.wallet.findUnique({ where: { userId: senderId }, select: { id: true, balance: true } }),
-            this.prisma.wallet.findUnique({ where: { userId: recipient.id }, select: { id: true, balance: true } }),
-        ]);
+        // Fetch or create both wallets
+        let senderWallet = await this.prisma.wallet.findUnique({ where: { userId: senderId }, select: { id: true, balance: true } });
+        if (!senderWallet) {
+            senderWallet = await this.prisma.wallet.create({ data: { userId: senderId, balance: 0 }, select: { id: true, balance: true } });
+        }
 
-        if (!senderWallet) throw new NotFoundException('Sender wallet not found');
-        if (!recipientWallet) throw new NotFoundException('Recipient wallet not found');
+        let recipientWallet = await this.prisma.wallet.findUnique({ where: { userId: recipient.id }, select: { id: true, balance: true } });
+        if (!recipientWallet) {
+            recipientWallet = await this.prisma.wallet.create({ data: { userId: recipient.id, balance: 0 }, select: { id: true, balance: true } });
+        }
 
         const senderBalance = Number(senderWallet.balance);
         if (senderBalance < amount) {
@@ -244,40 +277,48 @@ export class WalletService {
 
         const referenceId = `transfer_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
-        // Atomic transaction: debit sender, credit recipient
-        await this.prisma.$transaction(async (tx) => {
-            // Debit sender
-            const updatedSenderWallet = await tx.wallet.update({
-                where: { id: senderWallet.id },
-                data: { balance: { decrement: amount } },
-            });
-            await tx.walletTransaction.create({
-                data: {
-                    walletId: senderWallet.id,
-                    type: 'TRANSFER_OUT' as any,
-                    amount,
-                    balanceAfter: updatedSenderWallet.balance,
-                    referenceId,
-                    description: `Balance transfer to ${recipient.name} (${recipient.phone})`,
-                },
-            });
+        try {
+            // Atomic transaction: debit sender, credit recipient
+            await this.prisma.$transaction(async (tx) => {
+                // Debit sender
+                const updatedSender = await tx.wallet.update({
+                    where: { id: senderWallet.id },
+                    data: { balance: { decrement: amount } },
+                });
+                await tx.walletTransaction.create({
+                    data: {
+                        walletId: senderWallet.id,
+                        type: 'TRANSFER_OUT' as any,
+                        amount,
+                        balanceAfter: updatedSender.balance,
+                        referenceId,
+                        description: `Balance transfer to ${recipient.name} (${recipient.phone})`,
+                    },
+                });
 
-            // Credit recipient
-            const updatedRecipientWallet = await tx.wallet.update({
-                where: { id: recipientWallet.id },
-                data: { balance: { increment: amount } },
+                // Credit recipient
+                const updatedRecipient = await tx.wallet.update({
+                    where: { id: recipientWallet.id },
+                    data: { balance: { increment: amount } },
+                });
+                await tx.walletTransaction.create({
+                    data: {
+                        walletId: recipientWallet.id,
+                        type: 'TRANSFER_IN' as any,
+                        amount,
+                        balanceAfter: updatedRecipient.balance,
+                        referenceId,
+                        description: `Balance received from ${sender.name} (${sender.phone})`,
+                    },
+                });
             });
-            await tx.walletTransaction.create({
-                data: {
-                    walletId: recipientWallet.id,
-                    type: 'TRANSFER_IN' as any,
-                    amount,
-                    balanceAfter: updatedRecipientWallet.balance,
-                    referenceId,
-                    description: `Balance received from ${sender.name} (${sender.phone})`,
-                },
-            });
-        });
+        } catch (error: any) {
+            if (error instanceof BadRequestException || error instanceof NotFoundException) {
+                throw error;
+            }
+            console.error('Transfer Transaction Error:', error);
+            throw new InternalServerErrorException(error?.message || 'Transfer transaction failed');
+        }
 
         return {
             success: true,
@@ -286,3 +327,4 @@ export class WalletService {
         };
     }
 }
+

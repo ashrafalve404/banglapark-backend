@@ -1,11 +1,14 @@
+import { OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { DepositStatus } from '@prisma/client';
 export declare const ADMIN_BKASH_NUMBER = "01823674796";
-export declare class DepositService {
+export declare class DepositService implements OnModuleInit {
     private readonly prisma;
     private readonly walletService;
     constructor(prisma: PrismaService, walletService: WalletService);
+    onModuleInit(): Promise<void>;
+    private ensureTablesAndEnums;
     submitRequest(userId: string, dto: {
         amount: number;
         transactionId: string;

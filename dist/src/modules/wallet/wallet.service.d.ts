@@ -1,3 +1,4 @@
+import { OnModuleInit } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { Prisma } from '@prisma/client';
 type AnyPrismaTx = {
@@ -13,9 +14,11 @@ type AnyPrismaTx = {
         create: (args: unknown) => Promise<unknown>;
     };
 };
-export declare class WalletService {
+export declare class WalletService implements OnModuleInit {
     private readonly prisma;
     constructor(prisma: PrismaService);
+    onModuleInit(): Promise<void>;
+    private ensureEnumsExist;
     credit(tx: AnyPrismaTx, walletId: string, amount: number, type: string, description: string, referenceId?: string, benefitCategory?: string): Promise<{
         balance: unknown;
     }>;
@@ -61,7 +64,7 @@ export declare class WalletService {
         name: string;
         phone: string;
     }>;
-    transfer(senderId: string, recipientPhone: string, amount: number): Promise<{
+    transfer(senderId: string, recipientPhone: string, rawAmount: number): Promise<{
         success: boolean;
         message: string;
         referenceId: string;
