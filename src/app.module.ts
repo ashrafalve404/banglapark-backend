@@ -33,6 +33,7 @@ import { UserProductsModule } from './modules/user-products/user-products.module
 import { CpaMarketingModule } from './modules/cpa-marketing/cpa-marketing.module';
 import { GiftCardsModule } from './modules/gift-cards/gift-cards.module';
 import { EmailModule } from './modules/email/email.module';
+import { DepositModule } from './modules/deposit/deposit.module';
 
 @Module({
   imports: [
@@ -99,6 +100,7 @@ import { EmailModule } from './modules/email/email.module';
     CommissionModule,
     DailyBenefitModule,
     WithdrawalModule,
+    DepositModule,
     NotificationsModule,
     AdminModule,
     ReportsModule,

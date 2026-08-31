@@ -1,5 +1,9 @@
 import { TxType } from '@prisma/client';
 import { WalletService } from './wallet.service';
+declare class TransferDto {
+    recipientPhone: string;
+    amount: number;
+}
 export declare class WalletController {
     private readonly walletService;
     constructor(walletService: WalletService);
@@ -36,4 +40,15 @@ export declare class WalletController {
         limit: number;
         totalPages: number;
     }>;
+    lookupRecipient(phone: string): Promise<{
+        id: string;
+        name: string;
+        phone: string;
+    }>;
+    transfer(userId: string, body: TransferDto): Promise<{
+        success: boolean;
+        message: string;
+        referenceId: string;
+    }>;
 }
+export {};

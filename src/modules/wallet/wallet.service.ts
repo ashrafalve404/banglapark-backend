@@ -192,4 +192,97 @@ export class WalletService {
         if (!wallet) throw new NotFoundException('Wallet not found');
         return wallet.id;
     }
+
+    // ── Lookup recipient by phone number ─────────────────────────────────────
+    async lookupRecipient(phone: string) {
+        const user = await this.prisma.user.findUnique({
+            where: { phone },
+            select: { id: true, name: true, phone: true },
+        });
+        if (!user) throw new NotFoundException('No user found with this phone number');
+        return { id: user.id, name: user.name, phone: user.phone };
+    }
+
+    // ── Transfer balance between users ───────────────────────────────────────
+    async transfer(senderId: string, recipientPhone: string, amount: number) {
+        if (amount < 10) {
+            throw new BadRequestException('Minimum transfer amount is ৳10');
+        }
+
+        // Find sender info
+        const sender = await this.prisma.user.findUnique({
+            where: { id: senderId },
+            select: { id: true, name: true, phone: true },
+        });
+        if (!sender) throw new NotFoundException('Sender not found');
+
+        // Find recipient by phone
+        const recipient = await this.prisma.user.findUnique({
+            where: { phone: recipientPhone },
+            select: { id: true, name: true, phone: true },
+        });
+        if (!recipient) throw new NotFoundException('No user found with this phone number');
+
+        // Self-transfer check
+        if (sender.id === recipient.id) {
+            throw new BadRequestException('You cannot transfer balance to yourself');
+        }
+
+        // Fetch both wallets
+        const [senderWallet, recipientWallet] = await Promise.all([
+            this.prisma.wallet.findUnique({ where: { userId: senderId }, select: { id: true, balance: true } }),
+            this.prisma.wallet.findUnique({ where: { userId: recipient.id }, select: { id: true, balance: true } }),
+        ]);
+
+        if (!senderWallet) throw new NotFoundException('Sender wallet not found');
+        if (!recipientWallet) throw new NotFoundException('Recipient wallet not found');
+
+        const senderBalance = Number(senderWallet.balance);
+        if (senderBalance < amount) {
+            throw new BadRequestException('Insufficient wallet balance');
+        }
+
+        const referenceId = `transfer_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+        // Atomic transaction: debit sender, credit recipient
+        await this.prisma.$transaction(async (tx) => {
+            // Debit sender
+            const updatedSenderWallet = await tx.wallet.update({
+                where: { id: senderWallet.id },
+                data: { balance: { decrement: amount } },
+            });
+            await tx.walletTransaction.create({
+                data: {
+                    walletId: senderWallet.id,
+                    type: 'TRANSFER_OUT' as any,
+                    amount,
+                    balanceAfter: updatedSenderWallet.balance,
+                    referenceId,
+                    description: `Balance transfer to ${recipient.name} (${recipient.phone})`,
+                },
+            });
+
+            // Credit recipient
+            const updatedRecipientWallet = await tx.wallet.update({
+                where: { id: recipientWallet.id },
+                data: { balance: { increment: amount } },
+            });
+            await tx.walletTransaction.create({
+                data: {
+                    walletId: recipientWallet.id,
+                    type: 'TRANSFER_IN' as any,
+                    amount,
+                    balanceAfter: updatedRecipientWallet.balance,
+                    referenceId,
+                    description: `Balance received from ${sender.name} (${sender.phone})`,
+                },
+            });
+        });
+
+        return {
+            success: true,
+            message: `৳${amount} transferred successfully to ${recipient.name}`,
+            referenceId,
+        };
+    }
 }

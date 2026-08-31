@@ -56,5 +56,15 @@ export declare class WalletService {
         totalPages: number;
     }>;
     getWalletId(userId: string): Promise<string>;
+    lookupRecipient(phone: string): Promise<{
+        id: string;
+        name: string;
+        phone: string;
+    }>;
+    transfer(senderId: string, recipientPhone: string, amount: number): Promise<{
+        success: boolean;
+        message: string;
+        referenceId: string;
+    }>;
 }
 export {};

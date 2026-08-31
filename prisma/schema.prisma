@@ -36,6 +36,9 @@ enum TxType {
   SELLER_PAYOUT
   CPA_TASK_PURCHASE
   GIFT_CARD_PURCHASE
+  TRANSFER_OUT
+  TRANSFER_IN
+  DEPOSIT
 }
 
 enum ProductApprovalStatus {
@@ -131,6 +134,7 @@ model User {
   sellerProducts  Product[]      @relation("UserProducts")
   cpaTaskPurchases CpaTaskPurchase[]
   giftCardPurchases GiftCardPurchase[]
+  depositRequests  DepositRequest[]
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -497,4 +501,27 @@ model GiftCardPurchase {
 
   @@index([userId])
   @@index([giftCardId])
+}
+
+enum DepositStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model DepositRequest {
+  id              String        @id @default(uuid())
+  userId          String
+  user            User          @relation(fields: [userId], references: [id])
+  amount          Decimal       @db.Decimal(12, 2)
+  transactionId   String
+  senderPhone     String
+  status          DepositStatus @default(PENDING)
+  adminNote       String?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
 }

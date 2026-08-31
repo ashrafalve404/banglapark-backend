@@ -15,10 +15,24 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WalletController = void 0;
 const common_1 = require("@nestjs/common");
 const swagger_1 = require("@nestjs/swagger");
+const class_validator_1 = require("class-validator");
 const client_1 = require("@prisma/client");
 const wallet_service_1 = require("./wallet.service");
 const jwt_auth_guard_1 = require("../../common/guards/jwt-auth.guard");
 const current_user_decorator_1 = require("../../common/decorators/current-user.decorator");
+class TransferDto {
+    recipientPhone;
+    amount;
+}
+__decorate([
+    (0, class_validator_1.IsString)(),
+    __metadata("design:type", String)
+], TransferDto.prototype, "recipientPhone", void 0);
+__decorate([
+    (0, class_validator_1.IsNumber)(),
+    (0, class_validator_1.Min)(10),
+    __metadata("design:type", Number)
+], TransferDto.prototype, "amount", void 0);
 let WalletController = class WalletController {
     walletService;
     constructor(walletService) {
@@ -29,6 +43,12 @@ let WalletController = class WalletController {
     }
     getTransactions(userId, page = 1, limit = 20, type, from, to) {
         return this.walletService.getTransactions(userId, +page, +limit, type, from ? new Date(from) : undefined, to ? new Date(to) : undefined);
+    }
+    lookupRecipient(phone) {
+        return this.walletService.lookupRecipient(phone);
+    }
+    transfer(userId, body) {
+        return this.walletService.transfer(userId, body.recipientPhone, Number(body.amount));
     }
 };
 exports.WalletController = WalletController;
@@ -58,6 +78,25 @@ __decorate([
     __metadata("design:paramtypes", [String, Object, Object, String, String, String]),
     __metadata("design:returntype", void 0)
 ], WalletController.prototype, "getTransactions", null);
+__decorate([
+    (0, common_1.Get)('lookup'),
+    (0, swagger_1.ApiOperation)({ summary: 'Look up a user by phone number before transfer' }),
+    (0, swagger_1.ApiQuery)({ name: 'phone', required: true, type: String }),
+    __param(0, (0, common_1.Query)('phone')),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String]),
+    __metadata("design:returntype", void 0)
+], WalletController.prototype, "lookupRecipient", null);
+__decorate([
+    (0, common_1.Post)('transfer'),
+    (0, swagger_1.ApiOperation)({ summary: 'Transfer balance to another user by phone number' }),
+    (0, swagger_1.ApiBody)({ type: TransferDto }),
+    __param(0, (0, current_user_decorator_1.CurrentUser)('id')),
+    __param(1, (0, common_1.Body)()),
+    __metadata("design:type", Function),
+    __metadata("design:paramtypes", [String, TransferDto]),
+    __metadata("design:returntype", void 0)
+], WalletController.prototype, "transfer", null);
 exports.WalletController = WalletController = __decorate([
     (0, swagger_1.ApiTags)('Wallet'),
     (0, swagger_1.ApiBearerAuth)(),
