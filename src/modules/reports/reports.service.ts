@@ -281,7 +281,7 @@ export class ReportsService {
 
         // Earnings from wallet transactions
         const totalEarned = transactions
-            .filter((t: any) => t.type !== 'PURCHASE' && t.type !== 'WITHDRAWAL' && t.type !== 'CPA_TASK_PURCHASE' && t.type !== 'GIFT_CARD_PURCHASE' && t.type !== 'QUIZ_PURCHASE')
+            .filter((t: any) => t.type !== 'PURCHASE' && t.type !== 'WITHDRAWAL' && t.type !== 'CPA_TASK_PURCHASE' && t.type !== 'GIFT_CARD_PURCHASE' && t.type !== 'QUIZ_PURCHASE' && t.type !== 'TRANSFER_OUT')
             .reduce((sum: number, t: any) => sum + Number(t.amount), 0);
 
         // 5. Combine and format itemized log entries
@@ -354,7 +354,7 @@ export class ReportsService {
         });
 
         transactions.forEach((tx: any) => {
-            const isDebit = tx.type === 'PURCHASE' || tx.type === 'WITHDRAWAL' || tx.type === 'CPA_TASK_PURCHASE' || tx.type === 'GIFT_CARD_PURCHASE' || tx.type === 'QUIZ_PURCHASE';
+            const isDebit = tx.type === 'PURCHASE' || tx.type === 'WITHDRAWAL' || tx.type === 'CPA_TASK_PURCHASE' || tx.type === 'GIFT_CARD_PURCHASE' || tx.type === 'QUIZ_PURCHASE' || tx.type === 'TRANSFER_OUT';
             itemizedLogs.push({
                 id: `TX-${tx.id.slice(0, 8)}`,
                 date: tx.createdAt,

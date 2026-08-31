@@ -262,7 +262,7 @@ let ReportsService = class ReportsService {
             .filter((w) => w.status === 'APPROVED')
             .reduce((sum, w) => sum + Number(w.amount), 0);
         const totalEarned = transactions
-            .filter((t) => t.type !== 'PURCHASE' && t.type !== 'WITHDRAWAL' && t.type !== 'CPA_TASK_PURCHASE' && t.type !== 'GIFT_CARD_PURCHASE' && t.type !== 'QUIZ_PURCHASE')
+            .filter((t) => t.type !== 'PURCHASE' && t.type !== 'WITHDRAWAL' && t.type !== 'CPA_TASK_PURCHASE' && t.type !== 'GIFT_CARD_PURCHASE' && t.type !== 'QUIZ_PURCHASE' && t.type !== 'TRANSFER_OUT')
             .reduce((sum, t) => sum + Number(t.amount), 0);
         const itemizedLogs = [];
         orders.forEach((o) => {
@@ -327,7 +327,7 @@ let ReportsService = class ReportsService {
             });
         });
         transactions.forEach((tx) => {
-            const isDebit = tx.type === 'PURCHASE' || tx.type === 'WITHDRAWAL' || tx.type === 'CPA_TASK_PURCHASE' || tx.type === 'GIFT_CARD_PURCHASE' || tx.type === 'QUIZ_PURCHASE';
+            const isDebit = tx.type === 'PURCHASE' || tx.type === 'WITHDRAWAL' || tx.type === 'CPA_TASK_PURCHASE' || tx.type === 'GIFT_CARD_PURCHASE' || tx.type === 'QUIZ_PURCHASE' || tx.type === 'TRANSFER_OUT';
             itemizedLogs.push({
                 id: `TX-${tx.id.slice(0, 8)}`,
                 date: tx.createdAt,

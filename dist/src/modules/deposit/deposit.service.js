@@ -13,13 +13,17 @@ exports.DepositService = exports.ADMIN_BKASH_NUMBER = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const wallet_service_1 = require("../wallet/wallet.service");
+const notifications_service_1 = require("../notifications/notifications.service");
+const client_1 = require("@prisma/client");
 exports.ADMIN_BKASH_NUMBER = '01823674796';
 let DepositService = class DepositService {
     prisma;
     walletService;
-    constructor(prisma, walletService) {
+    notificationsService;
+    constructor(prisma, walletService, notificationsService) {
         this.prisma = prisma;
         this.walletService = walletService;
+        this.notificationsService = notificationsService;
     }
     async onModuleInit() {
         await this.ensureTablesAndEnums();
@@ -65,7 +69,7 @@ let DepositService = class DepositService {
         if (existing) {
             throw new common_1.BadRequestException('This Transaction ID has already been submitted');
         }
-        return this.prisma.depositRequest.create({
+        const created = await this.prisma.depositRequest.create({
             data: {
                 userId,
                 amount: dto.amount,
@@ -74,6 +78,17 @@ let DepositService = class DepositService {
                 status: 'PENDING',
             },
         });
+        try {
+            const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true, phone: true } });
+            await Promise.all([
+                this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Deposit Request Submitted ⏳', `Your ৳${dto.amount} Bkash deposit request (TxID: ${dto.transactionId.trim()}) has been submitted and is pending admin approval.`),
+                this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, 'New Deposit Request 💰', `User ${user?.name || 'User'} (${user?.phone || 'N/A'}) submitted a ৳${dto.amount} deposit (TxID: ${dto.transactionId.trim()}).`),
+            ]);
+        }
+        catch (e) {
+            console.error('Failed to dispatch deposit notification:', e);
+        }
+        return created;
     }
     async getMyRequests(userId, page = 1, limit = 10) {
         const skip = (page - 1) * limit;
@@ -115,11 +130,12 @@ let DepositService = class DepositService {
         if (request.status !== 'PENDING') {
             throw new common_1.BadRequestException(`Request is already ${request.status.toLowerCase()}`);
         }
-        if (!request.user.wallet) {
-            throw new common_1.NotFoundException('User wallet not found');
+        let wallet = request.user.wallet;
+        if (!wallet) {
+            wallet = await this.prisma.wallet.create({ data: { userId: request.userId, balance: 0 } });
         }
         const amount = Number(request.amount);
-        const walletId = request.user.wallet.id;
+        const walletId = wallet.id;
         await this.prisma.$transaction(async (tx) => {
             const updatedWallet = await tx.wallet.update({
                 where: { id: walletId },
@@ -140,6 +156,12 @@ let DepositService = class DepositService {
                 data: { status: 'APPROVED', adminNote: adminNote ?? null },
             });
         });
+        try {
+            await this.notificationsService.create(request.userId, client_1.NotificationType.SYSTEM, 'Deposit Approved 🎉', `Your BDT ৳${amount} deposit request (TxID: ${request.transactionId}) has been APPROVED and added to your wallet balance!`);
+        }
+        catch (e) {
+            console.error('Failed to notify deposit approval:', e);
+        }
         return { success: true, message: `৳${amount} credited to user wallet` };
     }
     async reject(requestId, adminNote) {
@@ -149,16 +171,24 @@ let DepositService = class DepositService {
         if (request.status !== 'PENDING') {
             throw new common_1.BadRequestException(`Request is already ${request.status.toLowerCase()}`);
         }
-        return this.prisma.depositRequest.update({
+        const updated = await this.prisma.depositRequest.update({
             where: { id: requestId },
             data: { status: 'REJECTED', adminNote: adminNote ?? null },
         });
+        try {
+            await this.notificationsService.create(request.userId, client_1.NotificationType.SYSTEM, 'Deposit Rejected ❌', `Your ৳${request.amount} deposit request (TxID: ${request.transactionId}) was rejected. ${adminNote ? `Reason: ${adminNote}` : ''}`);
+        }
+        catch (e) {
+            console.error('Failed to notify deposit rejection:', e);
+        }
+        return updated;
     }
 };
 exports.DepositService = DepositService;
 exports.DepositService = DepositService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,
-        wallet_service_1.WalletService])
+        wallet_service_1.WalletService,
+        notifications_service_1.NotificationsService])
 ], DepositService);
 //# sourceMappingURL=deposit.service.js.map

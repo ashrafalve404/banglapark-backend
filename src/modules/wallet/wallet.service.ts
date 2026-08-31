@@ -6,7 +6,8 @@ import {
     InternalServerErrorException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { Prisma } from '@prisma/client';
+import { NotificationsService } from '../notifications/notifications.service';
+import { NotificationType } from '@prisma/client';
 
 type AnyPrismaTx = {
     wallet: {
@@ -20,7 +21,10 @@ type AnyPrismaTx = {
 
 @Injectable()
 export class WalletService implements OnModuleInit {
-    constructor(private readonly prisma: PrismaService) { }
+    constructor(
+        private readonly prisma: PrismaService,
+        private readonly notificationsService: NotificationsService,
+    ) { }
 
     async onModuleInit() {
         await this.ensureEnumsExist();
@@ -318,6 +322,26 @@ export class WalletService implements OnModuleInit {
             }
             console.error('Transfer Transaction Error:', error);
             throw new InternalServerErrorException(error?.message || 'Transfer transaction failed');
+        }
+
+        // Send in-app notifications to recipient and sender
+        try {
+            await Promise.all([
+                this.notificationsService.create(
+                    recipient.id,
+                    NotificationType.SYSTEM,
+                    'Balance Received 💸',
+                    `You received ৳${amount} from ${sender.name} (${sender.phone}).`,
+                ),
+                this.notificationsService.create(
+                    senderId,
+                    NotificationType.SYSTEM,
+                    'Balance Transferred 💸',
+                    `You successfully transferred ৳${amount} to ${recipient.name} (${recipient.phone}).`,
+                ),
+            ]);
+        } catch (e) {
+            console.error('Failed to send transfer notification:', e);
         }
 
         return {

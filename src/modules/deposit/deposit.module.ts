@@ -3,8 +3,10 @@ import { DepositController } from './deposit.controller';
 import { DepositService } from './deposit.service';
 import { WalletModule } from '../wallet/wallet.module';
 
+import { NotificationsModule } from '../notifications/notifications.module';
+
 @Module({
-    imports: [WalletModule],
+    imports: [WalletModule, NotificationsModule],
     controllers: [DepositController],
     providers: [DepositService],
     exports: [DepositService],

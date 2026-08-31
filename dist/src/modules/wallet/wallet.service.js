@@ -12,10 +12,14 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.WalletService = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
+const notifications_service_1 = require("../notifications/notifications.service");
+const client_1 = require("@prisma/client");
 let WalletService = class WalletService {
     prisma;
-    constructor(prisma) {
+    notificationsService;
+    constructor(prisma, notificationsService) {
         this.prisma = prisma;
+        this.notificationsService = notificationsService;
     }
     async onModuleInit() {
         await this.ensureEnumsExist();
@@ -252,6 +256,15 @@ let WalletService = class WalletService {
             console.error('Transfer Transaction Error:', error);
             throw new common_1.InternalServerErrorException(error?.message || 'Transfer transaction failed');
         }
+        try {
+            await Promise.all([
+                this.notificationsService.create(recipient.id, client_1.NotificationType.SYSTEM, 'Balance Received 💸', `You received ৳${amount} from ${sender.name} (${sender.phone}).`),
+                this.notificationsService.create(senderId, client_1.NotificationType.SYSTEM, 'Balance Transferred 💸', `You successfully transferred ৳${amount} to ${recipient.name} (${recipient.phone}).`),
+            ]);
+        }
+        catch (e) {
+            console.error('Failed to send transfer notification:', e);
+        }
         return {
             success: true,
             message: `৳${amount} transferred successfully to ${recipient.name}`,
@@ -262,6 +275,7 @@ let WalletService = class WalletService {
 exports.WalletService = WalletService;
 exports.WalletService = WalletService = __decorate([
     (0, common_1.Injectable)(),
-    __metadata("design:paramtypes", [prisma_service_1.PrismaService])
+    __metadata("design:paramtypes", [prisma_service_1.PrismaService,
+        notifications_service_1.NotificationsService])
 ], WalletService);
 //# sourceMappingURL=wallet.service.js.map
