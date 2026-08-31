@@ -30,7 +30,7 @@ __decorate([
 ], TransferDto.prototype, "recipientPhone", void 0);
 __decorate([
     (0, class_validator_1.IsNumber)(),
-    (0, class_validator_1.Min)(10),
+    (0, class_validator_1.Min)(500),
     __metadata("design:type", Number)
 ], TransferDto.prototype, "amount", void 0);
 let WalletController = class WalletController {

@@ -185,8 +185,8 @@ let WalletService = class WalletService {
     }
     async transfer(senderId, recipientPhone, rawAmount) {
         const amount = Number(rawAmount);
-        if (isNaN(amount) || amount < 10) {
-            throw new common_1.BadRequestException('Minimum transfer amount is ৳10');
+        if (isNaN(amount) || amount < 500) {
+            throw new common_1.BadRequestException('Minimum transfer amount is ৳500');
         }
         await this.ensureEnumsExist();
         const sender = await this.prisma.user.findUnique({
@@ -216,6 +216,8 @@ let WalletService = class WalletService {
         if (senderBalance < amount) {
             throw new common_1.BadRequestException('Insufficient wallet balance');
         }
+        const fee = Math.round((amount * 0.10) * 100) / 100;
+        const netAmount = Math.round((amount - fee) * 100) / 100;
         const referenceId = `transfer_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         try {
             await this.prisma.$transaction(async (tx) => {
@@ -235,16 +237,16 @@ let WalletService = class WalletService {
                 });
                 const updatedRecipient = await tx.wallet.update({
                     where: { id: recipientWallet.id },
-                    data: { balance: { increment: amount } },
+                    data: { balance: { increment: netAmount } },
                 });
                 await tx.walletTransaction.create({
                     data: {
                         walletId: recipientWallet.id,
                         type: 'TRANSFER_IN',
-                        amount,
+                        amount: netAmount,
                         balanceAfter: updatedRecipient.balance,
                         referenceId,
-                        description: `Balance received from ${sender.name} (${sender.phone})`,
+                        description: `Balance received from ${sender.name} (${sender.phone}) (10% fee: ৳${fee})`,
                     },
                 });
             });
@@ -258,8 +260,8 @@ let WalletService = class WalletService {
         }
         try {
             await Promise.all([
-                this.notificationsService.create(recipient.id, client_1.NotificationType.SYSTEM, 'Balance Received 💸', `You received ৳${amount} from ${sender.name} (${sender.phone}).`),
-                this.notificationsService.create(senderId, client_1.NotificationType.SYSTEM, 'Balance Transferred 💸', `You successfully transferred ৳${amount} to ${recipient.name} (${recipient.phone}).`),
+                this.notificationsService.create(recipient.id, client_1.NotificationType.SYSTEM, 'Balance Received 💸', `You received ৳${netAmount} from ${sender.name} (${sender.phone}) (10% service fee: ৳${fee}).`),
+                this.notificationsService.create(senderId, client_1.NotificationType.SYSTEM, 'Balance Transferred 💸', `You successfully transferred ৳${amount} to ${recipient.name} (${recipient.phone}). Recipient received ৳${netAmount} (10% fee: ৳${fee}).`),
             ]);
         }
         catch (e) {
@@ -267,8 +269,11 @@ let WalletService = class WalletService {
         }
         return {
             success: true,
-            message: `৳${amount} transferred successfully to ${recipient.name}`,
+            message: `৳${amount} transferred successfully to ${recipient.name} (Fee: ৳${fee}, Recipient received ৳${netAmount})`,
             referenceId,
+            amount,
+            fee,
+            netAmount,
         };
     }
 };

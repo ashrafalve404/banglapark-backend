@@ -69,6 +69,9 @@ export declare class WalletService implements OnModuleInit {
         success: boolean;
         message: string;
         referenceId: string;
+        amount: number;
+        fee: number;
+        netAmount: number;
     }>;
 }
 export {};

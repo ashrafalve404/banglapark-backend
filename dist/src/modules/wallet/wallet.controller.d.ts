@@ -49,6 +49,9 @@ export declare class WalletController {
         success: boolean;
         message: string;
         referenceId: string;
+        amount: number;
+        fee: number;
+        netAmount: number;
     }>;
 }
 export {};

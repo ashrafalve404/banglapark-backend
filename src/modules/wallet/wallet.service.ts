@@ -238,8 +238,8 @@ export class WalletService implements OnModuleInit {
     // ── Transfer balance between users ───────────────────────────────────────
     async transfer(senderId: string, recipientPhone: string, rawAmount: number) {
         const amount = Number(rawAmount);
-        if (isNaN(amount) || amount < 10) {
-            throw new BadRequestException('Minimum transfer amount is ৳10');
+        if (isNaN(amount) || amount < 500) {
+            throw new BadRequestException('Minimum transfer amount is ৳500');
         }
 
         await this.ensureEnumsExist();
@@ -279,10 +279,12 @@ export class WalletService implements OnModuleInit {
             throw new BadRequestException('Insufficient wallet balance');
         }
 
+        const fee = Math.round((amount * 0.10) * 100) / 100;
+        const netAmount = Math.round((amount - fee) * 100) / 100;
         const referenceId = `transfer_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
 
         try {
-            // Atomic transaction: debit sender, credit recipient
+            // Atomic transaction: debit sender (full amount), credit recipient (net amount)
             await this.prisma.$transaction(async (tx) => {
                 // Debit sender
                 const updatedSender = await tx.wallet.update({
@@ -300,19 +302,19 @@ export class WalletService implements OnModuleInit {
                     },
                 });
 
-                // Credit recipient
+                // Credit recipient with net amount (amount minus 10% fee)
                 const updatedRecipient = await tx.wallet.update({
                     where: { id: recipientWallet.id },
-                    data: { balance: { increment: amount } },
+                    data: { balance: { increment: netAmount } },
                 });
                 await tx.walletTransaction.create({
                     data: {
                         walletId: recipientWallet.id,
                         type: 'TRANSFER_IN' as any,
-                        amount,
+                        amount: netAmount,
                         balanceAfter: updatedRecipient.balance,
                         referenceId,
-                        description: `Balance received from ${sender.name} (${sender.phone})`,
+                        description: `Balance received from ${sender.name} (${sender.phone}) (10% fee: ৳${fee})`,
                     },
                 });
             });
@@ -331,13 +333,13 @@ export class WalletService implements OnModuleInit {
                     recipient.id,
                     NotificationType.SYSTEM,
                     'Balance Received 💸',
-                    `You received ৳${amount} from ${sender.name} (${sender.phone}).`,
+                    `You received ৳${netAmount} from ${sender.name} (${sender.phone}) (10% service fee: ৳${fee}).`,
                 ),
                 this.notificationsService.create(
                     senderId,
                     NotificationType.SYSTEM,
                     'Balance Transferred 💸',
-                    `You successfully transferred ৳${amount} to ${recipient.name} (${recipient.phone}).`,
+                    `You successfully transferred ৳${amount} to ${recipient.name} (${recipient.phone}). Recipient received ৳${netAmount} (10% fee: ৳${fee}).`,
                 ),
             ]);
         } catch (e) {
@@ -346,8 +348,11 @@ export class WalletService implements OnModuleInit {
 
         return {
             success: true,
-            message: `৳${amount} transferred successfully to ${recipient.name}`,
+            message: `৳${amount} transferred successfully to ${recipient.name} (Fee: ৳${fee}, Recipient received ৳${netAmount})`,
             referenceId,
+            amount,
+            fee,
+            netAmount,
         };
     }
 }

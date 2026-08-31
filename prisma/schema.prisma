@@ -39,6 +39,8 @@ enum TxType {
   TRANSFER_OUT
   TRANSFER_IN
   DEPOSIT
+  DIGITAL_MARKETING_PURCHASE
+  DIGITAL_MARKETING_RETURN
 }
 
 enum ProductApprovalStatus {
@@ -135,6 +137,7 @@ model User {
   cpaTaskPurchases CpaTaskPurchase[]
   giftCardPurchases GiftCardPurchase[]
   depositRequests  DepositRequest[]
+  digitalMarketingPurchases DigitalMarketingPurchase[]
   createdAt        DateTime   @default(now())
   updatedAt        DateTime   @updatedAt
 
@@ -525,3 +528,42 @@ model DepositRequest {
   @@index([status])
   @@index([createdAt])
 }
+
+enum DigitalMarketingPurchaseStatus {
+  ACTIVE
+  COMPLETED
+}
+
+model DigitalMarketingPackage {
+  id            String                      @id @default(uuid())
+  title         String
+  description   String?
+  price         Decimal                     @db.Decimal(12, 2)
+  profitPercent Decimal                     @default(1.00) @db.Decimal(5, 2)
+  durationHours Int                         @default(24)
+  isHidden      Boolean                     @default(false)
+  sortOrder     Int                         @default(0)
+  purchases     DigitalMarketingPurchase[]
+  createdAt     DateTime                    @default(now())
+  updatedAt     DateTime                    @updatedAt
+}
+
+model DigitalMarketingPurchase {
+  id            String                         @id @default(uuid())
+  userId        String
+  user          User                           @relation(fields: [userId], references: [id])
+  packageId     String
+  package       DigitalMarketingPackage        @relation(fields: [packageId], references: [id])
+  amount        Decimal                        @db.Decimal(12, 2)
+  profitAmount  Decimal                        @db.Decimal(12, 2)
+  totalReturn   Decimal                        @db.Decimal(12, 2)
+  status        DigitalMarketingPurchaseStatus @default(ACTIVE)
+  purchasedAt   DateTime                       @default(now())
+  maturesAt     DateTime
+  creditedAt    DateTime?
+
+  @@index([userId])
+  @@index([status])
+  @@index([maturesAt])
+}
+

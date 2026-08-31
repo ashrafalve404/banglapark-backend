@@ -34,6 +34,8 @@ export declare class AdminController {
         totalRevenue: number;
         salesRevenue: number;
         giftCardRevenue: number;
+        transferFeeRevenue: number;
+        totalTransferVolume: number;
         totalCommissionsPaid: number;
         pendingWithdrawals: number;
         totalProducts: number;

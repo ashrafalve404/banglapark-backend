@@ -17,7 +17,7 @@ class TransferDto {
     recipientPhone: string;
 
     @IsNumber()
-    @Min(10)
+    @Min(500)
     amount: number;
 }
 

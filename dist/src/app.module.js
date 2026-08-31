@@ -40,6 +40,7 @@ const cpa_marketing_module_1 = require("./modules/cpa-marketing/cpa-marketing.mo
 const gift_cards_module_1 = require("./modules/gift-cards/gift-cards.module");
 const email_module_1 = require("./modules/email/email.module");
 const deposit_module_1 = require("./modules/deposit/deposit.module");
+const digital_marketing_module_1 = require("./modules/digital-marketing/digital-marketing.module");
 let AppModule = class AppModule {
 };
 exports.AppModule = AppModule;
@@ -96,6 +97,7 @@ exports.AppModule = AppModule = __decorate([
             daily_benefit_module_1.DailyBenefitModule,
             withdrawal_module_1.WithdrawalModule,
             deposit_module_1.DepositModule,
+            digital_marketing_module_1.DigitalMarketingModule,
             notifications_module_1.NotificationsModule,
             admin_module_1.AdminModule,
             reports_module_1.ReportsModule,
