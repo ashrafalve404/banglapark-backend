@@ -1,7 +1,7 @@
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { DepositStatus } from '@prisma/client';
-export declare const ADMIN_BKASH_NUMBER = "01XXXXXXXXX";
+export declare const ADMIN_BKASH_NUMBER = "01823674796";
 export declare class DepositService {
     private readonly prisma;
     private readonly walletService;

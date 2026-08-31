@@ -8,7 +8,7 @@ import { WalletService } from '../wallet/wallet.service';
 import { DepositStatus } from '@prisma/client';
 
 // Admin bkash number shown to users
-export const ADMIN_BKASH_NUMBER = '01XXXXXXXXX'; // Replace with real number
+export const ADMIN_BKASH_NUMBER = '01823674796';
 
 @Injectable()
 export class DepositService {

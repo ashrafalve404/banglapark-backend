@@ -13,7 +13,7 @@ exports.DepositService = exports.ADMIN_BKASH_NUMBER = void 0;
 const common_1 = require("@nestjs/common");
 const prisma_service_1 = require("../../prisma/prisma.service");
 const wallet_service_1 = require("../wallet/wallet.service");
-exports.ADMIN_BKASH_NUMBER = '01XXXXXXXXX';
+exports.ADMIN_BKASH_NUMBER = '01823674796';
 let DepositService = class DepositService {
     prisma;
     walletService;
