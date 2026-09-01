@@ -10,7 +10,7 @@ export declare class DigitalMarketingService implements OnModuleInit {
     onModuleInit(): Promise<void>;
     private ensureTablesAndEnums;
     private seedDefaultPackagesIfEmpty;
-    getPackages(): Promise<any>;
+    getPackages(): Promise<unknown>;
     purchasePackage(userId: string, packageId: string): Promise<{
         success: boolean;
         message: string;
@@ -23,7 +23,7 @@ export declare class DigitalMarketingService implements OnModuleInit {
         now: string;
     }>;
     processMaturedPurchases(): Promise<void>;
-    adminGetAllPackages(): Promise<any>;
+    adminGetAllPackages(): Promise<any[]>;
     adminCreatePackage(dto: {
         title: string;
         description?: string;
@@ -46,7 +46,9 @@ export declare class DigitalMarketingService implements OnModuleInit {
         isHidden?: boolean;
         sortOrder?: number;
     }): Promise<any>;
-    adminDeletePackage(id: string): Promise<any>;
+    adminDeletePackage(id: string): Promise<{
+        success: boolean;
+    }>;
     adminGetAllPurchases(page?: number, limit?: number, status?: string): Promise<{
         purchases: any;
         total: any;

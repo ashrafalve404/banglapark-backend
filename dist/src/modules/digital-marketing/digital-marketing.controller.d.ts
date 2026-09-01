@@ -27,7 +27,7 @@ declare class UpdatePackageDto {
 export declare class DigitalMarketingController {
     private readonly dmService;
     constructor(dmService: DigitalMarketingService);
-    getPackages(): Promise<any>;
+    getPackages(): Promise<unknown>;
     purchase(userId: string, dto: PurchasePackageDto): Promise<{
         success: boolean;
         message: string;
@@ -39,10 +39,12 @@ export declare class DigitalMarketingController {
         completed: any;
         now: string;
     }>;
-    adminGetAllPackages(): Promise<any>;
+    adminGetAllPackages(): Promise<any[]>;
     adminCreatePackage(dto: CreatePackageDto): Promise<any>;
     adminUpdatePackage(id: string, dto: UpdatePackageDto): Promise<any>;
-    adminDeletePackage(id: string): Promise<any>;
+    adminDeletePackage(id: string): Promise<{
+        success: boolean;
+    }>;
     adminGetAllPurchases(page?: number, limit?: number, status?: string): Promise<{
         purchases: any;
         total: any;
