@@ -10,16 +10,26 @@ export declare class DigitalMarketingService implements OnModuleInit {
     onModuleInit(): Promise<void>;
     private ensureTablesAndEnums;
     private seedDefaultPackagesIfEmpty;
-    getPackages(): Promise<unknown>;
+    getPackages(): Promise<any[]>;
     purchasePackage(userId: string, packageId: string): Promise<{
         success: boolean;
         message: string;
-        purchase: any;
+        purchase: {
+            id: string;
+            userId: string;
+            packageId: any;
+            amount: number;
+            profitAmount: number;
+            totalReturn: number;
+            status: string;
+            purchasedAt: string;
+            maturesAt: Date;
+        };
     }>;
     getMyPurchases(userId: string): Promise<{
-        purchases: any;
-        active: any;
-        completed: any;
+        purchases: any[];
+        active: any[];
+        completed: any[];
         now: string;
     }>;
     processMaturedPurchases(): Promise<void>;
@@ -50,8 +60,8 @@ export declare class DigitalMarketingService implements OnModuleInit {
         success: boolean;
     }>;
     adminGetAllPurchases(page?: number, limit?: number, status?: string): Promise<{
-        purchases: any;
-        total: any;
+        purchases: any[];
+        total: number;
         page: number;
         limit: number;
         totalPages: number;

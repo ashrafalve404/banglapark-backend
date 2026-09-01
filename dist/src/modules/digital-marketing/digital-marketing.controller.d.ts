@@ -27,16 +27,26 @@ declare class UpdatePackageDto {
 export declare class DigitalMarketingController {
     private readonly dmService;
     constructor(dmService: DigitalMarketingService);
-    getPackages(): Promise<unknown>;
+    getPackages(): Promise<any[]>;
     purchase(userId: string, dto: PurchasePackageDto): Promise<{
         success: boolean;
         message: string;
-        purchase: any;
+        purchase: {
+            id: string;
+            userId: string;
+            packageId: any;
+            amount: number;
+            profitAmount: number;
+            totalReturn: number;
+            status: string;
+            purchasedAt: string;
+            maturesAt: Date;
+        };
     }>;
     getMyPurchases(userId: string): Promise<{
-        purchases: any;
-        active: any;
-        completed: any;
+        purchases: any[];
+        active: any[];
+        completed: any[];
         now: string;
     }>;
     adminGetAllPackages(): Promise<any[]>;
@@ -46,8 +56,8 @@ export declare class DigitalMarketingController {
         success: boolean;
     }>;
     adminGetAllPurchases(page?: number, limit?: number, status?: string): Promise<{
-        purchases: any;
-        total: any;
+        purchases: any[];
+        total: number;
         page: number;
         limit: number;
         totalPages: number;
