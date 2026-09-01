@@ -54,12 +54,15 @@ let WalletService = class WalletService {
     async debit(tx, walletId, amount, type, description, referenceId) {
         const current = await tx.wallet.findUnique({
             where: { id: walletId },
+            select: { balance: true, pendingWithdrawal: true },
         });
         if (!current)
             throw new common_1.NotFoundException('Wallet not found');
-        const currentBalance = Number(current.balance);
-        if (currentBalance < amount) {
-            throw new common_1.BadRequestException('Insufficient wallet balance');
+        const totalBalance = Number(current.balance);
+        const pendingWithdrawal = Number(current.pendingWithdrawal ?? 0);
+        const availableBalance = totalBalance - pendingWithdrawal;
+        if (availableBalance < amount) {
+            throw new common_1.BadRequestException(`Insufficient available wallet balance. (Available: ৳${availableBalance}, Locked in Pending Withdrawal: ৳${pendingWithdrawal})`);
         }
         const wallet = await tx.wallet.update({
             where: { id: walletId },

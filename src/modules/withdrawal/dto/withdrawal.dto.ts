@@ -25,12 +25,12 @@ export class CreateWithdrawalDto {
 }
 
 export class ReviewWithdrawalDto {
-    @ApiProperty({ enum: ['APPROVED', 'REJECTED'] })
-    @IsEnum(['APPROVED', 'REJECTED'])
-    status: 'APPROVED' | 'REJECTED';
+    @ApiProperty({ enum: ['APPROVED', 'REJECTED', 'RETURNED'] })
+    @IsEnum(['APPROVED', 'REJECTED', 'RETURNED'])
+    status: 'APPROVED' | 'REJECTED' | 'RETURNED';
 
-    @ApiPropertyOptional({ example: 'Account details mismatch' })
-    @ValidateIf((o) => o.status === 'REJECTED')
+    @ApiPropertyOptional({ example: 'Account details mismatch or returned to wallet' })
+    @ValidateIf((o) => o.status === 'REJECTED' || o.status === 'RETURNED')
     @IsString()
     reason?: string;
 }

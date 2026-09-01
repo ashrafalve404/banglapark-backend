@@ -115,6 +115,23 @@ export class WithdrawalService {
                     data: { status: WithdrawStatus.APPROVED, reviewedAt: new Date(), reviewedById: adminId },
                 });
             });
+        } else if (dto.status === 'RETURNED') {
+            // Returned — release reservation without deducting balance, mark status as RETURNED
+            await this.prisma.$transaction(async (tx) => {
+                await tx.wallet.update({
+                    where: { userId: withdrawal.userId },
+                    data: { pendingWithdrawal: { decrement: Number(withdrawal.amount) } },
+                });
+                await tx.withdrawalRequest.update({
+                    where: { id: withdrawalId },
+                    data: {
+                        status: ('RETURNED' as any),
+                        reason: dto.reason || 'Returned to wallet balance',
+                        reviewedAt: new Date(),
+                        reviewedById: adminId,
+                    },
+                });
+            });
         } else {
             // Rejected — release reservation without deducting
             await this.prisma.$transaction(async (tx) => {
@@ -147,6 +164,13 @@ export class WithdrawalService {
                         NotificationType.WITHDRAWAL_STATUS,
                         "Withdrawal Approved",
                         `Your withdrawal request of BDT ${reviewed.amount} via ${reviewed.method} has been approved.`,
+                    );
+                } else if (reviewed.status === ('RETURNED' as any)) {
+                    await this.notificationsService.create(
+                        reviewed.userId,
+                        NotificationType.WITHDRAWAL_STATUS,
+                        "Withdrawal Returned 🔄",
+                        `Your withdrawal request of BDT ${reviewed.amount} via ${reviewed.method} has been returned to your wallet. Reason: ${reviewed.reason || "Returned to wallet balance"}.`,
                     );
                 } else if (reviewed.status === WithdrawStatus.REJECTED) {
                     await this.notificationsService.create(

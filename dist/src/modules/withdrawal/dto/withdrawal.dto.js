@@ -45,13 +45,13 @@ class ReviewWithdrawalDto {
 }
 exports.ReviewWithdrawalDto = ReviewWithdrawalDto;
 __decorate([
-    (0, swagger_1.ApiProperty)({ enum: ['APPROVED', 'REJECTED'] }),
-    (0, class_validator_1.IsEnum)(['APPROVED', 'REJECTED']),
+    (0, swagger_1.ApiProperty)({ enum: ['APPROVED', 'REJECTED', 'RETURNED'] }),
+    (0, class_validator_1.IsEnum)(['APPROVED', 'REJECTED', 'RETURNED']),
     __metadata("design:type", String)
 ], ReviewWithdrawalDto.prototype, "status", void 0);
 __decorate([
-    (0, swagger_1.ApiPropertyOptional)({ example: 'Account details mismatch' }),
-    (0, class_validator_1.ValidateIf)((o) => o.status === 'REJECTED'),
+    (0, swagger_1.ApiPropertyOptional)({ example: 'Account details mismatch or returned to wallet' }),
+    (0, class_validator_1.ValidateIf)((o) => o.status === 'REJECTED' || o.status === 'RETURNED'),
     (0, class_validator_1.IsString)(),
     __metadata("design:type", String)
 ], ReviewWithdrawalDto.prototype, "reason", void 0);

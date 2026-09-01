@@ -93,6 +93,23 @@ let WithdrawalService = class WithdrawalService {
                 });
             });
         }
+        else if (dto.status === 'RETURNED') {
+            await this.prisma.$transaction(async (tx) => {
+                await tx.wallet.update({
+                    where: { userId: withdrawal.userId },
+                    data: { pendingWithdrawal: { decrement: Number(withdrawal.amount) } },
+                });
+                await tx.withdrawalRequest.update({
+                    where: { id: withdrawalId },
+                    data: {
+                        status: 'RETURNED',
+                        reason: dto.reason || 'Returned to wallet balance',
+                        reviewedAt: new Date(),
+                        reviewedById: adminId,
+                    },
+                });
+            });
+        }
         else {
             await this.prisma.$transaction(async (tx) => {
                 await tx.wallet.update({
@@ -117,6 +134,9 @@ let WithdrawalService = class WithdrawalService {
             try {
                 if (reviewed.status === client_1.WithdrawStatus.APPROVED) {
                     await this.notificationsService.create(reviewed.userId, client_1.NotificationType.WITHDRAWAL_STATUS, "Withdrawal Approved", `Your withdrawal request of BDT ${reviewed.amount} via ${reviewed.method} has been approved.`);
+                }
+                else if (reviewed.status === 'RETURNED') {
+                    await this.notificationsService.create(reviewed.userId, client_1.NotificationType.WITHDRAWAL_STATUS, "Withdrawal Returned 🔄", `Your withdrawal request of BDT ${reviewed.amount} via ${reviewed.method} has been returned to your wallet. Reason: ${reviewed.reason || "Returned to wallet balance"}.`);
                 }
                 else if (reviewed.status === client_1.WithdrawStatus.REJECTED) {
                     await this.notificationsService.create(reviewed.userId, client_1.NotificationType.WITHDRAWAL_STATUS, "Withdrawal Rejected", `Your withdrawal request of BDT ${reviewed.amount} via ${reviewed.method} was rejected. Reason: ${reviewed.reason || "None"}.`);

@@ -79,6 +79,7 @@ enum WithdrawStatus {
   PENDING
   APPROVED
   REJECTED
+  RETURNED
 }
 
 enum BenefitCategory {

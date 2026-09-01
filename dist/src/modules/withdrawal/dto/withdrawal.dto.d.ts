@@ -5,6 +5,6 @@ export declare class CreateWithdrawalDto {
     accountDetails: Record<string, string>;
 }
 export declare class ReviewWithdrawalDto {
-    status: 'APPROVED' | 'REJECTED';
+    status: 'APPROVED' | 'REJECTED' | 'RETURNED';
     reason?: string;
 }

@@ -79,15 +79,19 @@ export class WalletService implements OnModuleInit {
         description: string,
         referenceId?: string,
     ) {
-        const current = await (tx.wallet.findUnique as (args: Record<string, unknown>) => Promise<{ balance: string | number } | null>)({
+        const current = await (tx.wallet.findUnique as (args: Record<string, unknown>) => Promise<{ balance: string | number; pendingWithdrawal?: string | number } | null>)({
             where: { id: walletId },
+            select: { balance: true, pendingWithdrawal: true },
         });
 
         if (!current) throw new NotFoundException('Wallet not found');
 
-        const currentBalance = Number(current.balance);
-        if (currentBalance < amount) {
-            throw new BadRequestException('Insufficient wallet balance');
+        const totalBalance = Number(current.balance);
+        const pendingWithdrawal = Number(current.pendingWithdrawal ?? 0);
+        const availableBalance = totalBalance - pendingWithdrawal;
+
+        if (availableBalance < amount) {
+            throw new BadRequestException(`Insufficient available wallet balance. (Available: ৳${availableBalance}, Locked in Pending Withdrawal: ৳${pendingWithdrawal})`);
         }
 
         const wallet = await (tx.wallet.update as (args: Record<string, unknown>) => Promise<{ balance: unknown }>)({

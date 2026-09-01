@@ -130,6 +130,17 @@ let DigitalMarketingService = class DigitalMarketingService {
             throw new common_1.NotFoundException('Digital marketing package not found');
         if (pkg.isHidden)
             throw new common_1.BadRequestException('This package is currently unavailable');
+        const startOfDay = new Date();
+        startOfDay.setHours(0, 0, 0, 0);
+        const todayPurchasesCount = await db.digitalMarketingPurchase.count({
+            where: {
+                userId,
+                purchasedAt: { gte: startOfDay },
+            },
+        });
+        if (todayPurchasesCount >= 5) {
+            throw new common_1.BadRequestException('Daily limit reached! You can purchase a maximum of 5 digital marketing packages per day.');
+        }
         const amount = Number(pkg.price);
         const profitPercent = Number(pkg.profitPercent ?? 1.0);
         const durationHours = pkg.durationHours ?? 24;
