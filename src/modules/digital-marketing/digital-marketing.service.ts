@@ -322,18 +322,21 @@ export class DigitalMarketingService implements OnModuleInit {
         const sortOrder = dto.sortOrder ?? 0;
 
         await this.prisma.$executeRawUnsafe(
-            `INSERT INTO "DigitalMarketingPackage" ("id","title","description","image","link","price","profitPercent","durationHours","isHidden","sortOrder","createdAt","updatedAt")
-             VALUES ($1,$2,$3,$4,$5,$6::DECIMAL,$7::INTEGER,$8::BOOLEAN,$9::INTEGER,NOW(),NOW())`,
+            `INSERT INTO "DigitalMarketingPackage" (
+                "id", "title", "description", "image", "link", "price", "profitPercent", "durationHours", "isHidden", "sortOrder", "createdAt", "updatedAt"
+             ) VALUES (
+                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()
+             )`,
             id,
             dto.title,
-            dto.description ?? null,
-            dto.image ?? null,
-            dto.link ?? null,
-            dto.price,
-            profitPercent,
-            durationHours,
-            isHidden,
-            sortOrder,
+            dto.description || null,
+            dto.image || null,
+            dto.link || null,
+            Number(dto.price),
+            Number(profitPercent),
+            Math.round(Number(durationHours)),
+            Boolean(isHidden),
+            Math.round(Number(sortOrder)),
         );
 
         const rows: any[] = await this.prisma.$queryRawUnsafe(
@@ -355,26 +358,26 @@ export class DigitalMarketingService implements OnModuleInit {
         let idx = 1;
 
         if (dto.title !== undefined) { fields.push(`"title" = $${idx++}`); values.push(dto.title); }
-        if (dto.description !== undefined) { fields.push(`"description" = $${idx++}`); values.push(dto.description ?? null); }
+        if (dto.description !== undefined) { fields.push(`"description" = $${idx++}`); values.push(dto.description || null); }
         if (dto.image !== undefined) { fields.push(`"image" = $${idx++}`); values.push(dto.image || null); }
         if (dto.link !== undefined) { fields.push(`"link" = $${idx++}`); values.push(dto.link || null); }
-        if (dto.price !== undefined) { fields.push(`"price" = $${idx++}::DECIMAL`); values.push(dto.price); }
-        if (dto.profitPercent !== undefined) { fields.push(`"profitPercent" = $${idx++}::DECIMAL`); values.push(dto.profitPercent); }
-        if (dto.durationHours !== undefined) { fields.push(`"durationHours" = $${idx++}::INTEGER`); values.push(dto.durationHours); }
-        if (dto.isHidden !== undefined) { fields.push(`"isHidden" = $${idx++}::BOOLEAN`); values.push(dto.isHidden); }
-        if (dto.sortOrder !== undefined) { fields.push(`"sortOrder" = $${idx++}::INTEGER`); values.push(dto.sortOrder); }
+        if (dto.price !== undefined) { fields.push(`"price" = $${idx++}`); values.push(Number(dto.price)); }
+        if (dto.profitPercent !== undefined) { fields.push(`"profitPercent" = $${idx++}`); values.push(Number(dto.profitPercent)); }
+        if (dto.durationHours !== undefined) { fields.push(`"durationHours" = $${idx++}`); values.push(Math.round(Number(dto.durationHours))); }
+        if (dto.isHidden !== undefined) { fields.push(`"isHidden" = $${idx++}`); values.push(Boolean(dto.isHidden)); }
+        if (dto.sortOrder !== undefined) { fields.push(`"sortOrder" = $${idx++}`); values.push(Math.round(Number(dto.sortOrder))); }
 
-        // Add updatedAt using SQL NOW() — avoids timestamp string issues
         fields.push(`"updatedAt" = NOW()`);
 
-        // Push id for WHERE clause BEFORE building WHERE (idx not incremented by NOW())
         const whereIdx = idx;
         values.push(id);
 
-        await this.prisma.$executeRawUnsafe(
-            `UPDATE "DigitalMarketingPackage" SET ${fields.join(', ')} WHERE "id" = $${whereIdx}`,
-            ...values,
-        );
+        if (fields.length > 1) {
+            await this.prisma.$executeRawUnsafe(
+                `UPDATE "DigitalMarketingPackage" SET ${fields.join(', ')} WHERE "id" = $${whereIdx}`,
+                ...values,
+            );
+        }
 
         const rows: any[] = await this.prisma.$queryRawUnsafe(
             `SELECT * FROM "DigitalMarketingPackage" WHERE "id" = $1`,
