@@ -16,7 +16,7 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const wallet_service_1 = require("../wallet/wallet.service");
 const notifications_service_1 = require("../notifications/notifications.service");
 const client_1 = require("@prisma/client");
-const uuidv4 = require('uuid').v4;
+const crypto_1 = require("crypto");
 let DigitalMarketingService = class DigitalMarketingService {
     prisma;
     walletService;
@@ -111,7 +111,7 @@ let DigitalMarketingService = class DigitalMarketingService {
                 ];
                 for (const pkg of packages) {
                     await this.prisma.$executeRawUnsafe(`INSERT INTO "DigitalMarketingPackage" ("id","title","description","image","link","price","profitPercent","durationHours","isHidden","sortOrder","createdAt","updatedAt")
-                         VALUES ($1,$2,$3,NULL,NULL,$4,0.10,24,false,$5,$6,$6)`, uuidv4(), pkg.title, pkg.description, pkg.price, pkg.sortOrder, now);
+                         VALUES ($1,$2,$3,NULL,NULL,$4,0.10,24,false,$5,$6,$6)`, (0, crypto_1.randomUUID)(), pkg.title, pkg.description, pkg.price, pkg.sortOrder, now);
                 }
             }
         }
@@ -145,7 +145,7 @@ let DigitalMarketingService = class DigitalMarketingService {
         const maturesAt = new Date(Date.now() + durationHours * 60 * 60 * 1000);
         const walletId = await this.walletService.getWalletId(userId);
         const referenceId = `dm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        const purchaseId = uuidv4();
+        const purchaseId = (0, crypto_1.randomUUID)();
         const now = new Date().toISOString();
         try {
             await this.prisma.$transaction(async (tx) => {
@@ -229,7 +229,7 @@ let DigitalMarketingService = class DigitalMarketingService {
         }));
     }
     async adminCreatePackage(dto) {
-        const id = uuidv4();
+        const id = (0, crypto_1.randomUUID)();
         const now = new Date().toISOString();
         const profitPercent = dto.profitPercent ?? 0.1;
         const durationHours = dto.durationHours ?? 24;

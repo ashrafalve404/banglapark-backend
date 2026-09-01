@@ -15,7 +15,7 @@ export declare class DigitalMarketingService implements OnModuleInit {
         success: boolean;
         message: string;
         purchase: {
-            id: string;
+            id: `${string}-${string}-${string}-${string}-${string}`;
             userId: string;
             packageId: any;
             amount: number;

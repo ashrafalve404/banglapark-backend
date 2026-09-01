@@ -10,8 +10,7 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { NotificationsService } from '../notifications/notifications.service';
 import { NotificationType } from '@prisma/client';
-// eslint-disable-next-line @typescript-eslint/no-var-requires
-const uuidv4: () => string = require('uuid').v4;
+import { randomUUID } from 'crypto';
 
 @Injectable()
 export class DigitalMarketingService implements OnModuleInit {
@@ -113,7 +112,7 @@ export class DigitalMarketingService implements OnModuleInit {
                     await this.prisma.$executeRawUnsafe(
                         `INSERT INTO "DigitalMarketingPackage" ("id","title","description","image","link","price","profitPercent","durationHours","isHidden","sortOrder","createdAt","updatedAt")
                          VALUES ($1,$2,$3,NULL,NULL,$4,0.10,24,false,$5,$6,$6)`,
-                        uuidv4(), pkg.title, pkg.description, pkg.price, pkg.sortOrder, now,
+                        randomUUID(), pkg.title, pkg.description, pkg.price, pkg.sortOrder, now,
                     );
                 }
             }
@@ -168,7 +167,7 @@ export class DigitalMarketingService implements OnModuleInit {
 
         const walletId = await this.walletService.getWalletId(userId);
         const referenceId = `dm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-        const purchaseId = uuidv4();
+        const purchaseId = randomUUID();
         const now = new Date().toISOString();
 
         try {
@@ -316,7 +315,7 @@ export class DigitalMarketingService implements OnModuleInit {
     }
 
     async adminCreatePackage(dto: { title: string; description?: string; image?: string; link?: string; price: number; profitPercent?: number; durationHours?: number; isHidden?: boolean; sortOrder?: number }) {
-        const id = uuidv4();
+        const id = randomUUID();
         const now = new Date().toISOString();
         const profitPercent = dto.profitPercent ?? 0.1;
         const durationHours = dto.durationHours ?? 24;
