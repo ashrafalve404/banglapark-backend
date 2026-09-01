@@ -35,6 +35,7 @@ export class WalletService implements OnModuleInit {
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'TRANSFER_OUT';`);
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'TRANSFER_IN';`);
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DEPOSIT';`);
+            await this.prisma.$executeRawUnsafe(`ALTER TYPE "WithdrawStatus" ADD VALUE IF NOT EXISTS 'RETURNED';`);
         } catch (e) {
             // Ignore if enum or DB doesn't support IF NOT EXISTS or already updated
         }

@@ -29,6 +29,7 @@ let WalletService = class WalletService {
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'TRANSFER_OUT';`);
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'TRANSFER_IN';`);
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DEPOSIT';`);
+            await this.prisma.$executeRawUnsafe(`ALTER TYPE "WithdrawStatus" ADD VALUE IF NOT EXISTS 'RETURNED';`);
         }
         catch (e) {
         }
