@@ -39,7 +39,7 @@ export class DigitalMarketingService implements OnModuleInit {
                     "title" TEXT NOT NULL,
                     "description" TEXT,
                     "price" DECIMAL(12,2) NOT NULL,
-                    "profitPercent" DECIMAL(5,2) NOT NULL DEFAULT 1.00,
+                    "profitPercent" DECIMAL(5,2) NOT NULL DEFAULT 0.10,
                     "durationHours" INTEGER NOT NULL DEFAULT 24,
                     "isHidden" BOOLEAN NOT NULL DEFAULT false,
                     "sortOrder" INTEGER NOT NULL DEFAULT 0,
@@ -67,6 +67,8 @@ export class DigitalMarketingService implements OnModuleInit {
             `);
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DIGITAL_MARKETING_PURCHASE';`);
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DIGITAL_MARKETING_RETURN';`);
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPackage" ADD COLUMN IF NOT EXISTS "image" TEXT;`);
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPackage" ADD COLUMN IF NOT EXISTS "link" TEXT;`);
         } catch (e) {
             // Ignore if DB already initialized
         }
@@ -81,29 +83,38 @@ export class DigitalMarketingService implements OnModuleInit {
                     data: [
                         {
                             title: 'Starter Marketing Package',
-                            description: 'Basic social media & digital promotion package. Earn 1% bonus after 24 hours.',
+                            description: 'Basic social media & digital promotion package. Earn 0.1% bonus after 24 hours.',
                             price: 1000,
-                            profitPercent: 1.00,
+                            profitPercent: 0.10,
                             durationHours: 24,
                             sortOrder: 1,
                         },
                         {
                             title: 'Standard Marketing Package',
-                            description: 'Standard brand reach & traffic campaign. Earn 1% bonus after 24 hours.',
+                            description: 'Standard brand reach & traffic campaign. Earn 0.1% bonus after 24 hours.',
                             price: 5000,
-                            profitPercent: 1.00,
+                            profitPercent: 0.10,
                             durationHours: 24,
                             sortOrder: 2,
                         },
                         {
                             title: 'Premium Marketing Package',
-                            description: 'High priority digital advertising & sponsored promo. Earn 1% bonus after 24 hours.',
+                            description: 'High priority digital advertising & sponsored promo. Earn 0.1% bonus after 24 hours.',
                             price: 10000,
-                            profitPercent: 1.00,
+                            profitPercent: 0.10,
                             durationHours: 24,
                             sortOrder: 3,
                         },
                     ],
+                });
+            } else {
+                // Update existing packages that are currently set to 1.00%
+                await db.digitalMarketingPackage.updateMany({
+                    where: { profitPercent: 1.00 },
+                    data: {
+                        profitPercent: 0.10,
+                        description: 'Earn 0.1% bonus after 24 hours.',
+                    },
                 });
             }
         } catch (e) {
@@ -303,14 +314,16 @@ export class DigitalMarketingService implements OnModuleInit {
         });
     }
 
-    async adminCreatePackage(dto: { title: string; description?: string; price: number; profitPercent?: number; durationHours?: number; isHidden?: boolean; sortOrder?: number }) {
+    async adminCreatePackage(dto: { title: string; description?: string; image?: string; link?: string; price: number; profitPercent?: number; durationHours?: number; isHidden?: boolean; sortOrder?: number }) {
         const db = this.prisma as any;
         return db.digitalMarketingPackage.create({
             data: {
                 title: dto.title,
                 description: dto.description || null,
+                image: dto.image || null,
+                link: dto.link || null,
                 price: dto.price,
-                profitPercent: dto.profitPercent ?? 1.0,
+                profitPercent: dto.profitPercent ?? 0.1,
                 durationHours: dto.durationHours ?? 24,
                 isHidden: dto.isHidden ?? false,
                 sortOrder: dto.sortOrder ?? 0,
@@ -318,7 +331,7 @@ export class DigitalMarketingService implements OnModuleInit {
         });
     }
 
-    async adminUpdatePackage(id: string, dto: { title?: string; description?: string; price?: number; profitPercent?: number; durationHours?: number; isHidden?: boolean; sortOrder?: number }) {
+    async adminUpdatePackage(id: string, dto: { title?: string; description?: string; image?: string; link?: string; price?: number; profitPercent?: number; durationHours?: number; isHidden?: boolean; sortOrder?: number }) {
         const db = this.prisma as any;
         const pkg = await db.digitalMarketingPackage.findUnique({ where: { id } });
         if (!pkg) throw new NotFoundException('Package not found');
@@ -328,6 +341,8 @@ export class DigitalMarketingService implements OnModuleInit {
             data: {
                 ...(dto.title !== undefined && { title: dto.title }),
                 ...(dto.description !== undefined && { description: dto.description }),
+                ...(dto.image !== undefined && { image: dto.image }),
+                ...(dto.link !== undefined && { link: dto.link }),
                 ...(dto.price !== undefined && { price: dto.price }),
                 ...(dto.profitPercent !== undefined && { profitPercent: dto.profitPercent }),
                 ...(dto.durationHours !== undefined && { durationHours: dto.durationHours }),

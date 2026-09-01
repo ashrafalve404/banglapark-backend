@@ -44,7 +44,7 @@ let DigitalMarketingService = class DigitalMarketingService {
                     "title" TEXT NOT NULL,
                     "description" TEXT,
                     "price" DECIMAL(12,2) NOT NULL,
-                    "profitPercent" DECIMAL(5,2) NOT NULL DEFAULT 1.00,
+                    "profitPercent" DECIMAL(5,2) NOT NULL DEFAULT 0.10,
                     "durationHours" INTEGER NOT NULL DEFAULT 24,
                     "isHidden" BOOLEAN NOT NULL DEFAULT false,
                     "sortOrder" INTEGER NOT NULL DEFAULT 0,
@@ -72,6 +72,8 @@ let DigitalMarketingService = class DigitalMarketingService {
             `);
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DIGITAL_MARKETING_PURCHASE';`);
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DIGITAL_MARKETING_RETURN';`);
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPackage" ADD COLUMN IF NOT EXISTS "image" TEXT;`);
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPackage" ADD COLUMN IF NOT EXISTS "link" TEXT;`);
         }
         catch (e) {
         }
@@ -85,29 +87,38 @@ let DigitalMarketingService = class DigitalMarketingService {
                     data: [
                         {
                             title: 'Starter Marketing Package',
-                            description: 'Basic social media & digital promotion package. Earn 1% bonus after 24 hours.',
+                            description: 'Basic social media & digital promotion package. Earn 0.1% bonus after 24 hours.',
                             price: 1000,
-                            profitPercent: 1.00,
+                            profitPercent: 0.10,
                             durationHours: 24,
                             sortOrder: 1,
                         },
                         {
                             title: 'Standard Marketing Package',
-                            description: 'Standard brand reach & traffic campaign. Earn 1% bonus after 24 hours.',
+                            description: 'Standard brand reach & traffic campaign. Earn 0.1% bonus after 24 hours.',
                             price: 5000,
-                            profitPercent: 1.00,
+                            profitPercent: 0.10,
                             durationHours: 24,
                             sortOrder: 2,
                         },
                         {
                             title: 'Premium Marketing Package',
-                            description: 'High priority digital advertising & sponsored promo. Earn 1% bonus after 24 hours.',
+                            description: 'High priority digital advertising & sponsored promo. Earn 0.1% bonus after 24 hours.',
                             price: 10000,
-                            profitPercent: 1.00,
+                            profitPercent: 0.10,
                             durationHours: 24,
                             sortOrder: 3,
                         },
                     ],
+                });
+            }
+            else {
+                await db.digitalMarketingPackage.updateMany({
+                    where: { profitPercent: 1.00 },
+                    data: {
+                        profitPercent: 0.10,
+                        description: 'Earn 0.1% bonus after 24 hours.',
+                    },
                 });
             }
         }
@@ -254,8 +265,10 @@ let DigitalMarketingService = class DigitalMarketingService {
             data: {
                 title: dto.title,
                 description: dto.description || null,
+                image: dto.image || null,
+                link: dto.link || null,
                 price: dto.price,
-                profitPercent: dto.profitPercent ?? 1.0,
+                profitPercent: dto.profitPercent ?? 0.1,
                 durationHours: dto.durationHours ?? 24,
                 isHidden: dto.isHidden ?? false,
                 sortOrder: dto.sortOrder ?? 0,
@@ -272,6 +285,8 @@ let DigitalMarketingService = class DigitalMarketingService {
             data: {
                 ...(dto.title !== undefined && { title: dto.title }),
                 ...(dto.description !== undefined && { description: dto.description }),
+                ...(dto.image !== undefined && { image: dto.image }),
+                ...(dto.link !== undefined && { link: dto.link }),
                 ...(dto.price !== undefined && { price: dto.price }),
                 ...(dto.profitPercent !== undefined && { profitPercent: dto.profitPercent }),
                 ...(dto.durationHours !== undefined && { durationHours: dto.durationHours }),

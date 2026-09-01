@@ -5,6 +5,8 @@ declare class PurchasePackageDto {
 declare class CreatePackageDto {
     title: string;
     description?: string;
+    image?: string;
+    link?: string;
     price: number;
     profitPercent?: number;
     durationHours?: number;
@@ -14,6 +16,8 @@ declare class CreatePackageDto {
 declare class UpdatePackageDto {
     title?: string;
     description?: string;
+    image?: string;
+    link?: string;
     price?: number;
     profitPercent?: number;
     durationHours?: number;

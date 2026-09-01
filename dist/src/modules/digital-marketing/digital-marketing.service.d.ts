@@ -27,6 +27,8 @@ export declare class DigitalMarketingService implements OnModuleInit {
     adminCreatePackage(dto: {
         title: string;
         description?: string;
+        image?: string;
+        link?: string;
         price: number;
         profitPercent?: number;
         durationHours?: number;
@@ -36,6 +38,8 @@ export declare class DigitalMarketingService implements OnModuleInit {
     adminUpdatePackage(id: string, dto: {
         title?: string;
         description?: string;
+        image?: string;
+        link?: string;
         price?: number;
         profitPercent?: number;
         durationHours?: number;

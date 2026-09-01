@@ -22,6 +22,14 @@ class CreatePackageDto {
     @IsString()
     description?: string;
 
+    @IsOptional()
+    @IsString()
+    image?: string;
+
+    @IsOptional()
+    @IsString()
+    link?: string;
+
     @IsNumber()
     @Min(1)
     price: number;
@@ -51,6 +59,14 @@ class UpdatePackageDto {
     @IsOptional()
     @IsString()
     description?: string;
+
+    @IsOptional()
+    @IsString()
+    image?: string;
+
+    @IsOptional()
+    @IsString()
+    link?: string;
 
     @IsOptional()
     @IsNumber()
