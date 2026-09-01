@@ -6,30 +6,25 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { TxType } from '@prisma/client';
 
-// Daily benefit tier table (≥ count → amount BDT)
+// Daily benefit tier table (1 BDT per active team member)
 export const BENEFIT_TIERS = [
-    { minCount: 10000, amount: 5000 },
-    { minCount: 5000, amount: 2000 },
-    { minCount: 500, amount: 1000 },
-    { minCount: 100, amount: 500 },
-    { minCount: 50, amount: 300 },
-    { minCount: 20, amount: 200 },
-    { minCount: 5, amount: 100 },
+    { minCount: 1, amount: 1 },
+    { minCount: 10, amount: 10 },
+    { minCount: 50, amount: 50 },
+    { minCount: 100, amount: 100 },
+    { minCount: 500, amount: 500 },
+    { minCount: 1000, amount: 1000 },
+    { minCount: 5000, amount: 5000 },
+    { minCount: 10000, amount: 10000 },
 ] as const;
 
 export function calculateDailyBenefit(activeTeamCount: number): number {
-    for (const tier of BENEFIT_TIERS) {
-        if (activeTeamCount >= tier.minCount) return tier.amount;
-    }
-    return 10; // base daily benefit for every active user
+    return 10 + (activeTeamCount * 1); // base 10 BDT + 1 BDT per active team member
 }
 
-// Returns only the additional tier bonus (0 for <5 team members)
+// Returns 1 BDT per active team member dynamically
 export function calculateTierBonus(activeTeamCount: number): number {
-    for (const tier of BENEFIT_TIERS) {
-        if (activeTeamCount >= tier.minCount) return tier.amount;
-    }
-    return 0;
+    return Math.max(0, activeTeamCount * 1);
 }
 
 export const DAILY_BENEFIT_QUEUE = 'daily-benefit';

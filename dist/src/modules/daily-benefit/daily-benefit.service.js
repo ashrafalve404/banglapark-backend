@@ -24,27 +24,20 @@ const prisma_service_1 = require("../../prisma/prisma.service");
 const wallet_service_1 = require("../wallet/wallet.service");
 const client_1 = require("@prisma/client");
 exports.BENEFIT_TIERS = [
-    { minCount: 10000, amount: 5000 },
-    { minCount: 5000, amount: 2000 },
-    { minCount: 500, amount: 1000 },
-    { minCount: 100, amount: 500 },
-    { minCount: 50, amount: 300 },
-    { minCount: 20, amount: 200 },
-    { minCount: 5, amount: 100 },
+    { minCount: 1, amount: 1 },
+    { minCount: 10, amount: 10 },
+    { minCount: 50, amount: 50 },
+    { minCount: 100, amount: 100 },
+    { minCount: 500, amount: 500 },
+    { minCount: 1000, amount: 1000 },
+    { minCount: 5000, amount: 5000 },
+    { minCount: 10000, amount: 10000 },
 ];
 function calculateDailyBenefit(activeTeamCount) {
-    for (const tier of exports.BENEFIT_TIERS) {
-        if (activeTeamCount >= tier.minCount)
-            return tier.amount;
-    }
-    return 10;
+    return 10 + (activeTeamCount * 1);
 }
 function calculateTierBonus(activeTeamCount) {
-    for (const tier of exports.BENEFIT_TIERS) {
-        if (activeTeamCount >= tier.minCount)
-            return tier.amount;
-    }
-    return 0;
+    return Math.max(0, activeTeamCount * 1);
 }
 exports.DAILY_BENEFIT_QUEUE = 'daily-benefit';
 let DailyBenefitService = DailyBenefitService_1 = class DailyBenefitService {

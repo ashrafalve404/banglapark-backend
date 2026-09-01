@@ -2,26 +2,29 @@ import { Queue } from 'bullmq';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 export declare const BENEFIT_TIERS: readonly [{
-    readonly minCount: 10000;
-    readonly amount: 5000;
+    readonly minCount: 1;
+    readonly amount: 1;
 }, {
-    readonly minCount: 5000;
-    readonly amount: 2000;
-}, {
-    readonly minCount: 500;
-    readonly amount: 1000;
-}, {
-    readonly minCount: 100;
-    readonly amount: 500;
+    readonly minCount: 10;
+    readonly amount: 10;
 }, {
     readonly minCount: 50;
-    readonly amount: 300;
+    readonly amount: 50;
 }, {
-    readonly minCount: 20;
-    readonly amount: 200;
-}, {
-    readonly minCount: 5;
+    readonly minCount: 100;
     readonly amount: 100;
+}, {
+    readonly minCount: 500;
+    readonly amount: 500;
+}, {
+    readonly minCount: 1000;
+    readonly amount: 1000;
+}, {
+    readonly minCount: 5000;
+    readonly amount: 5000;
+}, {
+    readonly minCount: 10000;
+    readonly amount: 10000;
 }];
 export declare function calculateDailyBenefit(activeTeamCount: number): number;
 export declare function calculateTierBonus(activeTeamCount: number): number;
@@ -55,25 +58,28 @@ export declare class DailyBenefitService {
         limit: number;
     }>;
     getTiers(): readonly [{
-        readonly minCount: 10000;
-        readonly amount: 5000;
+        readonly minCount: 1;
+        readonly amount: 1;
     }, {
-        readonly minCount: 5000;
-        readonly amount: 2000;
-    }, {
-        readonly minCount: 500;
-        readonly amount: 1000;
-    }, {
-        readonly minCount: 100;
-        readonly amount: 500;
+        readonly minCount: 10;
+        readonly amount: 10;
     }, {
         readonly minCount: 50;
-        readonly amount: 300;
+        readonly amount: 50;
     }, {
-        readonly minCount: 20;
-        readonly amount: 200;
-    }, {
-        readonly minCount: 5;
+        readonly minCount: 100;
         readonly amount: 100;
+    }, {
+        readonly minCount: 500;
+        readonly amount: 500;
+    }, {
+        readonly minCount: 1000;
+        readonly amount: 1000;
+    }, {
+        readonly minCount: 5000;
+        readonly amount: 5000;
+    }, {
+        readonly minCount: 10000;
+        readonly amount: 10000;
     }];
 }
