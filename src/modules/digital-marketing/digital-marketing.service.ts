@@ -33,11 +33,16 @@ export class DigitalMarketingService implements OnModuleInit {
                     WHEN duplicate_object THEN null;
                 END $$;
             `);
+        } catch (e) { }
+
+        try {
             await this.prisma.$executeRawUnsafe(`
                 CREATE TABLE IF NOT EXISTS "DigitalMarketingPackage" (
                     "id" TEXT NOT NULL,
                     "title" TEXT NOT NULL,
                     "description" TEXT,
+                    "image" TEXT,
+                    "link" TEXT,
                     "price" DECIMAL(12,2) NOT NULL,
                     "profitPercent" DECIMAL(5,2) NOT NULL DEFAULT 0.10,
                     "durationHours" INTEGER NOT NULL DEFAULT 24,
@@ -48,6 +53,9 @@ export class DigitalMarketingService implements OnModuleInit {
                     CONSTRAINT "DigitalMarketingPackage_pkey" PRIMARY KEY ("id")
                 );
             `);
+        } catch (e) { }
+
+        try {
             await this.prisma.$executeRawUnsafe(`
                 CREATE TABLE IF NOT EXISTS "DigitalMarketingPurchase" (
                     "id" TEXT NOT NULL,
@@ -65,13 +73,23 @@ export class DigitalMarketingService implements OnModuleInit {
                     CONSTRAINT "DigitalMarketingPurchase_packageId_fkey" FOREIGN KEY ("packageId") REFERENCES "DigitalMarketingPackage"("id") ON DELETE RESTRICT ON UPDATE CASCADE
                 );
             `);
+        } catch (e) { }
+
+        try {
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DIGITAL_MARKETING_PURCHASE';`);
+        } catch (e) { }
+
+        try {
             await this.prisma.$executeRawUnsafe(`ALTER TYPE "TxType" ADD VALUE IF NOT EXISTS 'DIGITAL_MARKETING_RETURN';`);
+        } catch (e) { }
+
+        try {
             await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPackage" ADD COLUMN IF NOT EXISTS "image" TEXT;`);
+        } catch (e) { }
+
+        try {
             await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPackage" ADD COLUMN IF NOT EXISTS "link" TEXT;`);
-        } catch (e) {
-            // Ignore if DB already initialized
-        }
+        } catch (e) { }
     }
 
     private async seedDefaultPackagesIfEmpty() {
