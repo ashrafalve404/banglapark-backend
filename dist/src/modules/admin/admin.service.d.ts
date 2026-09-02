@@ -169,6 +169,8 @@ export declare class AdminService {
         }[];
         team: {
             totalTeam: number;
+            directTeam: number;
+            activeTeam: number;
         };
         orders: {
             totalOrders: number;

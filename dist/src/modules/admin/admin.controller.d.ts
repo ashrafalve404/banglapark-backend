@@ -187,6 +187,8 @@ export declare class AdminController {
         }[];
         team: {
             totalTeam: number;
+            directTeam: number;
+            activeTeam: number;
         };
         orders: {
             totalOrders: number;

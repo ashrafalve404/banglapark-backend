@@ -139,7 +139,7 @@ let UsersService = class UsersService {
             });
             usedReferralCode = p?.referralCode || null;
         }
-        const [wallet, transactions, withdrawals, teamCount, orderAgg] = await Promise.all([
+        const [wallet, transactions, withdrawals, recursiveTeamResult, directTeamCount, orderAgg, dailyRewardAgg, tierBonusAgg, generationIncomeAgg,] = await Promise.all([
             this.prisma.wallet.findUnique({
                 where: { userId: id },
                 select: { balance: true, pendingWithdrawal: true },
@@ -172,22 +172,42 @@ let UsersService = class UsersService {
                     reviewedAt: true,
                 },
             }),
+            this.prisma.$queryRaw `
+                WITH RECURSIVE team AS (
+                    SELECT id, status FROM "User" WHERE "parentId" = ${id}
+                    UNION ALL
+                    SELECT u.id, u.status FROM "User" u
+                    INNER JOIN team t ON u."parentId" = t.id
+                )
+                SELECT 
+                    COUNT(*) as total,
+                    COUNT(*) FILTER (WHERE status = 'ACTIVE') as active
+                FROM team
+            `,
             this.prisma.user.count({ where: { parentId: id } }),
             this.prisma.order.aggregate({
                 where: { userId: id },
                 _count: { id: true },
                 _sum: { total: true },
             }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'DAILY_BENEFIT', benefitCategory: 'BASE' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'DAILY_BENEFIT', benefitCategory: 'TIER' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'GENERATION_COMMISSION' },
+                _sum: { amount: true },
+            }),
         ]);
-        const dailyReward = transactions
-            .filter((t) => t.type === 'DAILY_BENEFIT' && t.benefitCategory === 'BASE')
-            .reduce((sum, t) => sum + Number(t.amount), 0);
-        const tierBonus = transactions
-            .filter((t) => t.type === 'DAILY_BENEFIT' && t.benefitCategory === 'TIER')
-            .reduce((sum, t) => sum + Number(t.amount), 0);
-        const generationIncome = transactions
-            .filter((t) => t.type === 'GENERATION_COMMISSION')
-            .reduce((sum, t) => sum + Number(t.amount), 0);
+        const totalTeamCount = Number(recursiveTeamResult[0]?.total ?? 0);
+        const activeTeamCount = Number(recursiveTeamResult[0]?.active ?? 0);
+        const dailyReward = Number(dailyRewardAgg._sum.amount ?? 0);
+        const tierBonus = Number(tierBonusAgg._sum.amount ?? 0);
+        const generationIncome = Number(generationIncomeAgg._sum.amount ?? 0);
         const { parentId, ...safeUser } = user;
         return {
             account: {
@@ -205,7 +225,9 @@ let UsersService = class UsersService {
             transactions,
             withdrawals,
             team: {
-                totalTeam: teamCount,
+                totalTeam: totalTeamCount,
+                directTeam: directTeamCount,
+                activeTeam: activeTeamCount,
             },
             orders: {
                 totalOrders: orderAgg._count.id,

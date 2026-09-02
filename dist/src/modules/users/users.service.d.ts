@@ -111,6 +111,8 @@ export declare class UsersService {
         }[];
         team: {
             totalTeam: number;
+            directTeam: number;
+            activeTeam: number;
         };
         orders: {
             totalOrders: number;
