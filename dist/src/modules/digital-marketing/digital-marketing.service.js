@@ -50,7 +50,8 @@ let DigitalMarketingService = class DigitalMarketingService {
                     "image" TEXT,
                     "link" TEXT,
                     "price" DECIMAL(12,2) NOT NULL,
-                    "profitPercent" DECIMAL(5,2) NOT NULL DEFAULT 0.10,
+                    "profitPercent" DECIMAL(5,2) NOT NULL DEFAULT 0.50,
+                    "durationDays" INTEGER NOT NULL DEFAULT 365,
                     "durationHours" INTEGER NOT NULL DEFAULT 24,
                     "isHidden" BOOLEAN NOT NULL DEFAULT false,
                     "sortOrder" INTEGER NOT NULL DEFAULT 0,
@@ -68,11 +69,17 @@ let DigitalMarketingService = class DigitalMarketingService {
                     "userId" TEXT NOT NULL,
                     "packageId" TEXT NOT NULL,
                     "amount" DECIMAL(12,2) NOT NULL,
-                    "profitAmount" DECIMAL(12,2) NOT NULL,
-                    "totalReturn" DECIMAL(12,2) NOT NULL,
+                    "profitAmount" DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    "totalReturn" DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    "dailyProfitPercent" DECIMAL(5,2) NOT NULL DEFAULT 0.50,
+                    "dailyProfitAmount" DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    "daysTotal" INTEGER NOT NULL DEFAULT 365,
+                    "daysPaid" INTEGER NOT NULL DEFAULT 0,
+                    "totalEarned" DECIMAL(12,2) NOT NULL DEFAULT 0.00,
+                    "lastCreditedAt" TIMESTAMP(3),
                     "status" "DigitalMarketingPurchaseStatus" NOT NULL DEFAULT 'ACTIVE',
                     "purchasedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                    "maturesAt" TIMESTAMP(3) NOT NULL,
+                    "maturesAt" TIMESTAMP(3),
                     "creditedAt" TIMESTAMP(3),
                     CONSTRAINT "DigitalMarketingPurchase_pkey" PRIMARY KEY ("id"),
                     CONSTRAINT "DigitalMarketingPurchase_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -97,6 +104,42 @@ let DigitalMarketingService = class DigitalMarketingService {
             await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPackage" ADD COLUMN IF NOT EXISTS "link" TEXT;`);
         }
         catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPackage" ADD COLUMN IF NOT EXISTS "durationDays" INTEGER NOT NULL DEFAULT 365;`);
+        }
+        catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPackage" ADD COLUMN IF NOT EXISTS "dailyProfitPercent" DECIMAL(5,2) NOT NULL DEFAULT 0.50;`);
+        }
+        catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPurchase" ADD COLUMN IF NOT EXISTS "dailyProfitPercent" DECIMAL(5,2) NOT NULL DEFAULT 0.50;`);
+        }
+        catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPurchase" ADD COLUMN IF NOT EXISTS "dailyProfitAmount" DECIMAL(12,2) NOT NULL DEFAULT 0.00;`);
+        }
+        catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPurchase" ADD COLUMN IF NOT EXISTS "daysTotal" INTEGER NOT NULL DEFAULT 365;`);
+        }
+        catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPurchase" ADD COLUMN IF NOT EXISTS "daysPaid" INTEGER NOT NULL DEFAULT 0;`);
+        }
+        catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPurchase" ADD COLUMN IF NOT EXISTS "totalEarned" DECIMAL(12,2) NOT NULL DEFAULT 0.00;`);
+        }
+        catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPurchase" ADD COLUMN IF NOT EXISTS "lastCreditedAt" TIMESTAMP(3);`);
+        }
+        catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPurchase" ALTER COLUMN "maturesAt" DROP NOT NULL;`);
+        }
+        catch (e) { }
     }
     async seedDefaultPackagesIfEmpty() {
         try {
@@ -105,13 +148,13 @@ let DigitalMarketingService = class DigitalMarketingService {
             if (count === 0) {
                 const now = new Date().toISOString();
                 const packages = [
-                    { title: 'Starter Marketing Package', description: 'Basic social media & digital promotion package. Earn 0.1% bonus after 24 hours.', price: 1000, sortOrder: 1 },
-                    { title: 'Standard Marketing Package', description: 'Standard brand reach & traffic campaign. Earn 0.1% bonus after 24 hours.', price: 5000, sortOrder: 2 },
-                    { title: 'Premium Marketing Package', description: 'High priority digital advertising & sponsored promo. Earn 0.1% bonus after 24 hours.', price: 10000, sortOrder: 3 },
+                    { title: 'Starter Marketing Package', description: 'Basic digital promotion package. Earn 0.5% daily profit for 365 active days.', price: 2000, sortOrder: 1 },
+                    { title: 'Standard Marketing Package', description: 'Standard brand campaign package. Earn 0.5% daily profit for 365 active days.', price: 5000, sortOrder: 2 },
+                    { title: 'Premium Marketing Package', description: 'High priority promotion package. Earn 0.5% daily profit for 365 active days.', price: 10000, sortOrder: 3 },
                 ];
                 for (const pkg of packages) {
-                    await this.prisma.$executeRawUnsafe(`INSERT INTO "DigitalMarketingPackage" ("id","title","description","image","link","price","profitPercent","durationHours","isHidden","sortOrder","createdAt","updatedAt")
-                         VALUES ($1,$2,$3,NULL,NULL,$4,0.10,24,false,$5,$6,$6)`, (0, crypto_1.randomUUID)(), pkg.title, pkg.description, pkg.price, pkg.sortOrder, now);
+                    await this.prisma.$executeRawUnsafe(`INSERT INTO "DigitalMarketingPackage" ("id","title","description","image","link","price","profitPercent","dailyProfitPercent","durationDays","durationHours","isHidden","sortOrder","createdAt","updatedAt")
+                         VALUES ($1,$2,$3,NULL,NULL,$4,0.50,0.50,365,24,false,$5,$6,$6)`, (0, crypto_1.randomUUID)(), pkg.title, pkg.description, pkg.price, pkg.sortOrder, now);
                 }
             }
         }
@@ -132,38 +175,41 @@ let DigitalMarketingService = class DigitalMarketingService {
         const startOfDay = new Date();
         startOfDay.setHours(0, 0, 0, 0);
         const countRows = await this.prisma.$queryRawUnsafe(`SELECT COUNT(*)::INTEGER as cnt FROM "DigitalMarketingPurchase"
-             WHERE "userId" = $1 AND "purchasedAt" >= $2`, userId, startOfDay.toISOString());
+             WHERE "userId" = $1 AND "purchasedAt" >= $2::TIMESTAMPTZ`, userId, startOfDay.toISOString());
         const todayPurchasesCount = Number(countRows[0]?.cnt ?? 0);
         if (todayPurchasesCount >= 5) {
             throw new common_1.BadRequestException('Daily limit reached! You can purchase a maximum of 5 digital marketing packages per day.');
         }
         const amount = Number(pkg.price);
-        const profitPercent = Number(pkg.profitPercent ?? 0.1);
-        const durationHours = Number(pkg.durationHours ?? 24);
-        const profitAmount = Math.round((amount * (profitPercent / 100)) * 100) / 100;
-        const totalReturn = Math.round((amount + profitAmount) * 100) / 100;
-        const maturesAt = new Date(Date.now() + durationHours * 60 * 60 * 1000);
+        const dailyProfitPercent = Number(pkg.dailyProfitPercent ?? pkg.profitPercent ?? 0.5);
+        const daysTotal = Number(pkg.durationDays ?? 365);
+        const dailyProfitAmount = Math.round((amount * (dailyProfitPercent / 100)) * 100) / 100;
+        const totalReturn = Math.round((dailyProfitAmount * daysTotal) * 100) / 100;
         const walletId = await this.walletService.getWalletId(userId);
         const referenceId = `dm_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
         const purchaseId = (0, crypto_1.randomUUID)();
         const now = new Date().toISOString();
         try {
             await this.prisma.$transaction(async (tx) => {
-                await this.walletService.debit(tx, walletId, amount, 'DIGITAL_MARKETING_PURCHASE', `Purchased "${pkg.title}" (24h return: ৳${totalReturn})`, referenceId);
-                await tx.$executeRawUnsafe(`INSERT INTO "DigitalMarketingPurchase" ("id","userId","packageId","amount","profitAmount","totalReturn","status","purchasedAt","maturesAt")
-                     VALUES ($1,$2,$3,$4,$5,$6,'ACTIVE',$7,$8)`, purchaseId, userId, pkg.id, amount, profitAmount, totalReturn, now, maturesAt.toISOString());
+                await this.walletService.debit(tx, walletId, amount, 'DIGITAL_MARKETING_PURCHASE', `Purchased "${pkg.title}" (Daily return: ৳${dailyProfitAmount}/day for ${daysTotal} days)`, referenceId);
+                await tx.$executeRawUnsafe(`INSERT INTO "DigitalMarketingPurchase" (
+                        "id","userId","packageId","amount","profitAmount","totalReturn","dailyProfitPercent","dailyProfitAmount","daysTotal","daysPaid","totalEarned","status","purchasedAt"
+                     ) VALUES (
+                        $1, $2, $3, $4::DECIMAL, $5::DECIMAL, $6::DECIMAL, $7::DECIMAL, $8::DECIMAL, $9, 0, 0.00, 'ACTIVE'::"DigitalMarketingPurchaseStatus", $10::TIMESTAMPTZ
+                     )`, purchaseId, userId, pkg.id, amount, dailyProfitAmount, totalReturn, dailyProfitPercent, dailyProfitAmount, daysTotal, now);
             });
         }
         catch (error) {
+            console.error('Digital marketing purchase error:', error);
             if (error instanceof common_1.BadRequestException || error instanceof common_1.NotFoundException) {
                 throw error;
             }
-            throw new common_1.InternalServerErrorException(error?.message || 'Package purchase failed');
+            throw new common_1.BadRequestException(error?.message || 'Package purchase failed');
         }
         try {
             const user = await this.prisma.user.findUnique({ where: { id: userId }, select: { name: true, phone: true } });
             await Promise.all([
-                this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Digital Marketing Package Active 🚀', `You purchased "${pkg.title}" for ৳${amount}. ৳${totalReturn} (0.1% profit: ৳${profitAmount}) will be credited back in 24 hours.`),
+                this.notificationsService.create(userId, client_1.NotificationType.SYSTEM, 'Digital Marketing Package Active 🚀', `You purchased "${pkg.title}" for ৳${amount}. You will receive ৳${dailyProfitAmount} (0.5%) profit every day for ${daysTotal} active days.`),
                 this.notificationsService.notifyAdmins(client_1.NotificationType.SYSTEM, 'New Digital Marketing Purchase 📈', `User ${user?.name || 'User'} (${user?.phone || 'N/A'}) purchased "${pkg.title}" for ৳${amount}.`),
             ]);
         }
@@ -172,8 +218,20 @@ let DigitalMarketingService = class DigitalMarketingService {
         }
         return {
             success: true,
-            message: `Successfully purchased "${pkg.title}"! ৳${totalReturn} will be credited to your wallet in 24 hours.`,
-            purchase: { id: purchaseId, userId, packageId: pkg.id, amount, profitAmount, totalReturn, status: 'ACTIVE', purchasedAt: now, maturesAt },
+            message: `Successfully purchased "${pkg.title}"! You will earn ৳${dailyProfitAmount}/day for ${daysTotal} active days.`,
+            purchase: {
+                id: purchaseId,
+                userId,
+                packageId: pkg.id,
+                amount,
+                dailyProfitPercent,
+                dailyProfitAmount,
+                daysTotal,
+                daysPaid: 0,
+                totalEarned: 0,
+                status: 'ACTIVE',
+                purchasedAt: now,
+            },
         };
     }
     async getMyPurchases(userId) {
@@ -191,31 +249,49 @@ let DigitalMarketingService = class DigitalMarketingService {
         const completed = mapped.filter((p) => p.status === 'COMPLETED');
         return { purchases: mapped, active, completed, now: now.toISOString() };
     }
-    async processMaturedPurchases() {
-        const now = new Date();
-        const maturedList = await this.prisma.$queryRawUnsafe(`SELECT pur.*, pkg.title as pkg_title, u.id as u_id, u.name as u_name, u.phone as u_phone
+    async processDailyProfitPayouts() {
+        const startOfToday = new Date();
+        startOfToday.setHours(0, 0, 0, 0);
+        const activePurchases = await this.prisma.$queryRawUnsafe(`SELECT pur.*, pkg.title as pkg_title, u.id as u_id, u.name as u_name, u.phone as u_phone
              FROM "DigitalMarketingPurchase" pur
              LEFT JOIN "DigitalMarketingPackage" pkg ON pkg."id" = pur."packageId"
              LEFT JOIN "User" u ON u."id" = pur."userId"
-             WHERE pur."status" = 'ACTIVE' AND pur."maturesAt" <= $1`, now.toISOString());
-        if (maturedList.length === 0)
+             WHERE pur."status" = 'ACTIVE'
+               AND pur."daysPaid" < COALESCE(pur."daysTotal", 365)
+               AND u."status" = 'ACTIVE'
+               AND (u."activeUntil" IS NULL OR u."activeUntil" >= NOW())
+               AND (pur."lastCreditedAt" IS NULL OR pur."lastCreditedAt" < $1::TIMESTAMPTZ)`, startOfToday.toISOString());
+        if (activePurchases.length === 0)
             return;
-        for (const item of maturedList) {
+        for (const item of activePurchases) {
             try {
-                const totalReturn = Number(item.totalReturn);
                 const amount = Number(item.amount);
-                const profitAmount = Number(item.profitAmount);
+                const dailyProfitPercent = Number(item.dailyProfitPercent ?? 0.5);
+                const dailyProfitAmount = Number(item.dailyProfitAmount ?? (amount * (dailyProfitPercent / 100)));
+                const daysTotal = Number(item.daysTotal ?? 365);
+                const currentDaysPaid = Number(item.daysPaid ?? 0);
+                const newDaysPaid = currentDaysPaid + 1;
+                const currentTotalEarned = Number(item.totalEarned ?? 0);
+                const newTotalEarned = Math.round((currentTotalEarned + dailyProfitAmount) * 100) / 100;
+                const isCompleted = newDaysPaid >= daysTotal;
                 const walletId = await this.walletService.getWalletId(item.userId);
-                const referenceId = `dm_return_${item.id.slice(0, 8)}`;
+                const referenceId = `dm_daily_${item.id.slice(0, 8)}_${newDaysPaid}`;
                 const creditedAt = new Date().toISOString();
                 await this.prisma.$transaction(async (tx) => {
-                    await this.walletService.credit(tx, walletId, totalReturn, 'DIGITAL_MARKETING_RETURN', `24h Return for "${item.pkg_title || 'Digital Marketing'}" (Principal ৳${amount} + 0.1% profit ৳${profitAmount})`, referenceId);
-                    await tx.$executeRawUnsafe(`UPDATE "DigitalMarketingPurchase" SET "status" = 'COMPLETED', "creditedAt" = $1 WHERE "id" = $2`, creditedAt, item.id);
+                    await this.walletService.credit(tx, walletId, dailyProfitAmount, 'DIGITAL_MARKETING_RETURN', `Daily profit (${newDaysPaid}/${daysTotal} days) for "${item.pkg_title || 'Digital Marketing'}"`, referenceId);
+                    const statusStr = isCompleted ? 'COMPLETED' : 'ACTIVE';
+                    await tx.$executeRawUnsafe(`UPDATE "DigitalMarketingPurchase"
+                         SET "daysPaid" = $1,
+                             "totalEarned" = $2::DECIMAL,
+                             "lastCreditedAt" = $3::TIMESTAMPTZ,
+                             "creditedAt" = $3::TIMESTAMPTZ,
+                             "status" = $4::"DigitalMarketingPurchaseStatus"
+                         WHERE "id" = $5`, newDaysPaid, newTotalEarned, creditedAt, statusStr, item.id);
                 });
-                await this.notificationsService.create(item.userId, client_1.NotificationType.SYSTEM, '24h Return Credited to Wallet 🎉', `Your 24-hour return of ৳${totalReturn} (Principal ৳${amount} + 0.1% profit ৳${profitAmount}) for "${item.pkg_title || 'Digital Marketing'}" is credited to your wallet!`);
+                await this.notificationsService.create(item.userId, client_1.NotificationType.SYSTEM, 'Daily Profit Credited 🎉', `Daily profit of ৳${dailyProfitAmount} (Day ${newDaysPaid}/${daysTotal}) for "${item.pkg_title || 'Digital Marketing'}" credited to your wallet!`);
             }
             catch (error) {
-                console.error(`Failed to process matured purchase ${item.id}:`, error);
+                console.error(`Failed to process daily profit for purchase ${item.id}:`, error);
             }
         }
     }
@@ -230,15 +306,15 @@ let DigitalMarketingService = class DigitalMarketingService {
     }
     async adminCreatePackage(dto) {
         const id = (0, crypto_1.randomUUID)();
-        const profitPercent = dto.profitPercent ?? 0.1;
-        const durationHours = dto.durationHours ?? 24;
+        const dailyProfitPercent = dto.dailyProfitPercent ?? dto.profitPercent ?? 0.5;
+        const durationDays = dto.durationDays ?? 365;
         const isHidden = dto.isHidden ?? false;
         const sortOrder = dto.sortOrder ?? 0;
         await this.prisma.$executeRawUnsafe(`INSERT INTO "DigitalMarketingPackage" (
-                "id", "title", "description", "image", "link", "price", "profitPercent", "durationHours", "isHidden", "sortOrder", "createdAt", "updatedAt"
+                "id", "title", "description", "image", "link", "price", "profitPercent", "dailyProfitPercent", "durationDays", "durationHours", "isHidden", "sortOrder", "createdAt", "updatedAt"
              ) VALUES (
-                $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, NOW(), NOW()
-             )`, id, dto.title, dto.description || null, dto.image || null, dto.link || null, Number(dto.price), Number(profitPercent), Math.round(Number(durationHours)), Boolean(isHidden), Math.round(Number(sortOrder)));
+                $1, $2, $3, $4, $5, $6, $7, $7, $8, 24, $9, $10, NOW(), NOW()
+             )`, id, dto.title, dto.description || null, dto.image || null, dto.link || null, Number(dto.price), Number(dailyProfitPercent), Math.round(Number(durationDays)), Boolean(isHidden), Math.round(Number(sortOrder)));
         const rows = await this.prisma.$queryRawUnsafe(`SELECT * FROM "DigitalMarketingPackage" WHERE "id" = $1`, id);
         return rows[0];
     }
@@ -269,13 +345,16 @@ let DigitalMarketingService = class DigitalMarketingService {
             fields.push(`"price" = $${idx++}`);
             values.push(Number(dto.price));
         }
-        if (dto.profitPercent !== undefined) {
+        if (dto.dailyProfitPercent !== undefined || dto.profitPercent !== undefined) {
+            const pPct = Number(dto.dailyProfitPercent ?? dto.profitPercent);
             fields.push(`"profitPercent" = $${idx++}`);
-            values.push(Number(dto.profitPercent));
+            values.push(pPct);
+            fields.push(`"dailyProfitPercent" = $${idx++}`);
+            values.push(pPct);
         }
-        if (dto.durationHours !== undefined) {
-            fields.push(`"durationHours" = $${idx++}`);
-            values.push(Math.round(Number(dto.durationHours)));
+        if (dto.durationDays !== undefined) {
+            fields.push(`"durationDays" = $${idx++}`);
+            values.push(Math.round(Number(dto.durationDays)));
         }
         if (dto.isHidden !== undefined) {
             fields.push(`"isHidden" = $${idx++}`);
@@ -327,11 +406,11 @@ let DigitalMarketingService = class DigitalMarketingService {
 };
 exports.DigitalMarketingService = DigitalMarketingService;
 __decorate([
-    (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_5_MINUTES),
+    (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_HOUR),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)
-], DigitalMarketingService.prototype, "processMaturedPurchases", null);
+], DigitalMarketingService.prototype, "processDailyProfitPayouts", null);
 exports.DigitalMarketingService = DigitalMarketingService = __decorate([
     (0, common_1.Injectable)(),
     __metadata("design:paramtypes", [prisma_service_1.PrismaService,

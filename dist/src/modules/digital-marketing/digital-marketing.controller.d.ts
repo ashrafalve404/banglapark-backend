@@ -36,11 +36,13 @@ export declare class DigitalMarketingController {
             userId: string;
             packageId: any;
             amount: number;
-            profitAmount: number;
-            totalReturn: number;
+            dailyProfitPercent: number;
+            dailyProfitAmount: number;
+            daysTotal: number;
+            daysPaid: number;
+            totalEarned: number;
             status: string;
             purchasedAt: string;
-            maturesAt: Date;
         };
     }>;
     getMyPurchases(userId: string): Promise<{

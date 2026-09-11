@@ -19,11 +19,13 @@ export declare class DigitalMarketingService implements OnModuleInit {
             userId: string;
             packageId: any;
             amount: number;
-            profitAmount: number;
-            totalReturn: number;
+            dailyProfitPercent: number;
+            dailyProfitAmount: number;
+            daysTotal: number;
+            daysPaid: number;
+            totalEarned: number;
             status: string;
             purchasedAt: string;
-            maturesAt: Date;
         };
     }>;
     getMyPurchases(userId: string): Promise<{
@@ -32,7 +34,7 @@ export declare class DigitalMarketingService implements OnModuleInit {
         completed: any[];
         now: string;
     }>;
-    processMaturedPurchases(): Promise<void>;
+    processDailyProfitPayouts(): Promise<void>;
     adminGetAllPackages(): Promise<any[]>;
     adminCreatePackage(dto: {
         title: string;
@@ -41,7 +43,8 @@ export declare class DigitalMarketingService implements OnModuleInit {
         link?: string;
         price: number;
         profitPercent?: number;
-        durationHours?: number;
+        dailyProfitPercent?: number;
+        durationDays?: number;
         isHidden?: boolean;
         sortOrder?: number;
     }): Promise<any>;
@@ -52,7 +55,8 @@ export declare class DigitalMarketingService implements OnModuleInit {
         link?: string;
         price?: number;
         profitPercent?: number;
-        durationHours?: number;
+        dailyProfitPercent?: number;
+        durationDays?: number;
         isHidden?: boolean;
         sortOrder?: number;
     }): Promise<any>;
