@@ -35,6 +35,8 @@ class CreatePackageDto {
     link;
     price;
     profitPercent;
+    dailyProfitPercent;
+    durationDays;
     durationHours;
     isHidden;
     sortOrder;
@@ -72,6 +74,16 @@ __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
+], CreatePackageDto.prototype, "dailyProfitPercent", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], CreatePackageDto.prototype, "durationDays", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
 ], CreatePackageDto.prototype, "durationHours", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
@@ -90,6 +102,8 @@ class UpdatePackageDto {
     link;
     price;
     profitPercent;
+    dailyProfitPercent;
+    durationDays;
     durationHours;
     isHidden;
     sortOrder;
@@ -125,6 +139,16 @@ __decorate([
     (0, class_validator_1.IsNumber)(),
     __metadata("design:type", Number)
 ], UpdatePackageDto.prototype, "profitPercent", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], UpdatePackageDto.prototype, "dailyProfitPercent", void 0);
+__decorate([
+    (0, class_validator_1.IsOptional)(),
+    (0, class_validator_1.IsNumber)(),
+    __metadata("design:type", Number)
+], UpdatePackageDto.prototype, "durationDays", void 0);
 __decorate([
     (0, class_validator_1.IsOptional)(),
     (0, class_validator_1.IsNumber)(),

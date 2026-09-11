@@ -9,6 +9,8 @@ declare class CreatePackageDto {
     link?: string;
     price: number;
     profitPercent?: number;
+    dailyProfitPercent?: number;
+    durationDays?: number;
     durationHours?: number;
     isHidden?: boolean;
     sortOrder?: number;
@@ -20,6 +22,8 @@ declare class UpdatePackageDto {
     link?: string;
     price?: number;
     profitPercent?: number;
+    dailyProfitPercent?: number;
+    durationDays?: number;
     durationHours?: number;
     isHidden?: boolean;
     sortOrder?: number;

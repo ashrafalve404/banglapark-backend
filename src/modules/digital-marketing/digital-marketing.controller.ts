@@ -40,6 +40,14 @@ class CreatePackageDto {
 
     @IsOptional()
     @IsNumber()
+    dailyProfitPercent?: number;
+
+    @IsOptional()
+    @IsNumber()
+    durationDays?: number;
+
+    @IsOptional()
+    @IsNumber()
     durationHours?: number;
 
     @IsOptional()
@@ -76,6 +84,14 @@ class UpdatePackageDto {
     @IsOptional()
     @IsNumber()
     profitPercent?: number;
+
+    @IsOptional()
+    @IsNumber()
+    dailyProfitPercent?: number;
+
+    @IsOptional()
+    @IsNumber()
+    durationDays?: number;
 
     @IsOptional()
     @IsNumber()
