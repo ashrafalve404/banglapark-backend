@@ -140,6 +140,14 @@ let DigitalMarketingService = class DigitalMarketingService {
             await this.prisma.$executeRawUnsafe(`ALTER TABLE "DigitalMarketingPurchase" ALTER COLUMN "maturesAt" DROP NOT NULL;`);
         }
         catch (e) { }
+        try {
+            await this.prisma.$executeRawUnsafe(`
+                UPDATE "DigitalMarketingPackage"
+                SET "dailyProfitPercent" = 0.50, "profitPercent" = 0.50, "durationDays" = 365
+                WHERE "dailyProfitPercent" IS NULL OR "dailyProfitPercent" < 0.50 OR "profitPercent" < 0.50;
+            `);
+        }
+        catch (e) { }
     }
     async seedDefaultPackagesIfEmpty() {
         try {
