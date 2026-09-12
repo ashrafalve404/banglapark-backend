@@ -139,7 +139,7 @@ let UsersService = class UsersService {
             });
             usedReferralCode = p?.referralCode || null;
         }
-        const [wallet, transactions, withdrawals, recursiveTeamResult, directTeamCount, orderAgg, dailyRewardAgg, tierBonusAgg, generationIncomeAgg,] = await Promise.all([
+        const [wallet, transactions, withdrawals, recursiveTeamResult, directTeamCount, orderAgg, dailyRewardAgg, tierBonusAgg, generationIncomeAgg, digitalMarketingIncomeAgg, digitalMarketingSpentAgg, quizIncomeAgg, sellerIncomeAgg, positionSalaryAgg, depositAgg, approvedWithdrawalAgg, transferInAgg, transferOutAgg, giftCardSpentAgg, cpaSpentAgg,] = await Promise.all([
             this.prisma.wallet.findUnique({
                 where: { userId: id },
                 select: { balance: true, pendingWithdrawal: true },
@@ -202,12 +202,67 @@ let UsersService = class UsersService {
                 where: { wallet: { userId: id }, type: 'GENERATION_COMMISSION' },
                 _sum: { amount: true },
             }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'DIGITAL_MARKETING_RETURN' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'DIGITAL_MARKETING_PURCHASE' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'QUIZ_EARNING' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'SELLER_PAYOUT' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'POSITION_SALARY' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'DEPOSIT' },
+                _sum: { amount: true },
+            }),
+            this.prisma.withdrawalRequest.aggregate({
+                where: { userId: id, status: 'APPROVED' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'TRANSFER_IN' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'TRANSFER_OUT' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'GIFT_CARD_PURCHASE' },
+                _sum: { amount: true },
+            }),
+            this.prisma.walletTransaction.aggregate({
+                where: { wallet: { userId: id }, type: 'CPA_TASK_PURCHASE' },
+                _sum: { amount: true },
+            }),
         ]);
         const totalTeamCount = Number(recursiveTeamResult[0]?.total ?? 0);
         const activeTeamCount = Number(recursiveTeamResult[0]?.active ?? 0);
-        const dailyReward = Number(dailyRewardAgg._sum.amount ?? 0);
-        const tierBonus = Number(tierBonusAgg._sum.amount ?? 0);
-        const generationIncome = Number(generationIncomeAgg._sum.amount ?? 0);
+        const dailyReward = Number(dailyRewardAgg._sum?.amount ?? 0);
+        const tierBonus = Number(tierBonusAgg._sum?.amount ?? 0);
+        const generationIncome = Number(generationIncomeAgg._sum?.amount ?? 0);
+        const digitalMarketingIncome = Number(digitalMarketingIncomeAgg._sum?.amount ?? 0);
+        const digitalMarketingSpent = Number(digitalMarketingSpentAgg._sum?.amount ?? 0);
+        const quizIncome = Number(quizIncomeAgg._sum?.amount ?? 0);
+        const sellerIncome = Number(sellerIncomeAgg._sum?.amount ?? 0);
+        const positionSalary = Number(positionSalaryAgg._sum?.amount ?? 0);
+        const totalDeposited = Number(depositAgg._sum?.amount ?? 0);
+        const totalWithdrawn = Number(approvedWithdrawalAgg._sum?.amount ?? 0);
+        const transferIn = Number(transferInAgg._sum?.amount ?? 0);
+        const transferOut = Number(transferOutAgg._sum?.amount ?? 0);
+        const giftCardSpent = Number(giftCardSpentAgg._sum?.amount ?? 0);
+        const cpaSpent = Number(cpaSpentAgg._sum?.amount ?? 0);
         const { parentId, ...safeUser } = user;
         return {
             account: {
@@ -215,12 +270,23 @@ let UsersService = class UsersService {
                 usedReferralCode,
                 walletBalance: wallet ? Number(wallet.balance) : 0,
                 pendingWithdrawal: wallet ? Number(wallet.pendingWithdrawal) : 0,
-                dailyReward,
-                tierBonus,
-                generationIncome,
                 withdrawable: wallet
                     ? Math.max(0, Number(wallet.balance) - Number(wallet.pendingWithdrawal))
                     : 0,
+                dailyReward,
+                tierBonus,
+                generationIncome,
+                digitalMarketingIncome,
+                digitalMarketingSpent,
+                quizIncome,
+                sellerIncome,
+                positionSalary,
+                totalDeposited,
+                totalWithdrawn,
+                transferIn,
+                transferOut,
+                giftCardSpent,
+                cpaSpent,
             },
             transactions,
             withdrawals,
