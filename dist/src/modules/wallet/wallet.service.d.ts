@@ -35,6 +35,7 @@ export declare class WalletService implements OnModuleInit {
         quizEarning: number;
         salary: number;
         productSalesIncome: number;
+        digitalMarketingIncome: number;
         reward: number;
         travelling: number;
         share: number;
