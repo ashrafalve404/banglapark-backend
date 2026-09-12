@@ -2,6 +2,7 @@ import {
     Injectable,
     BadRequestException,
     NotFoundException,
+    OnModuleInit,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
@@ -11,13 +12,23 @@ import { WithdrawStatus, TxType, NotificationType } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
 
 @Injectable()
-export class WithdrawalService {
+export class WithdrawalService implements OnModuleInit {
     constructor(
         private readonly prisma: PrismaService,
         private readonly walletService: WalletService,
         private readonly configService: ConfigService,
         private readonly notificationsService: NotificationsService,
     ) { }
+
+    async onModuleInit() {
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "WithdrawalRequest" ADD COLUMN IF NOT EXISTS "fee" DECIMAL(12,2) NOT NULL DEFAULT 0.00;`);
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "WithdrawalRequest" ADD COLUMN IF NOT EXISTS "netAmount" DECIMAL(12,2) NOT NULL DEFAULT 0.00;`);
+            await this.prisma.$executeRawUnsafe(`UPDATE "WithdrawalRequest" SET "fee" = ROUND("amount" * 0.10, 2), "netAmount" = "amount" - ROUND("amount" * 0.10, 2) WHERE "fee" = 0 OR "fee" IS NULL;`);
+        } catch (err) {
+            console.error("Failed to execute WithdrawalRequest raw SQL migrations:", err);
+        }
+    }
 
     async request(userId: string, dto: CreateWithdrawalDto) {
         const today = new Date().getDay(); // 0=Sun, 5=Fri
@@ -36,6 +47,9 @@ export class WithdrawalService {
             throw new BadRequestException('Insufficient available balance');
         }
 
+        const fee = Math.round((Number(dto.amount) * 0.10) * 100) / 100;
+        const netAmount = Math.round((Number(dto.amount) - fee) * 100) / 100;
+
         // Reserve amount
         const withdrawal = await this.prisma.$transaction(async (tx) => {
             await tx.wallet.update({
@@ -47,6 +61,8 @@ export class WithdrawalService {
                 data: {
                     userId,
                     amount: dto.amount,
+                    fee,
+                    netAmount,
                     method: dto.method,
                     accountDetails: dto.accountDetails,
                 },
@@ -96,8 +112,12 @@ export class WithdrawalService {
 
         if (dto.status === 'APPROVED') {
             await this.prisma.$transaction(async (tx) => {
-                // Deduct balance and release reservation
+                // Release reservation first, then debit balance
                 const walletId = await this.walletService.getWalletId(withdrawal.userId);
+                await tx.wallet.update({
+                    where: { userId: withdrawal.userId },
+                    data: { pendingWithdrawal: { decrement: Number(withdrawal.amount) } },
+                });
                 await this.walletService.debit(
                     tx,
                     walletId,
@@ -106,10 +126,6 @@ export class WithdrawalService {
                     `Withdrawal via ${withdrawal.method} — approved`,
                     withdrawalId,
                 );
-                await tx.wallet.update({
-                    where: { userId: withdrawal.userId },
-                    data: { pendingWithdrawal: { decrement: Number(withdrawal.amount) } },
-                });
                 await tx.withdrawalRequest.update({
                     where: { id: withdrawalId },
                     data: { status: WithdrawStatus.APPROVED, reviewedAt: new Date(), reviewedById: adminId },

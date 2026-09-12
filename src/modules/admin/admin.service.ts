@@ -56,7 +56,7 @@ export class AdminService {
             }),
             this.prisma.withdrawalRequest.aggregate({
                 where: { status: 'APPROVED' },
-                _sum: { amount: true },
+                _sum: { amount: true, fee: true, netAmount: true },
             }),
             this.prisma.order.aggregate({ _sum: { deliveryCharge: true } }),
             this.prisma.walletTransaction.aggregate({
@@ -91,8 +91,10 @@ export class AdminService {
         const giftCardRevenue = Number(approvedGiftCardsAgg?._sum?.pricePaid ?? 0);
         const totalTransferVolume = Number(transferOutAgg?._sum?.amount ?? 0);
         const transferFeeRevenue = Math.round((totalTransferVolume * 0.10) * 100) / 100;
+        const withdrawalFeeRevenue = Number(approvedWithdrawals._sum.fee ?? 0) || Math.round((Number(approvedWithdrawals._sum.amount ?? 0) * 0.10) * 100) / 100;
         const commissionsPaid = Number(totalCommissions._sum.amount ?? 0);
-        const withdrawalsApproved = Number(approvedWithdrawals._sum.amount ?? 0);
+        const totalWithdrawalVolume = Number(approvedWithdrawals._sum.amount ?? 0);
+        const withdrawalsApproved = Number(approvedWithdrawals._sum.netAmount ?? (totalWithdrawalVolume - withdrawalFeeRevenue));
         const totalDeliveryCharges = Number(deliveryCharges._sum.deliveryCharge ?? 0);
         const totalSellerPayouts = Number(sellerPayoutsAgg._sum.amount ?? 0);
         // 80% to seller, 20% company commission => Company Commission = sellerPayouts * 0.25
@@ -106,17 +108,19 @@ export class AdminService {
             if (p.costPrice) costValue += Number(p.costPrice) * p.stock;
         }
 
-        const grossProfit = salesRevenue + giftCardRevenue + transferFeeRevenue - soldCost - totalDeliveryCharges + userProductCommission;
+        const grossProfit = salesRevenue + giftCardRevenue + transferFeeRevenue + withdrawalFeeRevenue - soldCost - totalDeliveryCharges + userProductCommission;
         const netProfit = grossProfit - commissionsPaid - withdrawalsApproved;
 
         return {
             users: { total: totalUsers, active: activeUsers, inactive: inactiveUsers },
             orders: { total: totalOrders, delivered: deliveredOrders },
-            totalRevenue: salesRevenue + giftCardRevenue + transferFeeRevenue,
+            totalRevenue: salesRevenue + giftCardRevenue + transferFeeRevenue + withdrawalFeeRevenue,
             salesRevenue,
             giftCardRevenue,
             transferFeeRevenue,
+            withdrawalFeeRevenue,
             totalTransferVolume,
+            totalWithdrawalVolume,
             totalCommissionsPaid: commissionsPaid,
             pendingWithdrawals,
             totalProducts,

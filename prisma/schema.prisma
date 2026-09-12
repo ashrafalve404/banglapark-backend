@@ -287,6 +287,8 @@ model WithdrawalRequest {
   userId         String
   user           User           @relation(fields: [userId], references: [id])
   amount         Decimal        @db.Decimal(12, 2)
+  fee            Decimal        @default(0) @db.Decimal(12, 2)
+  netAmount      Decimal        @default(0) @db.Decimal(12, 2)
   method         WithdrawMethod
   accountDetails Json
   status         WithdrawStatus @default(PENDING)

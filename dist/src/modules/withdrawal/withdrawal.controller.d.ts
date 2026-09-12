@@ -11,6 +11,8 @@ export declare class WithdrawalController {
         updatedAt: Date;
         userId: string;
         amount: import("@prisma/client/runtime/library").Decimal;
+        fee: import("@prisma/client/runtime/library").Decimal;
+        netAmount: import("@prisma/client/runtime/library").Decimal;
         method: import("@prisma/client").$Enums.WithdrawMethod;
         accountDetails: import("@prisma/client/runtime/library").JsonValue;
         reason: string | null;
@@ -25,6 +27,8 @@ export declare class WithdrawalController {
             updatedAt: Date;
             userId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
+            fee: import("@prisma/client/runtime/library").Decimal;
+            netAmount: import("@prisma/client/runtime/library").Decimal;
             method: import("@prisma/client").$Enums.WithdrawMethod;
             accountDetails: import("@prisma/client/runtime/library").JsonValue;
             reason: string | null;
@@ -50,6 +54,8 @@ export declare class WithdrawalController {
             updatedAt: Date;
             userId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
+            fee: import("@prisma/client/runtime/library").Decimal;
+            netAmount: import("@prisma/client/runtime/library").Decimal;
             method: import("@prisma/client").$Enums.WithdrawMethod;
             accountDetails: import("@prisma/client/runtime/library").JsonValue;
             reason: string | null;
@@ -67,6 +73,8 @@ export declare class WithdrawalController {
         updatedAt: Date;
         userId: string;
         amount: import("@prisma/client/runtime/library").Decimal;
+        fee: import("@prisma/client/runtime/library").Decimal;
+        netAmount: import("@prisma/client/runtime/library").Decimal;
         method: import("@prisma/client").$Enums.WithdrawMethod;
         accountDetails: import("@prisma/client/runtime/library").JsonValue;
         reason: string | null;

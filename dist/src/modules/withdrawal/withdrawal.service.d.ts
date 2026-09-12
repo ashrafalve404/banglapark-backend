@@ -1,15 +1,17 @@
+import { OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../../prisma/prisma.service';
 import { WalletService } from '../wallet/wallet.service';
 import { CreateWithdrawalDto, ReviewWithdrawalDto } from './dto/withdrawal.dto';
 import { WithdrawStatus } from '@prisma/client';
 import { NotificationsService } from '../notifications/notifications.service';
-export declare class WithdrawalService {
+export declare class WithdrawalService implements OnModuleInit {
     private readonly prisma;
     private readonly walletService;
     private readonly configService;
     private readonly notificationsService;
     constructor(prisma: PrismaService, walletService: WalletService, configService: ConfigService, notificationsService: NotificationsService);
+    onModuleInit(): Promise<void>;
     request(userId: string, dto: CreateWithdrawalDto): Promise<{
         id: string;
         status: import("@prisma/client").$Enums.WithdrawStatus;
@@ -17,6 +19,8 @@ export declare class WithdrawalService {
         updatedAt: Date;
         userId: string;
         amount: import("@prisma/client/runtime/library").Decimal;
+        fee: import("@prisma/client/runtime/library").Decimal;
+        netAmount: import("@prisma/client/runtime/library").Decimal;
         method: import("@prisma/client").$Enums.WithdrawMethod;
         accountDetails: import("@prisma/client/runtime/library").JsonValue;
         reason: string | null;
@@ -30,6 +34,8 @@ export declare class WithdrawalService {
         updatedAt: Date;
         userId: string;
         amount: import("@prisma/client/runtime/library").Decimal;
+        fee: import("@prisma/client/runtime/library").Decimal;
+        netAmount: import("@prisma/client/runtime/library").Decimal;
         method: import("@prisma/client").$Enums.WithdrawMethod;
         accountDetails: import("@prisma/client/runtime/library").JsonValue;
         reason: string | null;
@@ -44,6 +50,8 @@ export declare class WithdrawalService {
             updatedAt: Date;
             userId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
+            fee: import("@prisma/client/runtime/library").Decimal;
+            netAmount: import("@prisma/client/runtime/library").Decimal;
             method: import("@prisma/client").$Enums.WithdrawMethod;
             accountDetails: import("@prisma/client/runtime/library").JsonValue;
             reason: string | null;
@@ -69,6 +77,8 @@ export declare class WithdrawalService {
             updatedAt: Date;
             userId: string;
             amount: import("@prisma/client/runtime/library").Decimal;
+            fee: import("@prisma/client/runtime/library").Decimal;
+            netAmount: import("@prisma/client/runtime/library").Decimal;
             method: import("@prisma/client").$Enums.WithdrawMethod;
             accountDetails: import("@prisma/client/runtime/library").JsonValue;
             reason: string | null;

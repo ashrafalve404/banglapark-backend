@@ -27,6 +27,16 @@ let WithdrawalService = class WithdrawalService {
         this.configService = configService;
         this.notificationsService = notificationsService;
     }
+    async onModuleInit() {
+        try {
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "WithdrawalRequest" ADD COLUMN IF NOT EXISTS "fee" DECIMAL(12,2) NOT NULL DEFAULT 0.00;`);
+            await this.prisma.$executeRawUnsafe(`ALTER TABLE "WithdrawalRequest" ADD COLUMN IF NOT EXISTS "netAmount" DECIMAL(12,2) NOT NULL DEFAULT 0.00;`);
+            await this.prisma.$executeRawUnsafe(`UPDATE "WithdrawalRequest" SET "fee" = ROUND("amount" * 0.10, 2), "netAmount" = "amount" - ROUND("amount" * 0.10, 2) WHERE "fee" = 0 OR "fee" IS NULL;`);
+        }
+        catch (err) {
+            console.error("Failed to execute WithdrawalRequest raw SQL migrations:", err);
+        }
+    }
     async request(userId, dto) {
         const today = new Date().getDay();
         if (today !== 5) {
@@ -40,6 +50,8 @@ let WithdrawalService = class WithdrawalService {
         if (wallet.availableBalance < dto.amount) {
             throw new common_1.BadRequestException('Insufficient available balance');
         }
+        const fee = Math.round((Number(dto.amount) * 0.10) * 100) / 100;
+        const netAmount = Math.round((Number(dto.amount) - fee) * 100) / 100;
         const withdrawal = await this.prisma.$transaction(async (tx) => {
             await tx.wallet.update({
                 where: { userId },
@@ -49,6 +61,8 @@ let WithdrawalService = class WithdrawalService {
                 data: {
                     userId,
                     amount: dto.amount,
+                    fee,
+                    netAmount,
                     method: dto.method,
                     accountDetails: dto.accountDetails,
                 },
@@ -82,11 +96,11 @@ let WithdrawalService = class WithdrawalService {
         if (dto.status === 'APPROVED') {
             await this.prisma.$transaction(async (tx) => {
                 const walletId = await this.walletService.getWalletId(withdrawal.userId);
-                await this.walletService.debit(tx, walletId, Number(withdrawal.amount), client_1.TxType.WITHDRAWAL, `Withdrawal via ${withdrawal.method} — approved`, withdrawalId);
                 await tx.wallet.update({
                     where: { userId: withdrawal.userId },
                     data: { pendingWithdrawal: { decrement: Number(withdrawal.amount) } },
                 });
+                await this.walletService.debit(tx, walletId, Number(withdrawal.amount), client_1.TxType.WITHDRAWAL, `Withdrawal via ${withdrawal.method} — approved`, withdrawalId);
                 await tx.withdrawalRequest.update({
                     where: { id: withdrawalId },
                     data: { status: client_1.WithdrawStatus.APPROVED, reviewedAt: new Date(), reviewedById: adminId },
