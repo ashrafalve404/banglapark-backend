@@ -201,9 +201,9 @@ let DigitalMarketingService = class DigitalMarketingService {
             await this.prisma.$transaction(async (tx) => {
                 await this.walletService.debit(tx, walletId, amount, 'DIGITAL_MARKETING_PURCHASE', `Purchased "${pkg.title}" (Daily return: ৳${dailyProfitAmount}/day for ${daysTotal} days)`, referenceId);
                 await tx.$executeRawUnsafe(`INSERT INTO "DigitalMarketingPurchase" (
-                        "id","userId","packageId","amount","profitAmount","totalReturn","dailyProfitPercent","dailyProfitAmount","daysTotal","daysPaid","totalEarned","status","purchasedAt"
+                        "id","userId","packageId","amount","profitAmount","totalReturn","dailyProfitPercent","dailyProfitAmount","daysTotal","daysPaid","totalEarned","status","purchasedAt","lastCreditedAt"
                      ) VALUES (
-                        $1, $2, $3, $4::DECIMAL, $5::DECIMAL, $6::DECIMAL, $7::DECIMAL, $8::DECIMAL, $9, 0, 0.00, 'ACTIVE'::"DigitalMarketingPurchaseStatus", $10::TIMESTAMPTZ
+                        $1, $2, $3, $4::DECIMAL, $5::DECIMAL, $6::DECIMAL, $7::DECIMAL, $8::DECIMAL, $9, 0, 0.00, 'ACTIVE'::"DigitalMarketingPurchaseStatus", $10::TIMESTAMPTZ, $10::TIMESTAMPTZ
                      )`, purchaseId, userId, pkg.id, amount, dailyProfitAmount, totalReturn, dailyProfitPercent, dailyProfitAmount, daysTotal, now);
             });
         }
@@ -258,8 +258,10 @@ let DigitalMarketingService = class DigitalMarketingService {
         return { purchases: mapped, active, completed, now: now.toISOString() };
     }
     async processDailyProfitPayouts() {
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
+        const now = new Date();
+        const dhakaStr = now.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+        const dhakaStartOfToday = new Date(dhakaStr);
+        dhakaStartOfToday.setHours(0, 0, 0, 0);
         const activePurchases = await this.prisma.$queryRawUnsafe(`SELECT pur.*, pkg.title as pkg_title, u.id as u_id, u.name as u_name, u.phone as u_phone
              FROM "DigitalMarketingPurchase" pur
              LEFT JOIN "DigitalMarketingPackage" pkg ON pkg."id" = pur."packageId"
@@ -268,7 +270,7 @@ let DigitalMarketingService = class DigitalMarketingService {
                AND pur."daysPaid" < COALESCE(pur."daysTotal", 365)
                AND u."status" = 'ACTIVE'
                AND (u."activeUntil" IS NULL OR u."activeUntil" >= NOW())
-               AND (pur."lastCreditedAt" IS NULL OR pur."lastCreditedAt" < $1::TIMESTAMPTZ)`, startOfToday.toISOString());
+               AND (pur."lastCreditedAt" IS NULL OR pur."lastCreditedAt" < $1::TIMESTAMPTZ)`, dhakaStartOfToday.toISOString());
         if (activePurchases.length === 0)
             return;
         for (const item of activePurchases) {
@@ -414,7 +416,7 @@ let DigitalMarketingService = class DigitalMarketingService {
 };
 exports.DigitalMarketingService = DigitalMarketingService;
 __decorate([
-    (0, schedule_1.Cron)(schedule_1.CronExpression.EVERY_HOUR),
+    (0, schedule_1.Cron)('0 0 * * *', { timeZone: 'Asia/Dhaka', name: 'digital-marketing-profit-cron' }),
     __metadata("design:type", Function),
     __metadata("design:paramtypes", []),
     __metadata("design:returntype", Promise)

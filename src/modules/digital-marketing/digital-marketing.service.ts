@@ -230,12 +230,12 @@ export class DigitalMarketingService implements OnModuleInit {
                     referenceId,
                 );
 
-                // Insert purchase record
+                // Insert purchase record with initial lastCreditedAt
                 await tx.$executeRawUnsafe(
                     `INSERT INTO "DigitalMarketingPurchase" (
-                        "id","userId","packageId","amount","profitAmount","totalReturn","dailyProfitPercent","dailyProfitAmount","daysTotal","daysPaid","totalEarned","status","purchasedAt"
+                        "id","userId","packageId","amount","profitAmount","totalReturn","dailyProfitPercent","dailyProfitAmount","daysTotal","daysPaid","totalEarned","status","purchasedAt","lastCreditedAt"
                      ) VALUES (
-                        $1, $2, $3, $4::DECIMAL, $5::DECIMAL, $6::DECIMAL, $7::DECIMAL, $8::DECIMAL, $9, 0, 0.00, 'ACTIVE'::"DigitalMarketingPurchaseStatus", $10::TIMESTAMPTZ
+                        $1, $2, $3, $4::DECIMAL, $5::DECIMAL, $6::DECIMAL, $7::DECIMAL, $8::DECIMAL, $9, 0, 0.00, 'ACTIVE'::"DigitalMarketingPurchaseStatus", $10::TIMESTAMPTZ, $10::TIMESTAMPTZ
                      )`,
                     purchaseId, userId, pkg.id, amount, dailyProfitAmount, totalReturn, dailyProfitPercent, dailyProfitAmount, daysTotal, now,
                 );
@@ -311,16 +311,19 @@ export class DigitalMarketingService implements OnModuleInit {
     }
 
     // ── Automated Cron Job: Credit 0.5% Daily Profit for Active Users ─────────
-    // Runs hourly to credit profit for the current day to active users
-    @Cron(CronExpression.EVERY_HOUR)
+    // Runs daily at midnight (00:00 AM Asia/Dhaka)
+    @Cron('0 0 * * *', { timeZone: 'Asia/Dhaka', name: 'digital-marketing-profit-cron' })
     async processDailyProfitPayouts() {
-        const startOfToday = new Date();
-        startOfToday.setHours(0, 0, 0, 0);
+        // Compute start of today (00:00:00) in Asia/Dhaka timezone
+        const now = new Date();
+        const dhakaStr = now.toLocaleString("en-US", { timeZone: "Asia/Dhaka" });
+        const dhakaStartOfToday = new Date(dhakaStr);
+        dhakaStartOfToday.setHours(0, 0, 0, 0);
 
         // Fetch ACTIVE purchases where:
         // 1. daysPaid < daysTotal (not yet 365 days)
         // 2. User status is 'ACTIVE' AND user.activeUntil >= NOW() (Account is currently ACTIVE)
-        // 3. lastCreditedAt is null OR lastCreditedAt < startOfToday (Not credited yet today)
+        // 3. lastCreditedAt is null OR lastCreditedAt < dhakaStartOfToday (Not credited yet today BD time)
         const activePurchases: any[] = await this.prisma.$queryRawUnsafe(
             `SELECT pur.*, pkg.title as pkg_title, u.id as u_id, u.name as u_name, u.phone as u_phone
              FROM "DigitalMarketingPurchase" pur
@@ -331,7 +334,7 @@ export class DigitalMarketingService implements OnModuleInit {
                AND u."status" = 'ACTIVE'
                AND (u."activeUntil" IS NULL OR u."activeUntil" >= NOW())
                AND (pur."lastCreditedAt" IS NULL OR pur."lastCreditedAt" < $1::TIMESTAMPTZ)`,
-            startOfToday.toISOString(),
+            dhakaStartOfToday.toISOString(),
         );
 
         if (activePurchases.length === 0) return;
